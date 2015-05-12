@@ -1,8 +1,14 @@
 package gokeepass_lib
 
 import (
+	"bytes"
+	"compress/gzip"
+	"crypto/aes"
+	"crypto/cipher"
 	"encoding/binary"
+	"fmt"
 	"io"
+	"io/ioutil"
 )
 
 type Decoder struct {
@@ -18,6 +24,10 @@ func (d *Decoder) Decode(db *Database) error {
 		return err
 	}
 
+	if err := d.readData(db); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -30,6 +40,14 @@ func (d *Decoder) readSignature(db *Database) error {
 	if err := binary.Read(d.r, binary.LittleEndian, sig); err != nil {
 		return err
 	}
+
+	// if sig.BaseSignature != [...]byte{0x9a, 0xa2, 0xd9, 0x03} {
+	// 	return errors.New("BaseSignature not valid")
+	// }
+	// if sig.VersionSignature != [...]byte{0xb5, 0x4b, 0xfb, 0x67} {
+	// 	return errors.New("VersionSignature not valid")
+	// }
+
 	db.signature = *sig
 	return nil
 }
@@ -85,5 +103,34 @@ func (d *Decoder) readHeaders(db *Database) error {
 	}
 
 	db.headers = *headers
+	return nil
+}
+
+func (d *Decoder) readData(db *Database) error {
+	block, err := aes.NewCipher(db.credentials.Key)
+	if err != nil {
+		return err
+	}
+
+	in, err := ioutil.ReadAll(d.r)
+	if err != nil {
+		return err
+	}
+
+	mode := cipher.NewCBCDecrypter(block, db.headers.EncryptionIV)
+	decrypted := make([]byte, len(in))
+	mode.CryptBlocks(decrypted, in)
+
+	b := bytes.NewBuffer(decrypted)
+	r, err := gzip.NewReader(b)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	result := []byte{}
+	r.Read(result)
+
+	fmt.Println(result)
+
 	return nil
 }
