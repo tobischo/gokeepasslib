@@ -6,6 +6,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -41,12 +42,12 @@ func (d *Decoder) readSignature(db *Database) error {
 		return err
 	}
 
-	// if sig.BaseSignature != [...]byte{0x9a, 0xa2, 0xd9, 0x03} {
-	// 	return errors.New("BaseSignature not valid")
-	// }
-	// if sig.VersionSignature != [...]byte{0xb5, 0x4b, 0xfb, 0x67} {
-	// 	return errors.New("VersionSignature not valid")
-	// }
+	if sig.BaseSignature != [...]byte{0x03, 0xd9, 0xa2, 0x9a} {
+		return errors.New("BaseSignature not valid")
+	}
+	if sig.VersionSignature != [...]byte{0x67, 0xfb, 0x4b, 0xb5} {
+		return errors.New("VersionSignature not valid")
+	}
 
 	db.signature = *sig
 	return nil
