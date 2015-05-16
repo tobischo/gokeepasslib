@@ -1,4 +1,4 @@
-package gokeepass_lib
+package gokeepasslib
 
 import (
 	"crypto/sha256"
