@@ -164,7 +164,7 @@ func (d *Decoder) buildMasterKey(db *Database) ([]byte, error) {
 
 	for i := uint32(0); i < 1; i++ {
 		result := make([]byte, 16)
-		crypter := cipher.NewCBCEncrypter(block, result)
+		crypter := cipher.NewCBCDecrypter(block, result)
 		crypter.CryptBlocks(result, masterKey[:16])
 		// copy(masterKey[:16], result[:16])
 		// result = make([]byte, 16)
