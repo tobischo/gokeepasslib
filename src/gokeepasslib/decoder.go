@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"reflect"
 )
 
 type Decoder struct {
@@ -125,12 +126,13 @@ func (d *Decoder) readData(db *Database) error {
 	decrypted := make([]byte, len(in))
 	mode.CryptBlocks(decrypted, in)
 
-	_ = db.headers.StreamStartBytes
-	//fmt.Printf("%b\n", startBytes)
-	//fmt.Printf("%b\n", decrypted[0:len(startBytes)])
-	// if decrypted[0:len(startBytes)] != startBytes[:] {
-	// 	return errors.New("Database integrity check failed")
-	// }
+	startBytes := db.headers.StreamStartBytes
+	if !reflect.DeepEqual(decrypted[0:len(startBytes)], startBytes) {
+		return errors.New("Database integrity check failed")
+	}
+	decrypted = decrypted[len(startBytes):]
+
+	// TODO some more decryption here
 
 	b := bytes.NewBuffer(decrypted)
 	r, err := gzip.NewReader(b)
@@ -158,40 +160,21 @@ func (d *Decoder) buildMasterKey(db *Database) ([]byte, error) {
 		return nil, err
 	}
 
-	fmt.Printf("Before: % x\n", masterKey)
-
-	//http://crypto.stackexchange.com/questions/21048/can-i-simulate-iterated-aes-ecb-with-other-block-cipher-modes
-
-	for i := uint32(0); i < 1; i++ {
+	// http://crypto.stackexchange.com/questions/21048/can-i-simulate-iterated-aes-ecb-with-other-block-cipher-modes
+	for i := uint32(0); i < 6000; i++ {
 		result := make([]byte, 16)
-		crypter := cipher.NewCBCDecrypter(block, result)
-		fmt.Printf("% x\n", result)
-		crypter.CryptBlocks(result, masterKey[:16])
-		fmt.Printf("% x\n", result)
-		// copy(masterKey[:16], result[:16])
-		// result = make([]byte, 16)
-		// crypter = cipher.NewCBCEncrypter(block, masterKey[16:])
-		// crypter.CryptBlocks(result, result)
-		// copy(masterKey[16:], result[16:])
-		//ecbCrypt(result, masterKey, block)
+		crypter := cipher.NewCBCEncrypter(block, result)
+		crypter.CryptBlocks(masterKey[:16], masterKey[:16])
+		crypter = cipher.NewCBCEncrypter(block, result)
+		crypter.CryptBlocks(masterKey[16:], masterKey[16:])
 	}
 
-	fmt.Printf("After:  % x\n", masterKey)
-	fmt.Printf("Should be: % x\n", []byte{0x20, 0x07, 0xbb, 0x4b, 0xdc, 0xa2, 0x86, 0xfb, 0x92, 0x50, 0xf3, 0x9f, 0x11, 0x1b, 0xbf, 0x77, 0x7e, 0x07, 0xd3, 0x80, 0x7c, 0x4a, 0x4e, 0x57, 0xbb, 0xc3, 0x89, 0x4f, 0x30, 0x4e, 0x4c, 0x1f})
-	// 06 f4 38 80 ef 1c f2 fa c8 64 e4 4d 9c 42 eb 74 33 e9 22 07 c4 0a d3 29 0e 07 af c3 03 7a f9 5b
+	tmp = sha256.Sum256(masterKey)
+	masterKey = tmp[:]
 
 	masterKey = append(db.headers.MasterSeed, masterKey...)
 	masterHash := sha256.Sum256(masterKey)
 	masterKey = masterHash[:]
 
 	return masterKey, nil
-}
-
-func ecbCrypt(dst, src []byte, block cipher.Block) {
-	length := len(src) / block.BlockSize()
-	for i := 0; i < length; i++ {
-		block.Encrypt(dst, src)
-		src = src[block.BlockSize():]
-		dst = dst[block.BlockSize():]
-	}
 }
