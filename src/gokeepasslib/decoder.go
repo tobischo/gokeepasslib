@@ -132,9 +132,12 @@ func (d *Decoder) readData(db *Database) error {
 	}
 	decrypted = decrypted[len(startBytes):]
 
-	// TODO some more decryption here
+	zippedBody, err := d.checkHashBlocks(decrypted)
+	if err != nil {
+		return err
+	}
 
-	b := bytes.NewBuffer(decrypted)
+	b := bytes.NewBuffer(zippedBody)
 	r, err := gzip.NewReader(b)
 	if err != nil {
 		return err
@@ -177,4 +180,32 @@ func (d *Decoder) buildMasterKey(db *Database) ([]byte, error) {
 	masterKey = masterHash[:]
 
 	return masterKey, nil
+}
+
+func (d *Decoder) checkHashBlocks(hashedBody []byte) ([]byte, error) {
+	result := make([]byte, 0)
+
+	for len(hashedBody) > 0 {
+		fmt.Println(len(hashedBody))
+		index := binary.LittleEndian.Uint32(hashedBody[:4])
+		hashedBody = hashedBody[4:]
+		blockHash := hashedBody[:32]
+		hashedBody = hashedBody[32:]
+		blockLength := binary.LittleEndian.Uint32(hashedBody[:4])
+		hashedBody = hashedBody[4:]
+
+		if blockLength > 0 {
+			blockData := hashedBody[:blockLength]
+			hashedBody = hashedBody[blockLength:]
+			calculatedHash := sha256.Sum256(blockData)
+
+			if !reflect.DeepEqual(calculatedHash[:], blockHash[:]) {
+				return nil, fmt.Errorf("Hash mismatch. Database seems to be corrupt at index %d", index)
+			} else {
+				result = append(result, blockData...)
+			}
+		}
+	}
+
+	return result, nil
 }
