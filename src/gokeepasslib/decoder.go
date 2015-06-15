@@ -143,10 +143,13 @@ func (d *Decoder) readData(db *Database) error {
 		return err
 	}
 	defer r.Close()
-	result := []byte{}
-	r.Read(result)
 
-	fmt.Println(result)
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s\n", data)
 
 	return nil
 }
@@ -186,7 +189,6 @@ func (d *Decoder) checkHashBlocks(hashedBody []byte) ([]byte, error) {
 	result := make([]byte, 0)
 
 	for len(hashedBody) > 0 {
-		fmt.Println(len(hashedBody))
 		index := binary.LittleEndian.Uint32(hashedBody[:4])
 		hashedBody = hashedBody[4:]
 		blockHash := hashedBody[:32]
@@ -204,6 +206,8 @@ func (d *Decoder) checkHashBlocks(hashedBody []byte) ([]byte, error) {
 			} else {
 				result = append(result, blockData...)
 			}
+		} else {
+			break
 		}
 	}
 
