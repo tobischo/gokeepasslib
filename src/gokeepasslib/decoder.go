@@ -7,6 +7,7 @@ import (
 	"crypto/cipher"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -144,12 +145,9 @@ func (d *Decoder) readData(db *Database) error {
 	}
 	defer r.Close()
 
-	data, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("%s\n", data)
+	db.content = &Content{}
+	xmlDecoder := xml.NewDecoder(r)
+	xmlDecoder.Decode(db.content)
 
 	return nil
 }
