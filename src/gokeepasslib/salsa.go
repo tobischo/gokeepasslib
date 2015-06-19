@@ -13,11 +13,15 @@ var SIGMA_WORDS = []uint32{
 func (s *SalsaManager) unlockProtectedEntries(gs []Group) {
 	for _, g := range gs {
 		for i, e := range g.Entries {
-			g.Entries[i].Password = s.unpack(e.getProtectedPassword())
+			g.Entries[i].
+				Password = s.unpack(e.getProtectedPassword())
 
-			for _, h := range e.Histories {
-				for _, e := range h.Entries {
-					e.Password = s.unpack(e.getProtectedPassword())
+			for j, h := range e.Histories {
+				for k, el := range h.Entries {
+					g.Entries[i].
+						Histories[j].
+						Entries[k].
+						Password = s.unpack(el.getProtectedPassword())
 				}
 			}
 
