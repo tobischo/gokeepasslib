@@ -2,32 +2,25 @@ package gokeepasslib
 
 import "encoding/base64"
 
-var SALSA_IV = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
+var IV = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
 var SIGMA_WORDS = []uint32{
 	0x61707865,
 	0x3320646e,
 	0x79622d32,
 	0x6b206574,
 }
-var ROUNDS = 20
 
 func (s *SalsaManager) unlockProtectedEntries(gs []Group) {
 	for _, g := range gs {
-		if len(g.Entries) > 0 {
-			for _, e := range g.Entries {
-				e.Password = s.unpack(e.getProtectedPassword())
+		for i, e := range g.Entries {
+			g.Entries[i].Password = s.unpack(e.getProtectedPassword())
 
-				if len(e.Histories) > 0 {
-					for _, h := range e.Histories {
-						if len(h.Entries) > 0 {
-							for _, e := range h.Entries {
-								e.Password = s.unpack(e.getProtectedPassword())
-							}
-						}
-					}
+			for _, h := range e.Histories {
+				for _, e := range h.Entries {
+					e.Password = s.unpack(e.getProtectedPassword())
 				}
-
 			}
+
 		}
 		if len(g.Groups) > 0 {
 			s.unlockProtectedEntries(g.Groups)
@@ -70,8 +63,8 @@ func NewSalsaManager(key []byte) SalsaManager {
 	state[10] = SIGMA_WORDS[2]
 	state[15] = SIGMA_WORDS[3]
 
-	state[6] = u8to32little(SALSA_IV, 0)
-	state[7] = u8to32little(SALSA_IV, 4)
+	state[6] = u8to32little(IV, 0)
+	state[7] = u8to32little(IV, 4)
 	state[8] = uint32(0)
 	state[9] = uint32(0)
 
