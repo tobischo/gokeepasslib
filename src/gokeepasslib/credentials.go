@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -10,6 +11,10 @@ import (
 type Credentials struct {
 	Key      []byte
 	Priority int32
+}
+
+func (c *Credentials) String() string {
+	return fmt.Sprintf("%x", c.Key)
 }
 
 func NewPasswordCredentials(password string) *Credentials {

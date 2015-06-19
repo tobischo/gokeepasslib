@@ -7,38 +7,38 @@ import (
 
 type Content struct {
 	XMLName xml.Name `xml:"KeePassFile"`
-	Meta    meta     `xml:"Meta"`
-	Root    root     `xml:"Root"`
+	Meta    MetaData `xml:"Meta"`
+	Root    RootData `xml:"Root"`
 }
 
-type meta struct {
-	Generator                  string           `xml:"Generator"`
-	HeaderHash                 string           `xml:"HeaderHash"`
-	DatabaseName               string           `xml:"DatabaseName"`
-	DatabaseNameChanged        *time.Time       `xml:"DatabaseNameChanged"`
-	DatabaseDescription        string           `xml:"DatabaseDescription"`
-	DatabaseDescriptionChanged *time.Time       `xml:"DatabaseDescriptionChanged"`
-	DefaultUserName            string           `xml:"DefaultUserName"`
-	MaintenanceHistoryDays     string           `xml:"MaintenanceHistoryDays"`
-	Color                      string           `xml:"Color"`
-	MasterKeyChanged           *time.Time       `xml:"MasterKeyChanged"`
-	MasterKeyChangedRec        int64            `xml:"MasterKeyChangedRec"`
-	MasterKeyChangedForce      int64            `xml:"MasterKeyChangedForce"`
-	MemoryProtection           memoryProtection `xml:"MemoryProtection"`
-	RecycleBinEnabled          bool             `xml:"RecycleBinEnabled"`
-	RecycleBinUUID             string           `xml:"RecycleBinUUID"`
-	RecycleBinChanged          *time.Time       `xml:"RecycleBinChanged"`
-	EntryTemplatesGroup        string           `xml:"EntryTemplatesGroup"`
-	EntryTemplatesGroupChanged *time.Time       `xml:"EntryTemplatesGroupChanged"`
-	HistoryMaxItems            int64            `xml:"HistoryMaxItems"`
-	HistoryMaxSize             int64            `xml:"HistoryMaxSize"`
-	LastSelectedGroup          string           `xml:"LastSelectedGroup"`
-	LastTopVisibleGroup        string           `xml:"LastTopVisibleGroup"`
-	Binaries                   interface{}      `xml:"Binaries"`
-	CustomData                 interface{}      `xml:"CustomData"`
+type MetaData struct {
+	Generator                  string        `xml:"Generator"`
+	HeaderHash                 string        `xml:"HeaderHash"`
+	DatabaseName               string        `xml:"DatabaseName"`
+	DatabaseNameChanged        *time.Time    `xml:"DatabaseNameChanged"`
+	DatabaseDescription        string        `xml:"DatabaseDescription"`
+	DatabaseDescriptionChanged *time.Time    `xml:"DatabaseDescriptionChanged"`
+	DefaultUserName            string        `xml:"DefaultUserName"`
+	MaintenanceHistoryDays     string        `xml:"MaintenanceHistoryDays"`
+	Color                      string        `xml:"Color"`
+	MasterKeyChanged           *time.Time    `xml:"MasterKeyChanged"`
+	MasterKeyChangedRec        int64         `xml:"MasterKeyChangedRec"`
+	MasterKeyChangedForce      int64         `xml:"MasterKeyChangedForce"`
+	MemoryProtection           MemProtection `xml:"MemoryProtection"`
+	RecycleBinEnabled          bool          `xml:"RecycleBinEnabled"`
+	RecycleBinUUID             string        `xml:"RecycleBinUUID"`
+	RecycleBinChanged          *time.Time    `xml:"RecycleBinChanged"`
+	EntryTemplatesGroup        string        `xml:"EntryTemplatesGroup"`
+	EntryTemplatesGroupChanged *time.Time    `xml:"EntryTemplatesGroupChanged"`
+	HistoryMaxItems            int64         `xml:"HistoryMaxItems"`
+	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
+	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
+	LastTopVisibleGroup        string        `xml:"LastTopVisibleGroup"`
+	Binaries                   interface{}   `xml:"Binaries"`
+	CustomData                 interface{}   `xml:"CustomData"`
 }
 
-type memoryProtection struct {
+type MemProtection struct {
 	ProtectTitle    bool `xml:"ProtectTitle"`
 	ProtectUserName bool `xml:"ProtectUserName"`
 	ProtectPassword bool `xml:"ProtectPassword"`
@@ -46,27 +46,27 @@ type memoryProtection struct {
 	ProtectNotes    bool `xml:"ProtectNotes"`
 }
 
-type root struct {
-	Group          group           `xml:"Group"`
-	DeletedObjects []deletedObject `xml:"DeletedObjects>DeletedObject"`
+type RootData struct {
+	Groups         []Group             `xml:"Group"`
+	DeletedObjects []DeletedObjectData `xml:"DeletedObjects>DeletedObject"`
 }
 
-type group struct {
+type Group struct {
 	UUID                    string      `xml:"UUID"`
 	Name                    string      `xml:"Name"`
 	Notes                   interface{} `xml:"Notes"`
 	IconID                  int64       `xml:"IconID"`
-	Times                   times       `xml:"Times"`
+	Times                   TimeData    `xml:"Times"`
 	IsExpanded              bool        `xml:"IsExpanded`
 	DefaultAutoTypeSequence string      `xml:"DefaultAutoTypeSequence`
 	EnableAutoType          string      `xml:"EnableAutoType`
 	EnableSearching         string      `xml:"EnableSearching`
 	LastTopVisibleEntry     string      `xml:"LastTopVisibleEntry`
-	Groups                  []group     `xml:"Group,omitempty"`
-	Entries                 []entry     `xml:"Entry,omitempty"`
+	Groups                  []Group     `xml:"Group,omitempty"`
+	Entries                 []Entry     `xml:"Entry,omitempty"`
 }
 
-type times struct {
+type TimeData struct {
 	CreationTime         *time.Time `xml:"CreationTime"`
 	LastModificationTime *time.Time `xml:"LastModificationTime"`
 	LastAcessTime        *time.Time `xml:"LastAcessTime"`
@@ -76,30 +76,40 @@ type times struct {
 	LocationChanged      *time.Time `xml:"LocationChanged"`
 }
 
-type entry struct {
-	UUID            string      `xml:"UUID"`
-	IconID          int64       `xml:"IconID"`
-	ForegroundColor interface{} `xml:"ForegroundColor"`
-	BackgroundColor interface{} `xml:"BackgroundColor"`
-	OverrideURL     interface{} `xml:"OverrideURL"`
-	Tags            interface{} `xml:"Tags"`
-	Times           times       `xml:"Times"`
-	Values          []value     `xml:"String,omitempty"`
-	AutoType        autoType    `xml:"AutoType"`
+type Entry struct {
+	UUID            string       `xml:"UUID"`
+	IconID          int64        `xml:"IconID"`
+	ForegroundColor interface{}  `xml:"ForegroundColor"`
+	BackgroundColor interface{}  `xml:"BackgroundColor"`
+	OverrideURL     interface{}  `xml:"OverrideURL"`
+	Tags            interface{}  `xml:"Tags"`
+	Times           TimeData     `xml:"Times"`
+	Values          []ValueData  `xml:"String,omitempty"`
+	AutoType        AutoTypeData `xml:"AutoType"`
 }
 
-type value struct {
+func (e *Entry) getPassword() string {
+	var val string
+	for _, v := range e.Values {
+		if v.Key == "Password" {
+			val = v.Value
+		}
+	}
+	return val
+}
+
+type ValueData struct {
 	Key   string `xml:"Key"`
 	Value string `xml:"Value"`
 	//Protected attribute - how?
 }
 
-type autoType struct {
+type AutoTypeData struct {
 	Enabled                 bool  `xml:"Enabled"`
 	DataTransferObfuscation int64 `xml:"DataTransferObfuscation"`
 }
 
-type deletedObject struct {
+type DeletedObjectData struct {
 	XMLName      xml.Name   `xml:"DeletedObject"`
 	UUID         string     `xml:"UUID"`
 	DeletionTime *time.Time `xml:"DeletionTime"`

@@ -20,16 +20,16 @@ type Headers struct {
 
 func (h Headers) String() string {
 	return fmt.Sprintf(
-		"(1) Comment: %s\n"+
-			"(2) CipherID: %s\n"+
-			"(3) CompressionFlags: %t\n"+
-			"(4) MasterSeed: %s\n"+
-			"(5) TransformSeed: %s\n"+
-			"(6) TransformRounds: %t\n"+
-			"(7) EncryptionIV: %s\n"+
-			"(8) ProtectedStreamKey: %s\n"+
-			"(9) StreamStartBytes: %s\n"+
-			"(10) InnerRandomStreamID: %s\n",
+		"(1) Comment: %x\n"+
+			"(2) CipherID: %x\n"+
+			"(3) CompressionFlags: %x\n"+
+			"(4) MasterSeed: %x\n"+
+			"(5) TransformSeed: %x\n"+
+			"(6) TransformRounds: %d\n"+
+			"(7) EncryptionIV: %x\n"+
+			"(8) ProtectedStreamKey: %x\n"+
+			"(9) StreamStartBytes: %x\n"+
+			"(10) InnerRandomStreamID: %x\n",
 		h.Comment,
 		h.CipherID,
 		h.CompressionFlags,

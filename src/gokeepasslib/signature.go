@@ -14,7 +14,7 @@ type Signature struct {
 }
 
 func (s Signature) String() string {
-	return fmt.Sprintf("Base: %t, Version: %t, FileVersion: %t",
+	return fmt.Sprintf("Base: %x, Version: %x, FileVersion: %x",
 		s.BaseSignature,
 		s.VersionSignature,
 		s.FileVersion,

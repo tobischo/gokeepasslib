@@ -15,6 +15,9 @@ import (
 	"reflect"
 )
 
+var BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
+var VersionSignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
+
 type Decoder struct {
 	r io.Reader
 }
@@ -45,10 +48,10 @@ func (d *Decoder) readSignature(db *Database) error {
 		return err
 	}
 
-	if sig.BaseSignature != [...]byte{0x03, 0xd9, 0xa2, 0x9a} {
+	if sig.BaseSignature != BaseSignature {
 		return errors.New("BaseSignature not valid")
 	}
-	if sig.VersionSignature != [...]byte{0x67, 0xfb, 0x4b, 0xb5} {
+	if sig.VersionSignature != VersionSignature {
 		return errors.New("VersionSignature not valid")
 	}
 
@@ -165,7 +168,7 @@ func (d *Decoder) buildMasterKey(db *Database) ([]byte, error) {
 	}
 
 	// http://crypto.stackexchange.com/questions/21048/can-i-simulate-iterated-aes-ecb-with-other-block-cipher-modes
-	for i := uint32(0); i < 6000; i++ {
+	for i := uint32(0); i < db.headers.TransformRounds; i++ {
 		result := make([]byte, 16)
 		crypter := cipher.NewCBCEncrypter(block, result)
 		crypter.CryptBlocks(masterKey[:16], masterKey[:16])
