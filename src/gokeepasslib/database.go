@@ -1,6 +1,9 @@
 package gokeepasslib
 
-import "fmt"
+import (
+	"crypto/sha256"
+	"fmt"
+)
 
 type Database struct {
 	signature   Signature
@@ -17,4 +20,11 @@ func (db *Database) String() string {
 		db.credentials,
 		db.content,
 	)
+}
+
+func (db *Database) UnlockProtectedEntries() {
+	key := sha256.Sum256(db.headers.ProtectedStreamKey)
+	salsaManager := NewSalsaManager(key[:])
+
+	salsaManager.unlockProtectedEntries(db.content.Root.Groups)
 }

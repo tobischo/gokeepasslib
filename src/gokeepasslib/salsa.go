@@ -1,13 +1,9 @@
 package gokeepasslib
 
-import (
-	"crypto/sha256"
-	"encoding/base64"
-	"fmt"
-)
+import "encoding/base64"
 
 var SALSA_IV = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
-var SIGMA_WORDS = []int{
+var SIGMA_WORDS = []uint32{
 	0x61707865,
 	0x3320646e,
 	0x79622d32,
@@ -15,44 +11,73 @@ var SIGMA_WORDS = []int{
 }
 var ROUNDS = 20
 
-func UnlockProtectedEntry(e *Entry, d *Database) []byte {
-	key := sha256.Sum256(d.headers.ProtectedStreamKey)
-	salsaManager := NewSalsaManager(key[:])
-	return salsaManager.unpack(e.getPassword())
+func (s *SalsaManager) unlockProtectedEntries(gs []Group) {
+	for _, g := range gs {
+		if len(g.Entries) > 0 {
+			for _, e := range g.Entries {
+				e.Password = s.unpack(e.getProtectedPassword())
+
+				if len(e.Histories) > 0 {
+					for _, h := range e.Histories {
+						if len(h.Entries) > 0 {
+							for _, e := range h.Entries {
+								e.Password = s.unpack(e.getProtectedPassword())
+							}
+						}
+					}
+				}
+
+			}
+		}
+		if len(g.Groups) > 0 {
+			s.unlockProtectedEntries(g.Groups)
+		}
+	}
 }
 
 type SalsaManager struct {
-	Key          []byte
-	Nonce        []byte
+	State        []uint32
 	blockUsed    int
 	block        []byte
 	counterWords [2]int
+	currentBlock []byte
+}
+
+func u8to32little(k []byte, i int) uint32 {
+	return uint32(k[i]) |
+		(uint32(k[i+1]) << 8) |
+		(uint32(k[i+2]) << 16) |
+		(uint32(k[i+3]) << 24)
+}
+
+func rotl32(x uint32, b uint) uint32 {
+	return ((x << b) | (x >> (32 - b)))
 }
 
 func NewSalsaManager(key []byte) SalsaManager {
-	keyWords := [8]byte{}
-	j := 0
-	for i := 0; i < 8; i++ {
-		keyWords[i] = ((key[j+0] & 0xff) << 0) |
-			((key[j+1] & 0xff) << 8) |
-			((key[j+2] & 0xff) << 16) |
-			((key[j+3] & 0xff) << 24)
-		j += 4
-	}
+	state := make([]uint32, 16)
 
-	nonceWords := [2]byte{}
-	nonceWords[0] = ((SALSA_IV[0] & 0xff) << 0) |
-		((SALSA_IV[1] & 0xff) << 8) |
-		((SALSA_IV[2] & 0xff) << 16) |
-		((SALSA_IV[3] & 0xff) << 24)
-	nonceWords[1] = ((SALSA_IV[4] & 0xff) << 0) |
-		((SALSA_IV[5] & 0xff) << 8) |
-		((SALSA_IV[6] & 0xff) << 16) |
-		((SALSA_IV[7] & 0xff) << 24)
+	state[1] = u8to32little(key, 0)
+	state[2] = u8to32little(key, 4)
+	state[3] = u8to32little(key, 8)
+	state[4] = u8to32little(key, 12)
+	state[11] = u8to32little(key, 16)
+	state[12] = u8to32little(key, 20)
+	state[13] = u8to32little(key, 24)
+	state[14] = u8to32little(key, 28)
+	state[0] = SIGMA_WORDS[0]
+	state[5] = SIGMA_WORDS[1]
+	state[10] = SIGMA_WORDS[2]
+	state[15] = SIGMA_WORDS[3]
+
+	state[6] = u8to32little(SALSA_IV, 0)
+	state[7] = u8to32little(SALSA_IV, 4)
+	state[8] = uint32(0)
+	state[9] = uint32(0)
 
 	s := SalsaManager{
-		Key:   keyWords[:],
-		Nonce: nonceWords[:],
+		State:        state,
+		currentBlock: make([]byte, 0),
 	}
 	s.reset()
 	return s
@@ -63,9 +88,8 @@ func (s *SalsaManager) unpack(payload string) []byte {
 
 	data, _ := base64.StdEncoding.DecodeString(payload)
 
-	salsaBytes := s.getBytes(len(data))
-	fmt.Printf("% x\n", salsaBytes)
-	//[ 86, 184, 90, 22, 209 ]
+	salsaBytes := s.fetchBytes(len(data))
+
 	for i := 0; i < len(data); i++ {
 		result = append(result, salsaBytes[i]^data[i])
 	}
@@ -83,6 +107,17 @@ func (s *SalsaManager) incrementCounter() {
 	if s.counterWords[0] == 0 {
 		s.counterWords[1] = (s.counterWords[1] + 1) & 0xffffffff
 	}
+}
+
+func (s *SalsaManager) fetchBytes(length int) []byte {
+	for length > len(s.currentBlock) {
+		s.currentBlock = append(s.currentBlock, s.getBytes(64)...)
+	}
+
+	data := s.currentBlock[0:length]
+	s.currentBlock = s.currentBlock[length:]
+
+	return data
 }
 
 func (s *SalsaManager) getBytes(length int) []byte {
@@ -104,169 +139,64 @@ func (s *SalsaManager) getBytes(length int) []byte {
 func (s *SalsaManager) generateBlock() {
 	s.block = make([]byte, 64)
 
-	j0 := SIGMA_WORDS[0]
-	j1 := int(s.Key[0])
-	j2 := int(s.Key[1])
-	j3 := int(s.Key[2])
-	j4 := int(s.Key[3])
-	j5 := SIGMA_WORDS[1]
-	j6 := int(s.Nonce[0])
-	j7 := int(s.Nonce[1])
-	j8 := int(s.counterWords[0])
-	j9 := int(s.counterWords[1])
-	j10 := SIGMA_WORDS[2]
-	j11 := int(s.Key[4])
-	j12 := int(s.Key[5])
-	j13 := int(s.Key[6])
-	j14 := int(s.Key[7])
-	j15 := SIGMA_WORDS[3]
-	x0 := j0
-	x1 := j1
-	x2 := j2
-	x3 := j3
-	x4 := j4
-	x5 := j5
-	x6 := j6
-	x7 := j7
-	x8 := j8
-	x9 := j9
-	x10 := j10
-	x11 := j11
-	x12 := j12
-	x13 := j13
-	x14 := j14
-	x15 := j15
+	x := make([]uint32, 16)
+	copy(x, s.State)
 
-	for i := 0; i < ROUNDS; i = i + 2 {
-		// First block
-		x4 = x4 ^ ((x0 + x12) << 7) | ((x0 + x12) >> (32 - 7))
-		x8 = x8 ^ ((x4 + x0) << 9) | ((x4 + x0) >> (32 - 9))
-		x12 = x12 ^ ((x8 + x4) << 13) | ((x8 + x4) >> (32 - 13))
-		x0 = x0 ^ ((x12 + x8) << 18) | ((x12 + x8) >> (32 - 18))
+	for i := 0; i < 10; i++ {
+		x[4] = x[4] ^ rotl32(x[0]+x[12], 7)
+		x[8] = x[8] ^ rotl32(x[4]+x[0], 9)
+		x[12] = x[12] ^ rotl32(x[8]+x[4], 13)
+		x[0] = x[0] ^ rotl32(x[12]+x[8], 18)
 
-		// Second block
-		x9 = x9 ^ ((x5 + x1) << 7) | ((x5 + x1) >> (32 - 7))
-		x13 = x13 ^ ((x9 + x5) << 9) | ((x9 + x5) >> (32 - 9))
-		x1 = x1 ^ ((x13 + x9) << 13) | ((x13 + x9) >> (32 - 13))
-		x5 = x5 ^ ((x1 + x13) << 18) | ((x1 + x13) >> (32 - 18))
+		x[9] = x[9] ^ rotl32(x[5]+x[1], 7)
+		x[13] = x[13] ^ rotl32(x[9]+x[5], 9)
+		x[1] = x[1] ^ rotl32(x[13]+x[9], 13)
+		x[5] = x[5] ^ rotl32(x[1]+x[13], 18)
 
-		// Third block
-		x14 = x14 ^ ((x10 + x6) << 7) | ((x10 + x6) >> (32 - 7))
-		x2 = x2 ^ ((x14 + x10) << 9) | ((x14 + x10) >> (32 - 9))
-		x6 = x6 ^ ((x2 + x14) << 13) | ((x2 + x14) >> (32 - 13))
-		x10 = x10 ^ ((x6 + x2) << 18) | ((x6 + x2) >> (32 - 18))
+		x[14] = x[14] ^ rotl32(x[10]+x[6], 7)
+		x[2] = x[2] ^ rotl32(x[14]+x[10], 9)
+		x[6] = x[6] ^ rotl32(x[2]+x[14], 13)
+		x[10] = x[10] ^ rotl32(x[6]+x[2], 18)
 
-		// Fourth block
-		x3 = x3 ^ ((x15 + x11) << 7) | ((x15 + x11) >> (32 - 7))
-		x7 = x7 ^ ((x3 + x15) << 9) | ((x3 + x15) >> (32 - 9))
-		x11 = x11 ^ ((x7 + x3) << 13) | ((x7 + x3) >> (32 - 13))
-		x15 = x15 ^ ((x11 + x7) << 18) | ((x11 + x7) >> (32 - 18))
+		x[3] = x[3] ^ rotl32(x[15]+x[11], 7)
+		x[7] = x[7] ^ rotl32(x[3]+x[15], 9)
+		x[11] = x[11] ^ rotl32(x[7]+x[3], 13)
+		x[15] = x[15] ^ rotl32(x[11]+x[7], 18)
 
-		// Fifth block
-		x1 = x1 ^ ((x0 + x3) << 7) | ((x0 + x3) >> (32 - 7))
-		x2 = x2 ^ ((x1 + x0) << 9) | ((x1 + x0) >> (32 - 9))
-		x3 = x3 ^ ((x2 + x1) << 13) | ((x2 + x1) >> (32 - 13))
-		x0 = x0 ^ ((x3 + x2) << 18) | ((x3 + x2) >> (32 - 18))
+		x[1] = x[1] ^ rotl32(x[0]+x[3], 7)
+		x[2] = x[2] ^ rotl32(x[1]+x[0], 9)
+		x[3] = x[3] ^ rotl32(x[2]+x[1], 13)
+		x[0] = x[0] ^ rotl32(x[3]+x[2], 18)
 
-		// Sixth block
-		x6 = x6 ^ ((x5 + x4) << 7) | ((x5 + x4) >> (32 - 7))
-		x7 = x7 ^ ((x6 + x5) << 9) | ((x6 + x5) >> (32 - 9))
-		x4 = x4 ^ ((x7 + x6) << 13) | ((x7 + x6) >> (32 - 13))
-		x5 = x5 ^ ((x4 + x7) << 18) | ((x4 + x7) >> (32 - 18))
+		x[6] = x[6] ^ rotl32(x[5]+x[4], 7)
+		x[7] = x[7] ^ rotl32(x[6]+x[5], 9)
+		x[4] = x[4] ^ rotl32(x[7]+x[6], 13)
+		x[5] = x[5] ^ rotl32(x[4]+x[7], 18)
 
-		// Seventh block
-		x11 = x11 ^ ((x10 + x9) << 7) | ((x10 + x9) >> (32 - 7))
-		x8 = x8 ^ ((x11 + x10) << 9) | ((x11 + x10) >> (32 - 9))
-		x9 = x9 ^ ((x8 + x11) << 13) | ((x8 + x11) >> (32 - 13))
-		x10 = x10 ^ ((x9 + x8) << 18) | ((x9 + x8) >> (32 - 18))
+		x[11] = x[11] ^ rotl32(x[10]+x[9], 7)
+		x[8] = x[8] ^ rotl32(x[11]+x[10], 9)
+		x[9] = x[9] ^ rotl32(x[8]+x[11], 13)
+		x[10] = x[10] ^ rotl32(x[9]+x[8], 18)
 
-		// Eigth block
-		x12 = x12 ^ ((x15 + x14) << 7) | ((x15 + x14) >> (32 - 7))
-		x13 = x13 ^ ((x12 + x15) << 9) | ((x12 + x15) >> (32 - 9))
-		x14 = x14 ^ ((x13 + x12) << 13) | ((x13 + x12) >> (32 - 13))
-		x15 = x15 ^ ((x14 + x13) << 18) | ((x14 + x13) >> (32 - 18))
+		x[12] = x[12] ^ rotl32(x[15]+x[14], 7)
+		x[13] = x[13] ^ rotl32(x[12]+x[15], 9)
+		x[14] = x[14] ^ rotl32(x[13]+x[12], 13)
+		x[15] = x[15] ^ rotl32(x[14]+x[13], 18)
 	}
 
-	x0 += j0
-	x1 += j1
-	x2 += j2
-	x3 += j3
-	x4 += j4
-	x5 += j5
-	x6 += j6
-	x7 += j7
-	x8 += j8
-	x9 += j9
-	x10 += j10
-	x11 += j11
-	x12 += j12
-	x13 += j13
-	x14 += j14
-	x15 += j15
+	for i := 0; i < 16; i++ {
+		x[i] += s.State[i]
+	}
 
-	s.block[0] = byte((x0 >> 0) & 0xff)
-	s.block[1] = byte((x0 >> 8) & 0xff)
-	s.block[2] = byte((x0 >> 16) & 0xff)
-	s.block[3] = byte((x0 >> 24) & 0xff)
-	s.block[4] = byte((x1 >> 0) & 0xff)
-	s.block[5] = byte((x1 >> 8) & 0xff)
-	s.block[6] = byte((x1 >> 16) & 0xff)
-	s.block[7] = byte((x1 >> 24) & 0xff)
-	s.block[8] = byte((x2 >> 0) & 0xff)
-	s.block[9] = byte((x2 >> 8) & 0xff)
-	s.block[10] = byte((x2 >> 16) & 0xff)
-	s.block[11] = byte((x2 >> 24) & 0xff)
-	s.block[12] = byte((x3 >> 0) & 0xff)
-	s.block[13] = byte((x3 >> 8) & 0xff)
-	s.block[14] = byte((x3 >> 16) & 0xff)
-	s.block[15] = byte((x3 >> 24) & 0xff)
-	s.block[16] = byte((x4 >> 0) & 0xff)
-	s.block[17] = byte((x4 >> 8) & 0xff)
-	s.block[18] = byte((x4 >> 16) & 0xff)
-	s.block[19] = byte((x4 >> 24) & 0xff)
-	s.block[20] = byte((x5 >> 0) & 0xff)
-	s.block[21] = byte((x5 >> 8) & 0xff)
-	s.block[22] = byte((x5 >> 16) & 0xff)
-	s.block[23] = byte((x5 >> 24) & 0xff)
-	s.block[24] = byte((x6 >> 0) & 0xff)
-	s.block[25] = byte((x6 >> 8) & 0xff)
-	s.block[26] = byte((x6 >> 16) & 0xff)
-	s.block[27] = byte((x6 >> 24) & 0xff)
-	s.block[28] = byte((x7 >> 0) & 0xff)
-	s.block[29] = byte((x7 >> 8) & 0xff)
-	s.block[30] = byte((x7 >> 16) & 0xff)
-	s.block[31] = byte((x7 >> 24) & 0xff)
-	s.block[32] = byte((x8 >> 0) & 0xff)
-	s.block[33] = byte((x8 >> 8) & 0xff)
-	s.block[34] = byte((x8 >> 16) & 0xff)
-	s.block[35] = byte((x8 >> 24) & 0xff)
-	s.block[36] = byte((x9 >> 0) & 0xff)
-	s.block[37] = byte((x9 >> 8) & 0xff)
-	s.block[38] = byte((x9 >> 16) & 0xff)
-	s.block[39] = byte((x9 >> 24) & 0xff)
-	s.block[40] = byte((x10 >> 0) & 0xff)
-	s.block[41] = byte((x10 >> 8) & 0xff)
-	s.block[42] = byte((x10 >> 16) & 0xff)
-	s.block[43] = byte((x10 >> 24) & 0xff)
-	s.block[44] = byte((x11 >> 0) & 0xff)
-	s.block[45] = byte((x11 >> 8) & 0xff)
-	s.block[46] = byte((x11 >> 16) & 0xff)
-	s.block[47] = byte((x11 >> 24) & 0xff)
-	s.block[48] = byte((x12 >> 0) & 0xff)
-	s.block[49] = byte((x12 >> 8) & 0xff)
-	s.block[50] = byte((x12 >> 16) & 0xff)
-	s.block[51] = byte((x12 >> 24) & 0xff)
-	s.block[52] = byte((x13 >> 0) & 0xff)
-	s.block[53] = byte((x13 >> 8) & 0xff)
-	s.block[54] = byte((x13 >> 16) & 0xff)
-	s.block[55] = byte((x13 >> 24) & 0xff)
-	s.block[56] = byte((x14 >> 0) & 0xff)
-	s.block[57] = byte((x14 >> 8) & 0xff)
-	s.block[58] = byte((x14 >> 16) & 0xff)
-	s.block[59] = byte((x14 >> 24) & 0xff)
-	s.block[60] = byte((x15 >> 0) & 0xff)
-	s.block[61] = byte((x15 >> 8) & 0xff)
-	s.block[62] = byte((x15 >> 16) & 0xff)
-	s.block[63] = byte((x15 >> 24) & 0xff)
-
+	for i := 0; i < 16; i++ {
+		s.block[i<<2] = byte(x[i])
+		s.block[(i<<2)+1] = byte(x[i] >> 8)
+		s.block[(i<<2)+2] = byte(x[i] >> 16)
+		s.block[(i<<2)+3] = byte(x[i] >> 24)
+	}
+	s.blockUsed = 0
+	s.State[8]++
+	if s.State[8] == 0 {
+		s.State[9]++
+	}
 }

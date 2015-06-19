@@ -6,9 +6,9 @@ import (
 )
 
 type Content struct {
-	XMLName xml.Name `xml:"KeePassFile"`
-	Meta    MetaData `xml:"Meta"`
-	Root    RootData `xml:"Root"`
+	XMLName xml.Name  `xml:"KeePassFile"`
+	Meta    *MetaData `xml:"Meta"`
+	Root    *RootData `xml:"Root"`
 }
 
 type MetaData struct {
@@ -86,9 +86,11 @@ type Entry struct {
 	Times           TimeData     `xml:"Times"`
 	Values          []ValueData  `xml:"String,omitempty"`
 	AutoType        AutoTypeData `xml:"AutoType"`
+	Histories       []History    `xml:"History`
+	Password        []byte
 }
 
-func (e *Entry) getPassword() string {
+func (e *Entry) getProtectedPassword() string {
 	var val string
 	for _, v := range e.Values {
 		if v.Key == "Password" {
@@ -96,6 +98,20 @@ func (e *Entry) getPassword() string {
 		}
 	}
 	return val
+}
+
+func (e *Entry) getTitle() string {
+	var val string
+	for _, v := range e.Values {
+		if v.Key == "Title" {
+			val = v.Value
+		}
+	}
+	return val
+}
+
+type History struct {
+	Entries []Entry `xml:"Entry"`
 }
 
 type ValueData struct {
