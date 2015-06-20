@@ -12,6 +12,10 @@ type Database struct {
 	content     *Content
 }
 
+func NewDatabase() *Database {
+	return new(Database)
+}
+
 func (db *Database) String() string {
 	return fmt.Sprintf("Database:\nSignature: %s\n"+
 		"Headers: %s\nCredentials: %s\nContent:\n%+v\n",

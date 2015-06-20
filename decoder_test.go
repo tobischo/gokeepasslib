@@ -11,7 +11,7 @@ func TestDecodeFile(t *testing.T) {
 		t.Fatalf("Failed to open keepass file: %s", err)
 	}
 
-	db := new(Database)
+	db := NewDatabase()
 	db.credentials = NewPasswordCredentials("abcdefg12345678")
 	err = NewDecoder(file).Decode(db)
 	if err != nil {

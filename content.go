@@ -100,7 +100,7 @@ func (e *Entry) getProtectedPassword() string {
 	return val
 }
 
-func (e *Entry) getTitle() string {
+func (e *Entry) GetTitle() string {
 	var val string
 	for _, v := range e.Values {
 		if v.Key == "Title" {
