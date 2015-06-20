@@ -28,7 +28,7 @@ fmt.Println(string(entry.Password))
 * Write more tests
 
 ### License
-[LICENSE](LICENSE)
+[LICENSE](LICENSE.md)
 
 ### Copyright
 Copyright &copy; 2015 Tobias Schoknecht. All rights reserved.
