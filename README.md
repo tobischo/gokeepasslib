@@ -29,3 +29,6 @@ fmt.Println(string(entry.Password))
 
 ### License
 [LICENSE](LICENSE)
+
+### Copyright
+Copyright &copy; 2015 Tobias Schoknecht. All rights reserved.
