@@ -2,7 +2,6 @@ gokeepasslib
 ============
 
 gokeepasslib is a library which allows reading Keepass 2 files (kdbx).
-It is mostly a port from the node.js implementation [keepass.io](https://github.com/NeoXiD/keepass.io)
 
 ### Example
 
