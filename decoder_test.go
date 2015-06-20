@@ -12,7 +12,7 @@ func TestDecodeFile(t *testing.T) {
 	}
 
 	db := NewDatabase()
-	db.credentials = NewPasswordCredentials("abcdefg12345678")
+	db.Credentials = NewPasswordCredentials("abcdefg12345678")
 	err = NewDecoder(file).Decode(db)
 	if err != nil {
 		t.Fatalf("Failed to decode file: %s", err)
@@ -20,7 +20,7 @@ func TestDecodeFile(t *testing.T) {
 
 	db.UnlockProtectedEntries()
 
-	pw := db.content.Root.Groups[0].Groups[0].Entries[0].Password
+	pw := db.Content.Root.Groups[0].Groups[0].Entries[0].Password
 	if string(pw) != "Password" {
 		t.Fatalf(
 			"Failed to decode password: should be 'Password' not '%s'",

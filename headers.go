@@ -3,7 +3,7 @@ package gokeepasslib
 import "fmt"
 
 // Headers holds the header information of the Keepass File.
-type Headers struct {
+type FileHeaders struct {
 	Comment             []byte // FieldID:  1
 	CipherID            []byte // FieldID:  2
 	CompressionFlags    uint32 // FieldID:  3
@@ -18,7 +18,7 @@ type Headers struct {
 
 // 0: EndOfHeader
 
-func (h Headers) String() string {
+func (h FileHeaders) String() string {
 	return fmt.Sprintf(
 		"(1) Comment: %x\n"+
 			"(2) CipherID: %x\n"+

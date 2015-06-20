@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Content struct {
+type DBContent struct {
 	XMLName xml.Name  `xml:"KeePassFile"`
 	Meta    *MetaData `xml:"Meta"`
 	Root    *RootData `xml:"Root"`

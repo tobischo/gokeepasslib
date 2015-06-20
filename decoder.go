@@ -43,7 +43,7 @@ func NewDecoder(r io.Reader) *Decoder {
 }
 
 func (d *Decoder) readSignature(db *Database) error {
-	sig := new(Signature)
+	sig := new(FileSignature)
 	if err := binary.Read(d.r, binary.LittleEndian, sig); err != nil {
 		return err
 	}
@@ -55,12 +55,12 @@ func (d *Decoder) readSignature(db *Database) error {
 		return errors.New("VersionSignature not valid")
 	}
 
-	db.signature = *sig
+	db.Signature = *sig
 	return nil
 }
 
 func (d *Decoder) readHeaders(db *Database) error {
-	headers := new(Headers)
+	headers := new(FileHeaders)
 
 	for {
 		var fieldID byte
@@ -109,7 +109,7 @@ func (d *Decoder) readHeaders(db *Database) error {
 		}
 	}
 
-	db.headers = *headers
+	db.Headers = *headers
 	return nil
 }
 
@@ -126,11 +126,11 @@ func (d *Decoder) readData(db *Database) error {
 		return err
 	}
 
-	mode := cipher.NewCBCDecrypter(block, db.headers.EncryptionIV)
+	mode := cipher.NewCBCDecrypter(block, db.Headers.EncryptionIV)
 	decrypted := make([]byte, len(in))
 	mode.CryptBlocks(decrypted, in)
 
-	startBytes := db.headers.StreamStartBytes
+	startBytes := db.Headers.StreamStartBytes
 	if !reflect.DeepEqual(decrypted[0:len(startBytes)], startBytes) {
 		return errors.New("Database integrity check failed")
 	}
@@ -148,27 +148,27 @@ func (d *Decoder) readData(db *Database) error {
 	}
 	defer r.Close()
 
-	db.content = &Content{}
+	db.Content = &DBContent{}
 	xmlDecoder := xml.NewDecoder(r)
-	xmlDecoder.Decode(db.content)
+	xmlDecoder.Decode(db.Content)
 
 	return nil
 }
 
 func (d *Decoder) buildMasterKey(db *Database) ([]byte, error) {
 	masterKey := make([]byte, 32)
-	copy(masterKey, db.credentials.Key)
+	copy(masterKey, db.Credentials.Key)
 
 	tmp := sha256.Sum256(masterKey)
 	masterKey = tmp[:]
 
-	block, err := aes.NewCipher(db.headers.TransformSeed)
+	block, err := aes.NewCipher(db.Headers.TransformSeed)
 	if err != nil {
 		return nil, err
 	}
 
 	// http://crypto.stackexchange.com/questions/21048/can-i-simulate-iterated-aes-ecb-with-other-block-cipher-modes
-	for i := uint32(0); i < db.headers.TransformRounds; i++ {
+	for i := uint32(0); i < db.Headers.TransformRounds; i++ {
 		result := make([]byte, 16)
 		crypter := cipher.NewCBCEncrypter(block, result)
 		crypter.CryptBlocks(masterKey[:16], masterKey[:16])
@@ -179,7 +179,7 @@ func (d *Decoder) buildMasterKey(db *Database) ([]byte, error) {
 	tmp = sha256.Sum256(masterKey)
 	masterKey = tmp[:]
 
-	masterKey = append(db.headers.MasterSeed, masterKey...)
+	masterKey = append(db.Headers.MasterSeed, masterKey...)
 	masterHash := sha256.Sum256(masterKey)
 	masterKey = masterHash[:]
 

@@ -11,12 +11,12 @@ It is mostly a port from the node.js implementation [keepass.io](https://github.
 file, _ := os.Open("example.kdbx")
 
 db := gokeepasslib.NewDatabase()
-db.credentials = gokeepasslib.NewPasswordCredentials("abcdefg12345678")
+db.Credentials = gokeepasslib.NewPasswordCredentials("abcdefg12345678")
 _ = gokeepasslib.NewDecoder(file).Decode(db)
 
 db.UnlockProtectedEntries()
 
-entry := db.content.Root.Groups[0].Groups[0].Entries[0]
+entry := db.Content.Root.Groups[0].Groups[0].Entries[0]
 fmt.Println(entry.GetTitle())
 fmt.Println(string(entry.Password))
 

@@ -8,24 +8,24 @@ import (
 	"regexp"
 )
 
-type Credentials struct {
+type DBCredentials struct {
 	Key      []byte
 	Priority int32
 }
 
-func (c *Credentials) String() string {
+func (c *DBCredentials) String() string {
 	return fmt.Sprintf("%x", c.Key)
 }
 
-func NewPasswordCredentials(password string) *Credentials {
-	credentials := &Credentials{Priority: 200}
+func NewPasswordCredentials(password string) *DBCredentials {
+	credentials := &DBCredentials{Priority: 200}
 	key := sha256.Sum256([]byte(password))
 	credentials.Key = key[:]
 	return credentials
 }
 
-func NewKeyCredentials(location string) (*Credentials, error) {
-	credentials := &Credentials{Priority: 100}
+func NewKeyCredentials(location string) (*DBCredentials, error) {
+	credentials := &DBCredentials{Priority: 100}
 	r, err := regexp.Compile("<data>(.+)<\\/data>")
 	if err != nil {
 		return nil, err
