@@ -90,10 +90,7 @@ func (d *Decoder) readHeaders(db *Database) error {
 		case 5:
 			headers.TransformSeed = fieldData
 		case 6:
-			data := binary.LittleEndian.Uint32(fieldData[4:8])*
-				(1<<16)*(1<<16) +
-				binary.LittleEndian.Uint32(fieldData[0:4])
-			headers.TransformRounds = data
+			headers.TransformRounds = binary.LittleEndian.Uint64(fieldData)
 		case 7:
 			headers.EncryptionIV = fieldData
 		case 8:
@@ -168,7 +165,7 @@ func (d *Decoder) buildMasterKey(db *Database) ([]byte, error) {
 	}
 
 	// http://crypto.stackexchange.com/questions/21048/can-i-simulate-iterated-aes-ecb-with-other-block-cipher-modes
-	for i := uint32(0); i < db.Headers.TransformRounds; i++ {
+	for i := uint64(0); i < db.Headers.TransformRounds; i++ {
 		result := make([]byte, 16)
 		crypter := cipher.NewCBCEncrypter(block, result)
 		crypter.CryptBlocks(masterKey[:16], masterKey[:16])

@@ -19,7 +19,6 @@ func TestDecodeFile(t *testing.T) {
 	}
 
 	db.UnlockProtectedEntries()
-
 	pw := db.Content.Root.Groups[0].Groups[0].Entries[0].Password
 	if string(pw) != "Password" {
 		t.Fatalf(

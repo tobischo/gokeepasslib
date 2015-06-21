@@ -19,11 +19,12 @@ type MetaData struct {
 	DatabaseDescription        string        `xml:"DatabaseDescription"`
 	DatabaseDescriptionChanged *time.Time    `xml:"DatabaseDescriptionChanged"`
 	DefaultUserName            string        `xml:"DefaultUserName"`
+	DefaultUserNameChanged     *time.Time    `xml:"DefaultUserNameChanged"`
 	MaintenanceHistoryDays     string        `xml:"MaintenanceHistoryDays"`
 	Color                      string        `xml:"Color"`
 	MasterKeyChanged           *time.Time    `xml:"MasterKeyChanged"`
-	MasterKeyChangedRec        int64         `xml:"MasterKeyChangedRec"`
-	MasterKeyChangedForce      int64         `xml:"MasterKeyChangedForce"`
+	MasterKeyChangeRec         int64         `xml:"MasterKeyChangeRec"`
+	MasterKeyChangeForce       int64         `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection `xml:"MemoryProtection"`
 	RecycleBinEnabled          bool          `xml:"RecycleBinEnabled"`
 	RecycleBinUUID             string        `xml:"RecycleBinUUID"`
@@ -34,8 +35,8 @@ type MetaData struct {
 	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
 	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
 	LastTopVisibleGroup        string        `xml:"LastTopVisibleGroup"`
-	Binaries                   interface{}   `xml:"Binaries"`
-	CustomData                 interface{}   `xml:"CustomData"`
+	Binaries                   string        `xml:"Binaries"`
+	CustomData                 string        `xml:"CustomData"`
 }
 
 type MemProtection struct {
@@ -52,18 +53,18 @@ type RootData struct {
 }
 
 type Group struct {
-	UUID                    string      `xml:"UUID"`
-	Name                    string      `xml:"Name"`
-	Notes                   interface{} `xml:"Notes"`
-	IconID                  int64       `xml:"IconID"`
-	Times                   TimeData    `xml:"Times"`
-	IsExpanded              bool        `xml:"IsExpanded`
-	DefaultAutoTypeSequence string      `xml:"DefaultAutoTypeSequence`
-	EnableAutoType          string      `xml:"EnableAutoType`
-	EnableSearching         string      `xml:"EnableSearching`
-	LastTopVisibleEntry     string      `xml:"LastTopVisibleEntry`
-	Groups                  []Group     `xml:"Group,omitempty"`
-	Entries                 []Entry     `xml:"Entry,omitempty"`
+	UUID                    string   `xml:"UUID"`
+	Name                    string   `xml:"Name"`
+	Notes                   string   `xml:"Notes"`
+	IconID                  int64    `xml:"IconID"`
+	Times                   TimeData `xml:"Times"`
+	IsExpanded              bool     `xml:"IsExpanded`
+	DefaultAutoTypeSequence string   `xml:"DefaultAutoTypeSequence`
+	EnableAutoType          string   `xml:"EnableAutoType`
+	EnableSearching         string   `xml:"EnableSearching`
+	LastTopVisibleEntry     string   `xml:"LastTopVisibleEntry`
+	Groups                  []Group  `xml:"Group,omitempty"`
+	Entries                 []Entry  `xml:"Entry,omitempty"`
 }
 
 type TimeData struct {
@@ -79,22 +80,22 @@ type TimeData struct {
 type Entry struct {
 	UUID            string       `xml:"UUID"`
 	IconID          int64        `xml:"IconID"`
-	ForegroundColor interface{}  `xml:"ForegroundColor"`
-	BackgroundColor interface{}  `xml:"BackgroundColor"`
-	OverrideURL     interface{}  `xml:"OverrideURL"`
-	Tags            interface{}  `xml:"Tags"`
+	ForegroundColor string       `xml:"ForegroundColor"`
+	BackgroundColor string       `xml:"BackgroundColor"`
+	OverrideURL     string       `xml:"OverrideURL"`
+	Tags            string       `xml:"Tags"`
 	Times           TimeData     `xml:"Times"`
 	Values          []ValueData  `xml:"String,omitempty"`
 	AutoType        AutoTypeData `xml:"AutoType"`
 	Histories       []History    `xml:"History`
-	Password        []byte
+	Password        []byte       `xml:"-"`
 }
 
 func (e *Entry) getProtectedPassword() string {
 	var val string
 	for _, v := range e.Values {
 		if v.Key == "Password" {
-			val = v.Value
+			val = v.Value.Content
 		}
 	}
 	return val
@@ -104,7 +105,7 @@ func (e *Entry) GetTitle() string {
 	var val string
 	for _, v := range e.Values {
 		if v.Key == "Title" {
-			val = v.Value
+			val = v.Value.Content
 		}
 	}
 	return val
@@ -116,13 +117,23 @@ type History struct {
 
 type ValueData struct {
 	Key   string `xml:"Key"`
-	Value string `xml:"Value"`
-	//Protected attribute - how?
+	Value V      `xml:"Value"`
+}
+
+type V struct {
+	Content   string `xml:",innerxml"`
+	Protected *bool  `xml:"Protected,attr,omitempty"`
 }
 
 type AutoTypeData struct {
-	Enabled                 bool  `xml:"Enabled"`
-	DataTransferObfuscation int64 `xml:"DataTransferObfuscation"`
+	Enabled                 bool                `xml:"Enabled"`
+	DataTransferObfuscation int64               `xml:"DataTransferObfuscation"`
+	Association             AutoTypeAssociation `xml:"Association"`
+}
+
+type AutoTypeAssociation struct {
+	Window            string `xml:"Window"`
+	KeystrokeSequence string `xml:"KeystrokeSequence"`
 }
 
 type DeletedObjectData struct {

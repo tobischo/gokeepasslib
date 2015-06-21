@@ -9,7 +9,7 @@ type FileHeaders struct {
 	CompressionFlags    uint32 // FieldID:  3
 	MasterSeed          []byte // FieldID:  4
 	TransformSeed       []byte // FieldID:  5
-	TransformRounds     uint32 // FieldID:  6
+	TransformRounds     uint64 // FieldID:  6
 	EncryptionIV        []byte // FieldID:  7
 	ProtectedStreamKey  []byte // FieldID:  8
 	StreamStartBytes    []byte // FieldID:  9
