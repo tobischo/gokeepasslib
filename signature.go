@@ -1,12 +1,16 @@
 package gokeepasslib
 
-import "fmt"
+import (
+	"encoding/binary"
+	"errors"
+	"fmt"
+	"io"
+)
 
-// Signature holds the Keepass File Signature.
+// FileSignature holds the Keepass File Signature.
 // The first 4 Bytes are the Base Signature,
 // followed by 4 Bytes for the Version of the Format
 // which is followed by 4 Bytes for the File Version
-
 type FileSignature struct {
 	BaseSignature    [4]byte
 	VersionSignature [4]byte
@@ -19,4 +23,20 @@ func (s FileSignature) String() string {
 		s.VersionSignature,
 		s.FileVersion,
 	)
+}
+
+func ReadSignature(r io.Reader) (*FileSignature, error) {
+	sig := new(FileSignature)
+	if err := binary.Read(r, binary.LittleEndian, sig); err != nil {
+		return nil, err
+	}
+
+	if sig.BaseSignature != BaseSignature {
+		return nil, errors.New("BaseSignature not valid")
+	}
+	if sig.VersionSignature != VersionSignature {
+		return nil, errors.New("VersionSignature not valid")
+	}
+
+	return sig, nil
 }

@@ -1,8 +1,12 @@
 package gokeepasslib
 
-import "fmt"
+import (
+	"encoding/binary"
+	"fmt"
+	"io"
+)
 
-// Headers holds the header information of the Keepass File.
+// FileHeaders holds the header information of the Keepass File.
 type FileHeaders struct {
 	Comment             []byte // FieldID:  1
 	CipherID            []byte // FieldID:  2
@@ -41,4 +45,53 @@ func (h FileHeaders) String() string {
 		h.StreamStartBytes,
 		h.InnerRandomStreamID,
 	)
+}
+
+func ReadHeaders(r io.Reader) (*FileHeaders, error) {
+	headers := new(FileHeaders)
+	for {
+		var fieldID byte
+		if err := binary.Read(r, binary.LittleEndian, &fieldID); err != nil {
+			return nil, err
+		}
+
+		var fieldLength [2]byte
+		if err := binary.Read(r, binary.LittleEndian, &fieldLength); err != nil {
+			return nil, err
+		}
+
+		var fieldData = make([]byte, binary.LittleEndian.Uint16(fieldLength[:]))
+		if err := binary.Read(r, binary.LittleEndian, &fieldData); err != nil {
+			return nil, err
+		}
+
+		switch fieldID {
+		case 1:
+			headers.Comment = fieldData
+		case 2:
+			headers.CipherID = fieldData
+		case 3:
+			headers.CompressionFlags = binary.LittleEndian.Uint32(fieldData)
+		case 4:
+			headers.MasterSeed = fieldData
+		case 5:
+			headers.TransformSeed = fieldData
+		case 6:
+			headers.TransformRounds = binary.LittleEndian.Uint64(fieldData)
+		case 7:
+			headers.EncryptionIV = fieldData
+		case 8:
+			headers.ProtectedStreamKey = fieldData
+		case 9:
+			headers.StreamStartBytes = fieldData
+		case 10:
+			headers.InnerRandomStreamID = fieldData
+		}
+
+		if fieldID == 0 {
+			break
+		}
+	}
+
+	return headers, nil
 }

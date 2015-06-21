@@ -6,8 +6,8 @@ import (
 )
 
 type Database struct {
-	Signature   FileSignature
-	Headers     FileHeaders
+	Signature   *FileSignature
+	Headers     *FileHeaders
 	Credentials *DBCredentials
 	Content     *DBContent
 }

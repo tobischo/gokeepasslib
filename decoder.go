@@ -23,13 +23,17 @@ type Decoder struct {
 }
 
 func (d *Decoder) Decode(db *Database) error {
-	if err := d.readSignature(db); err != nil {
+	s, err := ReadSignature(d.r)
+	if err != nil {
 		return err
 	}
+	db.Signature = s
 
-	if err := d.readHeaders(db); err != nil {
+	h, err := ReadHeaders(d.r)
+	if err != nil {
 		return err
 	}
+	db.Headers = h
 
 	if err := d.readData(db); err != nil {
 		return err
@@ -42,76 +46,8 @@ func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{r: r}
 }
 
-func (d *Decoder) readSignature(db *Database) error {
-	sig := new(FileSignature)
-	if err := binary.Read(d.r, binary.LittleEndian, sig); err != nil {
-		return err
-	}
-
-	if sig.BaseSignature != BaseSignature {
-		return errors.New("BaseSignature not valid")
-	}
-	if sig.VersionSignature != VersionSignature {
-		return errors.New("VersionSignature not valid")
-	}
-
-	db.Signature = *sig
-	return nil
-}
-
-func (d *Decoder) readHeaders(db *Database) error {
-	headers := new(FileHeaders)
-
-	for {
-		var fieldID byte
-		if err := binary.Read(d.r, binary.LittleEndian, &fieldID); err != nil {
-			return err
-		}
-
-		var fieldLength [2]byte
-		if err := binary.Read(d.r, binary.LittleEndian, &fieldLength); err != nil {
-			return err
-		}
-
-		var fieldData = make([]byte, binary.LittleEndian.Uint16(fieldLength[:]))
-		if err := binary.Read(d.r, binary.LittleEndian, &fieldData); err != nil {
-			return err
-		}
-
-		switch fieldID {
-		case 1:
-			headers.Comment = fieldData
-		case 2:
-			headers.CipherID = fieldData
-		case 3:
-			headers.CompressionFlags = binary.LittleEndian.Uint32(fieldData)
-		case 4:
-			headers.MasterSeed = fieldData
-		case 5:
-			headers.TransformSeed = fieldData
-		case 6:
-			headers.TransformRounds = binary.LittleEndian.Uint64(fieldData)
-		case 7:
-			headers.EncryptionIV = fieldData
-		case 8:
-			headers.ProtectedStreamKey = fieldData
-		case 9:
-			headers.StreamStartBytes = fieldData
-		case 10:
-			headers.InnerRandomStreamID = fieldData
-		}
-
-		if fieldID == 0 {
-			break
-		}
-	}
-
-	db.Headers = *headers
-	return nil
-}
-
 func (d *Decoder) readData(db *Database) error {
-	masterKey, nil := d.buildMasterKey(db)
+	masterKey, nil := db.Credentials.buildMasterKey(db)
 
 	block, err := aes.NewCipher(masterKey)
 	if err != nil {
@@ -150,37 +86,6 @@ func (d *Decoder) readData(db *Database) error {
 	xmlDecoder.Decode(db.Content)
 
 	return nil
-}
-
-func (d *Decoder) buildMasterKey(db *Database) ([]byte, error) {
-	masterKey := make([]byte, 32)
-	copy(masterKey, db.Credentials.Key)
-
-	tmp := sha256.Sum256(masterKey)
-	masterKey = tmp[:]
-
-	block, err := aes.NewCipher(db.Headers.TransformSeed)
-	if err != nil {
-		return nil, err
-	}
-
-	// http://crypto.stackexchange.com/questions/21048/can-i-simulate-iterated-aes-ecb-with-other-block-cipher-modes
-	for i := uint64(0); i < db.Headers.TransformRounds; i++ {
-		result := make([]byte, 16)
-		crypter := cipher.NewCBCEncrypter(block, result)
-		crypter.CryptBlocks(masterKey[:16], masterKey[:16])
-		crypter = cipher.NewCBCEncrypter(block, result)
-		crypter.CryptBlocks(masterKey[16:], masterKey[16:])
-	}
-
-	tmp = sha256.Sum256(masterKey)
-	masterKey = tmp[:]
-
-	masterKey = append(db.Headers.MasterSeed, masterKey...)
-	masterHash := sha256.Sum256(masterKey)
-	masterKey = masterHash[:]
-
-	return masterKey, nil
 }
 
 func (d *Decoder) checkHashBlocks(hashedBody []byte) ([]byte, error) {
