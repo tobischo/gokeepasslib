@@ -26,4 +26,12 @@ func TestDecodeFile(t *testing.T) {
 			pw,
 		)
 	}
+
+	f, err := os.Create("tmp.kdbx")
+	if err != nil {
+		t.Fatalf("Failed to open file for writing: %s", err)
+	}
+
+	enc := NewEncoder(f)
+	enc.Encode(db)
 }

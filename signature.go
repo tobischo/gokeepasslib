@@ -40,3 +40,11 @@ func ReadSignature(r io.Reader) (*FileSignature, error) {
 
 	return sig, nil
 }
+
+func (s *FileSignature) WriteSignature(w io.Writer) error {
+	if err := binary.Write(w, binary.LittleEndian, s); err != nil {
+		return err
+	}
+
+	return nil
+}

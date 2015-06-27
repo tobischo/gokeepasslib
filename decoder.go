@@ -69,7 +69,7 @@ func (d *Decoder) readData(db *Database) error {
 	}
 	decrypted = decrypted[len(startBytes):]
 
-	zippedBody, err := d.checkHashBlocks(decrypted)
+	zippedBody, err := checkHashBlocks(decrypted)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (d *Decoder) readData(db *Database) error {
 	return nil
 }
 
-func (d *Decoder) checkHashBlocks(hashedBody []byte) ([]byte, error) {
+func checkHashBlocks(hashedBody []byte) ([]byte, error) {
 	result := make([]byte, 0)
 
 	for len(hashedBody) > 0 {

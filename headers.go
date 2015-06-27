@@ -95,3 +95,53 @@ func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 
 	return headers, nil
 }
+
+func (h *FileHeaders) WriteHeaders(w io.Writer) error {
+	for i := 1; i <= 10; i++ {
+		data := make([]byte, 0)
+		switch i {
+		case 1:
+			data = append(data, h.Comment...)
+		case 2:
+			data = append(data, h.CipherID...)
+		case 3:
+			d := make([]byte, 4)
+			binary.LittleEndian.PutUint32(d, h.CompressionFlags)
+			data = append(data, d...)
+		case 4:
+			data = append(data, h.MasterSeed...)
+		case 5:
+			data = append(data, h.TransformSeed...)
+		case 6:
+			d := make([]byte, 8)
+			binary.LittleEndian.PutUint64(d, h.TransformRounds)
+			data = append(data, d...)
+		case 7:
+			data = append(data, h.EncryptionIV...)
+		case 8:
+			data = append(data, h.ProtectedStreamKey...)
+		case 9:
+			data = append(data, h.StreamStartBytes...)
+		case 10:
+			data = append(data, h.InnerRandomStreamID...)
+		}
+
+		err := binary.Write(w, binary.LittleEndian, uint8(i))
+		if err != nil {
+			return err
+		}
+
+		l := len(data)
+		err = binary.Write(w, binary.LittleEndian, uint16(l))
+		if err != nil {
+			return err
+		}
+
+		err = binary.Write(w, binary.LittleEndian, data)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
