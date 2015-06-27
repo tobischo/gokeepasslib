@@ -47,7 +47,10 @@ func NewDecoder(r io.Reader) *Decoder {
 }
 
 func (d *Decoder) readData(db *Database) error {
-	masterKey, nil := db.Credentials.buildMasterKey(db)
+	masterKey, err := db.Credentials.buildMasterKey(db)
+	if err != nil {
+		return err
+	}
 
 	block, err := aes.NewCipher(masterKey)
 	if err != nil {

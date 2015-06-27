@@ -23,7 +23,7 @@ fmt.Println(string(entry.Password))
 
 ### TODO
 
-* Implement file writing
+* Improve basic encoding part to be compatible with the original Keepass implementation
 * Add godoc comments
 * Write more tests
 

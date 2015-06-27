@@ -10,7 +10,7 @@ import (
 type FileHeaders struct {
 	Comment             []byte // FieldID:  1
 	CipherID            []byte // FieldID:  2
-	CompressionFlags    uint32 // FieldID:  3
+	CompressionFlags    []byte // FieldID:  3
 	MasterSeed          []byte // FieldID:  4
 	TransformSeed       []byte // FieldID:  5
 	TransformRounds     uint64 // FieldID:  6
@@ -71,7 +71,7 @@ func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 		case 2:
 			headers.CipherID = fieldData
 		case 3:
-			headers.CompressionFlags = binary.LittleEndian.Uint32(fieldData)
+			headers.CompressionFlags = fieldData
 		case 4:
 			headers.MasterSeed = fieldData
 		case 5:
@@ -105,9 +105,7 @@ func (h *FileHeaders) WriteHeaders(w io.Writer) error {
 		case 2:
 			data = append(data, h.CipherID...)
 		case 3:
-			d := make([]byte, 4)
-			binary.LittleEndian.PutUint32(d, h.CompressionFlags)
-			data = append(data, d...)
+			data = append(data, h.CompressionFlags...)
 		case 4:
 			data = append(data, h.MasterSeed...)
 		case 5:
@@ -126,21 +124,38 @@ func (h *FileHeaders) WriteHeaders(w io.Writer) error {
 			data = append(data, h.InnerRandomStreamID...)
 		}
 
-		err := binary.Write(w, binary.LittleEndian, uint8(i))
-		if err != nil {
-			return err
-		}
+		if len(data) > 0 {
+			err := binary.Write(w, binary.LittleEndian, uint8(i))
+			if err != nil {
+				return err
+			}
 
-		l := len(data)
-		err = binary.Write(w, binary.LittleEndian, uint16(l))
-		if err != nil {
-			return err
-		}
+			l := len(data)
+			err = binary.Write(w, binary.LittleEndian, uint16(l))
+			if err != nil {
+				return err
+			}
 
-		err = binary.Write(w, binary.LittleEndian, data)
-		if err != nil {
-			return err
+			err = binary.Write(w, binary.LittleEndian, data)
+			if err != nil {
+				return err
+			}
 		}
+	}
+
+	// End of header
+	err := binary.Write(w, binary.LittleEndian, uint8(0))
+	if err != nil {
+		return err
+	}
+
+	err = binary.Write(w, binary.LittleEndian, uint16(4))
+	if err != nil {
+		return err
+	}
+
+	if _, err := w.Write([]byte{0x0d, 0x0a, 0x0d, 0x0a}); err != nil {
+		return err
 	}
 
 	return nil
