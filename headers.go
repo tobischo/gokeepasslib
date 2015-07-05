@@ -10,7 +10,7 @@ import (
 type FileHeaders struct {
 	Comment             []byte // FieldID:  1
 	CipherID            []byte // FieldID:  2
-	CompressionFlags    []byte // FieldID:  3
+	CompressionFlags    uint32 // FieldID:  3
 	MasterSeed          []byte // FieldID:  4
 	TransformSeed       []byte // FieldID:  5
 	TransformRounds     uint64 // FieldID:  6
@@ -71,7 +71,7 @@ func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 		case 2:
 			headers.CipherID = fieldData
 		case 3:
-			headers.CompressionFlags = fieldData
+			headers.CompressionFlags = binary.LittleEndian.Uint32(fieldData)
 		case 4:
 			headers.MasterSeed = fieldData
 		case 5:
@@ -105,7 +105,9 @@ func (h *FileHeaders) WriteHeaders(w io.Writer) error {
 		case 2:
 			data = append(data, h.CipherID...)
 		case 3:
-			data = append(data, h.CompressionFlags...)
+			d := make([]byte, 8)
+			binary.LittleEndian.PutUint32(d, h.CompressionFlags)
+			data = append(data, d...)
 		case 4:
 			data = append(data, h.MasterSeed...)
 		case 5:

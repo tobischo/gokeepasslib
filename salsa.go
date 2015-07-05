@@ -14,14 +14,14 @@ func (s *SalsaManager) unlockProtectedEntries(gs []Group) {
 	for _, g := range gs {
 		for i, e := range g.Entries {
 			g.Entries[i].
-				Password = s.unpack(e.getProtectedPassword())
+				Password = s.getUnlockedPassword(&e)
 
 			for j, h := range e.Histories {
 				for k, el := range h.Entries {
 					g.Entries[i].
 						Histories[j].
 						Entries[k].
-						Password = s.unpack(el.getProtectedPassword())
+						Password = s.getUnlockedPassword(&el)
 				}
 			}
 
@@ -29,6 +29,37 @@ func (s *SalsaManager) unlockProtectedEntries(gs []Group) {
 		if len(g.Groups) > 0 {
 			s.unlockProtectedEntries(g.Groups)
 		}
+	}
+}
+
+func (s *SalsaManager) lockProtectedEntries(gs []Group) {
+	for _, g := range gs {
+		for i, e := range g.Entries {
+			valueIndex := e.getPasswordIndex()
+
+			g.Entries[i].
+				Values[valueIndex].
+				Value.
+				Content = s.lockedPassword(&e)
+
+			for j, h := range e.Histories {
+				for k, el := range h.Entries {
+					valueIndex := el.getPasswordIndex()
+
+					g.Entries[i].
+						Histories[j].
+						Entries[k].
+						Values[valueIndex].
+						Value.
+						Content = s.lockedPassword(&el)
+				}
+			}
+
+		}
+		if len(g.Groups) > 0 {
+			s.lockProtectedEntries(g.Groups)
+		}
+
 	}
 }
 
@@ -92,6 +123,35 @@ func (s *SalsaManager) unpack(payload string) []byte {
 	}
 
 	return result
+}
+
+func (s *SalsaManager) pack(payload []byte) string {
+	data := make([]byte, 0)
+
+	salsaBytes := s.fetchBytes(len(payload))
+
+	for i := 0; i < len(payload); i++ {
+		data = append(data, salsaBytes[i]^payload[i])
+	}
+
+	lockedPassword := base64.StdEncoding.EncodeToString(data)
+	return lockedPassword
+}
+
+func (s *SalsaManager) lockedPassword(e *Entry) string {
+	if e.protected() {
+		return s.pack(e.Password)
+	} else {
+		return string(e.Password)
+	}
+}
+
+func (s *SalsaManager) getUnlockedPassword(e *Entry) []byte {
+	if e.protected() {
+		return s.unpack(e.getPassword())
+	} else {
+		return []byte(e.getPassword())
+	}
 }
 
 func (s *SalsaManager) reset() {

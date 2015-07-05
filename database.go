@@ -32,3 +32,10 @@ func (db *Database) UnlockProtectedEntries() {
 
 	salsaManager.unlockProtectedEntries(db.Content.Root.Groups)
 }
+
+func (db *Database) LockProtectedEntries() {
+	key := sha256.Sum256(db.Headers.ProtectedStreamKey)
+	salsaManager := NewSalsaManager(key[:])
+
+	salsaManager.lockProtectedEntries(db.Content.Root.Groups)
+}

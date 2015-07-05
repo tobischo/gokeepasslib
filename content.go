@@ -91,7 +91,16 @@ type Entry struct {
 	Password        []byte       `xml:"-"`
 }
 
-func (e *Entry) getProtectedPassword() string {
+func (e *Entry) protected() bool {
+	for _, v := range e.Values {
+		if v.Key == "Password" && *v.Value.Protected {
+			return true
+		}
+	}
+	return false
+}
+
+func (e *Entry) getPassword() string {
 	var val string
 	for _, v := range e.Values {
 		if v.Key == "Password" {
@@ -99,6 +108,15 @@ func (e *Entry) getProtectedPassword() string {
 		}
 	}
 	return val
+}
+
+func (e *Entry) getPasswordIndex() int {
+	for i, v := range e.Values {
+		if v.Key == "Password" {
+			return i
+		}
+	}
+	return 0
 }
 
 func (e *Entry) GetTitle() string {

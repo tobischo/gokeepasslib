@@ -31,6 +31,8 @@ func NewEncoder(w io.Writer) *Encoder {
 }
 
 func (e *Encoder) writeData(db *Database) error {
+	db.LockProtectedEntries()
+
 	xmlHeader := []byte(`<?xml version="1.0" encoding="utf-8" standalone="yes"?>`)
 
 	xmlData, err := xml.Marshal(db.Content)
