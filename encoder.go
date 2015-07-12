@@ -35,10 +35,12 @@ func (e *Encoder) writeData(db *Database) error {
 
 	xmlHeader := []byte(`<?xml version="1.0" encoding="utf-8" standalone="yes"?>`)
 
-	xmlData, err := xml.Marshal(db.Content)
+	xmlData, err := xml.MarshalIndent(db.Content, "", "\t")
 	if err != nil {
 		return err
 	}
+
+	//fmt.Printf("%s\n", xmlData)
 
 	xmlData = append(xmlHeader, xmlData...)
 

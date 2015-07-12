@@ -5,6 +5,38 @@ import (
 	"time"
 )
 
+type boolWrapper bool
+
+func (b *boolWrapper) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	val := "False"
+	if *b {
+		val = "True"
+	}
+	e.EncodeElement(val, start)
+	return nil
+}
+
+func (b *boolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var val string
+	d.DecodeElement(&val, &start)
+
+	*b = false
+	if val == "True" {
+		*b = true
+	}
+
+	return nil
+}
+
+func (b *boolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	val := "False"
+	if *b {
+		val = "True"
+	}
+
+	return xml.Attr{Name: name, Value: val}, nil
+}
+
 type DBContent struct {
 	XMLName xml.Name  `xml:"KeePassFile"`
 	Meta    *MetaData `xml:"Meta"`
@@ -26,7 +58,7 @@ type MetaData struct {
 	MasterKeyChangeRec         int64         `xml:"MasterKeyChangeRec"`
 	MasterKeyChangeForce       int64         `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection `xml:"MemoryProtection"`
-	RecycleBinEnabled          bool          `xml:"RecycleBinEnabled"`
+	RecycleBinEnabled          boolWrapper   `xml:"RecycleBinEnabled"`
 	RecycleBinUUID             string        `xml:"RecycleBinUUID"`
 	RecycleBinChanged          *time.Time    `xml:"RecycleBinChanged"`
 	EntryTemplatesGroup        string        `xml:"EntryTemplatesGroup"`
@@ -40,11 +72,11 @@ type MetaData struct {
 }
 
 type MemProtection struct {
-	ProtectTitle    bool `xml:"ProtectTitle"`
-	ProtectUserName bool `xml:"ProtectUserName"`
-	ProtectPassword bool `xml:"ProtectPassword"`
-	ProtectURL      bool `xml:"ProtectURL"`
-	ProtectNotes    bool `xml:"ProtectNotes"`
+	ProtectTitle    boolWrapper `xml:"ProtectTitle"`
+	ProtectUserName boolWrapper `xml:"ProtectUserName"`
+	ProtectPassword boolWrapper `xml:"ProtectPassword"`
+	ProtectURL      boolWrapper `xml:"ProtectURL"`
+	ProtectNotes    boolWrapper `xml:"ProtectNotes"`
 }
 
 type RootData struct {
@@ -53,28 +85,28 @@ type RootData struct {
 }
 
 type Group struct {
-	UUID                    string   `xml:"UUID"`
-	Name                    string   `xml:"Name"`
-	Notes                   string   `xml:"Notes"`
-	IconID                  int64    `xml:"IconID"`
-	Times                   TimeData `xml:"Times"`
-	IsExpanded              bool     `xml:"IsExpanded"`
-	DefaultAutoTypeSequence string   `xml:"DefaultAutoTypeSequence"`
-	EnableAutoType          string   `xml:"EnableAutoType"`
-	EnableSearching         string   `xml:"EnableSearching"`
-	LastTopVisibleEntry     string   `xml:"LastTopVisibleEntry"`
-	Groups                  []Group  `xml:"Group,omitempty"`
-	Entries                 []Entry  `xml:"Entry,omitempty"`
+	UUID                    string      `xml:"UUID"`
+	Name                    string      `xml:"Name"`
+	Notes                   string      `xml:"Notes"`
+	IconID                  int64       `xml:"IconID"`
+	Times                   TimeData    `xml:"Times"`
+	IsExpanded              boolWrapper `xml:"IsExpanded"`
+	DefaultAutoTypeSequence string      `xml:"DefaultAutoTypeSequence"`
+	EnableAutoType          string      `xml:"EnableAutoType"`
+	EnableSearching         string      `xml:"EnableSearching"`
+	LastTopVisibleEntry     string      `xml:"LastTopVisibleEntry"`
+	Groups                  []Group     `xml:"Group,omitempty"`
+	Entries                 []Entry     `xml:"Entry,omitempty"`
 }
 
 type TimeData struct {
-	CreationTime         *time.Time `xml:"CreationTime"`
-	LastModificationTime *time.Time `xml:"LastModificationTime"`
-	LastAcessTime        *time.Time `xml:"LastAcessTime"`
-	ExpiryTime           *time.Time `xml:"ExpiryTime"`
-	Expires              bool       `xml:"Expires"`
-	UsageCount           int64      `xml:"UsageCount"`
-	LocationChanged      *time.Time `xml:"LocationChanged"`
+	CreationTime         *time.Time  `xml:"CreationTime"`
+	LastModificationTime *time.Time  `xml:"LastModificationTime"`
+	LastAcessTime        *time.Time  `xml:"LastAcessTime"`
+	ExpiryTime           *time.Time  `xml:"ExpiryTime"`
+	Expires              boolWrapper `xml:"Expires"`
+	UsageCount           int64       `xml:"UsageCount"`
+	LocationChanged      *time.Time  `xml:"LocationChanged"`
 }
 
 type Entry struct {
@@ -93,7 +125,7 @@ type Entry struct {
 
 func (e *Entry) protected() bool {
 	for _, v := range e.Values {
-		if v.Key == "Password" && *v.Value.Protected {
+		if v.Key == "Password" && bool(v.Value.Protected) {
 			return true
 		}
 	}
@@ -139,12 +171,12 @@ type ValueData struct {
 }
 
 type V struct {
-	Content   string `xml:",innerxml"`
-	Protected *bool  `xml:"Protected,attr,omitempty"`
+	Content   string      `xml:",innerxml"`
+	Protected boolWrapper `xml:"Protected,attr,omitempty"`
 }
 
 type AutoTypeData struct {
-	Enabled                 bool                `xml:"Enabled"`
+	Enabled                 boolWrapper         `xml:"Enabled"`
 	DataTransferObfuscation int64               `xml:"DataTransferObfuscation"`
 	Association             AutoTypeAssociation `xml:"Association"`
 }
