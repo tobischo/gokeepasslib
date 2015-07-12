@@ -40,8 +40,6 @@ func (e *Encoder) writeData(db *Database) error {
 		return err
 	}
 
-	//fmt.Printf("%s\n", xmlData)
-
 	xmlData = append(xmlHeader, xmlData...)
 
 	b := new(bytes.Buffer)
