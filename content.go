@@ -37,6 +37,15 @@ func (b *boolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	return xml.Attr{Name: name, Value: val}, nil
 }
 
+func (b *boolWrapper) UnmarshalXMLAttr(attr xml.Attr) error {
+	*b = false
+	if attr.Value == "True" {
+		*b = true
+	}
+
+	return nil
+}
+
 type DBContent struct {
 	XMLName xml.Name  `xml:"KeePassFile"`
 	Meta    *MetaData `xml:"Meta"`
