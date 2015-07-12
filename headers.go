@@ -98,7 +98,7 @@ func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 
 func (h *FileHeaders) WriteHeaders(w io.Writer) error {
 	for i := 1; i <= 10; i++ {
-		data := make([]byte, 0)
+		var data []byte
 		switch i {
 		case 1:
 			data = append(data, h.Comment...)

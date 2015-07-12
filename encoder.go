@@ -92,7 +92,7 @@ func hashBlocks(data []byte) ([]byte, error) {
 
 	i := 0
 	for len(data) > 0 {
-		block := make([]byte, 0)
+		var block []byte
 		if len(data) >= blockSplitRate {
 			block = append(block, data[:blockSplitRate]...)
 			data = data[blockSplitRate:]

@@ -58,11 +58,11 @@ type Group struct {
 	Notes                   string   `xml:"Notes"`
 	IconID                  int64    `xml:"IconID"`
 	Times                   TimeData `xml:"Times"`
-	IsExpanded              bool     `xml:"IsExpanded`
-	DefaultAutoTypeSequence string   `xml:"DefaultAutoTypeSequence`
-	EnableAutoType          string   `xml:"EnableAutoType`
-	EnableSearching         string   `xml:"EnableSearching`
-	LastTopVisibleEntry     string   `xml:"LastTopVisibleEntry`
+	IsExpanded              bool     `xml:"IsExpanded"`
+	DefaultAutoTypeSequence string   `xml:"DefaultAutoTypeSequence"`
+	EnableAutoType          string   `xml:"EnableAutoType"`
+	EnableSearching         string   `xml:"EnableSearching"`
+	LastTopVisibleEntry     string   `xml:"LastTopVisibleEntry"`
 	Groups                  []Group  `xml:"Group,omitempty"`
 	Entries                 []Entry  `xml:"Entry,omitempty"`
 }
@@ -87,7 +87,7 @@ type Entry struct {
 	Times           TimeData     `xml:"Times"`
 	Values          []ValueData  `xml:"String,omitempty"`
 	AutoType        AutoTypeData `xml:"AutoType"`
-	Histories       []History    `xml:"History`
+	Histories       []History    `xml:"History"`
 	Password        []byte       `xml:"-"`
 }
 

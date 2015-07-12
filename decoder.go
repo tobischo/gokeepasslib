@@ -92,7 +92,7 @@ func (d *Decoder) readData(db *Database) error {
 }
 
 func checkHashBlocks(hashedBody []byte) ([]byte, error) {
-	result := make([]byte, 0)
+	var result []byte
 
 	for len(hashedBody) > 0 {
 		index := binary.LittleEndian.Uint32(hashedBody[:4])
@@ -109,9 +109,8 @@ func checkHashBlocks(hashedBody []byte) ([]byte, error) {
 
 			if !reflect.DeepEqual(calculatedHash[:], blockHash[:]) {
 				return nil, fmt.Errorf("Hash mismatch. Database seems to be corrupt at index %d", index)
-			} else {
-				result = append(result, blockData...)
 			}
+			result = append(result, blockData...)
 		} else {
 			break
 		}

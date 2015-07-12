@@ -2,8 +2,8 @@ package gokeepasslib
 
 import "encoding/base64"
 
-var IV = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
-var SIGMA_WORDS = []uint32{
+var iv = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
+var sigmaWords = []uint32{
 	0x61707865,
 	0x3320646e,
 	0x79622d32,
@@ -63,6 +63,7 @@ func (s *SalsaManager) lockProtectedEntries(gs []Group) {
 	}
 }
 
+// SalsaManager is responsible for stream encrypting and decrypting of the passwords
 type SalsaManager struct {
 	State        []uint32
 	blockUsed    int
@@ -82,6 +83,7 @@ func rotl32(x uint32, b uint) uint32 {
 	return ((x << b) | (x >> (32 - b)))
 }
 
+// NewSalsaManager initializes a new Password
 func NewSalsaManager(key []byte) SalsaManager {
 	state := make([]uint32, 16)
 
@@ -93,13 +95,13 @@ func NewSalsaManager(key []byte) SalsaManager {
 	state[12] = u8to32little(key, 20)
 	state[13] = u8to32little(key, 24)
 	state[14] = u8to32little(key, 28)
-	state[0] = SIGMA_WORDS[0]
-	state[5] = SIGMA_WORDS[1]
-	state[10] = SIGMA_WORDS[2]
-	state[15] = SIGMA_WORDS[3]
+	state[0] = sigmaWords[0]
+	state[5] = sigmaWords[1]
+	state[10] = sigmaWords[2]
+	state[15] = sigmaWords[3]
 
-	state[6] = u8to32little(IV, 0)
-	state[7] = u8to32little(IV, 4)
+	state[6] = u8to32little(iv, 0)
+	state[7] = u8to32little(iv, 4)
 	state[8] = uint32(0)
 	state[9] = uint32(0)
 
@@ -112,7 +114,7 @@ func NewSalsaManager(key []byte) SalsaManager {
 }
 
 func (s *SalsaManager) unpack(payload string) []byte {
-	result := make([]byte, 0)
+	var result []byte
 
 	data, _ := base64.StdEncoding.DecodeString(payload)
 
@@ -126,7 +128,7 @@ func (s *SalsaManager) unpack(payload string) []byte {
 }
 
 func (s *SalsaManager) pack(payload []byte) string {
-	data := make([]byte, 0)
+	var data []byte
 
 	salsaBytes := s.fetchBytes(len(payload))
 
@@ -141,17 +143,15 @@ func (s *SalsaManager) pack(payload []byte) string {
 func (s *SalsaManager) lockedPassword(e *Entry) string {
 	if e.protected() {
 		return s.pack(e.Password)
-	} else {
-		return string(e.Password)
 	}
+	return string(e.Password)
 }
 
 func (s *SalsaManager) getUnlockedPassword(e *Entry) []byte {
 	if e.protected() {
 		return s.unpack(e.getPassword())
-	} else {
-		return []byte(e.getPassword())
 	}
+	return []byte(e.getPassword())
 }
 
 func (s *SalsaManager) reset() {
