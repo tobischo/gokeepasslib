@@ -1,3 +1,4 @@
+//Package gokeepasslib is a library written in go which provides functionality to decrypt and parse keepass 2 files (kdbx)
 package gokeepasslib
 
 import (
