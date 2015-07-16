@@ -5,13 +5,14 @@ import (
 	"encoding/xml"
 	"time"
 )
-
+//Container for all elements of a keepass database
 type DBContent struct {
 	XMLName xml.Name  `xml:"KeePassFile"`
 	Meta    *MetaData `xml:"Meta"`
 	Root    *RootData `xml:"Root"`
 }
 
+//The metadata headers at the top of kdbx files, continas things like the name of the database
 type MetaData struct {
 	Generator                  string        `xml:"Generator"`
 	HeaderHash                 string        `xml:"HeaderHash"`
@@ -48,11 +49,13 @@ type MemProtection struct {
 	ProtectNotes    boolWrapper `xml:"ProtectNotes"`
 }
 
+//Stores the actual content of a database (all enteries sorted into groups and the recycle bin)
 type RootData struct {
 	Groups         []Group             `xml:"Group"`
 	DeletedObjects []DeletedObjectData `xml:"DeletedObjects>DeletedObject"`
 }
 
+//Structure to store entries in their named groups for organization
 type Group struct {
 	UUID                    string      `xml:"UUID"`
 	Name                    string      `xml:"Name"`
@@ -68,6 +71,7 @@ type Group struct {
 	Entries                 []Entry     `xml:"Entry,omitempty"`
 }
 
+//All metadata relating to times for groups and entries, such as last modification time
 type TimeData struct {
 	CreationTime         *time.Time  `xml:"CreationTime"`
 	LastModificationTime *time.Time  `xml:"LastModificationTime"`
@@ -77,7 +81,7 @@ type TimeData struct {
 	UsageCount           int64       `xml:"UsageCount"`
 	LocationChanged      *time.Time  `xml:"LocationChanged"`
 }
-
+//structure for each parsed entry in a keepass database
 type Entry struct {
 	UUID            string       `xml:"UUID"`
 	IconID          int64        `xml:"IconID"`
