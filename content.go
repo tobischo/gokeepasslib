@@ -105,16 +105,19 @@ func (e *Entry) protected() bool {
 	return false
 }
 
-func (e *Entry) getPassword() string {
+//Gets the value in e corresponding with key k, or an empty string otherwise
+func (e *Entry) get(k string) string {
 	var val string
 	for _, v := range e.Values {
-		if v.Key == "Password" {
+		if v.Key == k {
 			val = v.Value.Content
 		}
 	}
 	return val
 }
-
+func (e *Entry) getPassword() string {
+	return e.get("password")
+}
 func (e *Entry) getPasswordIndex() int {
 	for i, v := range e.Values {
 		if v.Key == "Password" {
@@ -125,13 +128,7 @@ func (e *Entry) getPasswordIndex() int {
 }
 
 func (e *Entry) GetTitle() string {
-	var val string
-	for _, v := range e.Values {
-		if v.Key == "Title" {
-			val = v.Value.Content
-		}
-	}
-	return val
+	return e.get("Title")
 }
 
 type History struct {
