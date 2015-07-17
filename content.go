@@ -116,8 +116,9 @@ func (e *Entry) get(k string) string {
 	return val
 }
 func (e *Entry) getPassword() string {
-	return e.get("password")
+	return e.get("Password")
 }
+
 func (e *Entry) getPasswordIndex() int {
 	for i, v := range e.Values {
 		if v.Key == "Password" {
