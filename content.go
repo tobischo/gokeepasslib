@@ -96,6 +96,7 @@ type Entry struct {
 	Password        []byte       `xml:"-"`
 }
 
+//Returns true if the e's password has in-memory protection
 func (e *Entry) protected() bool {
 	for _, v := range e.Values {
 		if v.Key == "Password" && bool(v.Value.Protected) {
@@ -131,7 +132,7 @@ func (e *Entry) getPasswordIndex() int {
 func (e *Entry) GetTitle() string {
 	return e.get("Title")
 }
-
+//Stores the history (changes) of an entry, a list of previous versions of that entry
 type History struct {
 	Entries []Entry `xml:"Entry"`
 }
@@ -141,6 +142,7 @@ type ValueData struct {
 	Value V      `xml:"Value"`
 }
 
+//Wraper for the content of a value, so that it can store whether it is protected
 type V struct {
 	Content   string      `xml:",innerxml"`
 	Protected boolWrapper `xml:"Protected,attr,omitempty"`
