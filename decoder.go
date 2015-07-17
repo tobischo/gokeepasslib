@@ -73,20 +73,25 @@ func (d *Decoder) readData(db *Database) error {
 	}
 	decrypted = decrypted[len(startBytes):]
 
-	zippedBody, err := checkHashBlocks(decrypted)
-	if err != nil {
-		return err
-	}
+	var xmlDecoder *xml.Decoder
+	if db.Headers.CompressionFlags == 1 { //Unzip if the header compression flag is 1 for gzip
+		zippedBody, err := checkHashBlocks(decrypted)
+		if err != nil {
+			return err
+		}
 
-	b := bytes.NewBuffer(zippedBody)
-	r, err := gzip.NewReader(b)
-	if err != nil {
-		return err
+		b := bytes.NewBuffer(zippedBody)
+		r, err := gzip.NewReader(b)
+		if err != nil {
+			return err
+		}
+		defer r.Close()
+		xmlDecoder = xml.NewDecoder(r)
+	} else { //Otherwise assume it not compressed
+		xmlDecoder = xml.NewDecoder(bytes.NewReader(decrypted))
 	}
-	defer r.Close()
-
+	
 	db.Content = &DBContent{}
-	xmlDecoder := xml.NewDecoder(r)
 	xmlDecoder.Decode(db.Content)
 
 	return nil
