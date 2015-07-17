@@ -13,7 +13,7 @@ var sigmaWords = []uint32{
 func (s *SalsaManager) unlockProtectedEntries(gs []Group) {
 	for i,_ := range gs { //For each top level group
 		s.unlockProtectedEntrySlice(gs[i].Entries) //Unlock the Entries in the group
-		if len(g.Groups) > 0 { //Recursively unlock any subgroups
+		if len(gs[i].Groups) > 0 { //Recursively unlock any subgroups
 			s.unlockProtectedEntries(gs[i].Groups)
 		}
 	}
