@@ -12,7 +12,7 @@ type DBContent struct {
 	Root    *RootData `xml:"Root"`
 }
 
-//The metadata headers at the top of kdbx files, continas things like the name of the database
+//The metadata headers at the top of kdbx files, contains things like the name of the database
 type MetaData struct {
 	Generator                  string        `xml:"Generator"`
 	HeaderHash                 string        `xml:"HeaderHash"`
