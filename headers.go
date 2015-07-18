@@ -105,7 +105,7 @@ func (h *FileHeaders) WriteHeaders(w io.Writer) error {
 		case 2:
 			data = append(data, h.CipherID...)
 		case 3:
-			d := make([]byte, 8)
+			d := make([]byte, 4)
 			binary.LittleEndian.PutUint32(d, h.CompressionFlags)
 			data = append(data, d...)
 		case 4:
