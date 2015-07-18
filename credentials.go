@@ -12,16 +12,41 @@ import (
 
 // DBCredentials holds the key used to lock and unlock the database
 type DBCredentials struct {
-	Key []byte
+	Passphrase []byte //Passphrase if using one, stored in sha256 hash
+	Key []byte //Contents of the keyfile if using one, stored in sha256 hash
+	Windows []byte //Whatever is returned from windows user account auth, stored in sha256 hash
 }
 
 func (c *DBCredentials) String() string {
-	return fmt.Sprintf("%x", c.Key)
+	return fmt.Sprintf("Hashed Passphrase: %x\nHashed Key: %x\nHashed Windows Auth: %x", c.Passphrase,c.Key,c.Windows)
 }
-
+func (c *DBCredentials) buildCompositeKey () ([]byte,error) {
+	hash := sha256.New()
+	if c.Passphrase != nil { //If the hashed password is provided
+		_, err := hash.Write(c.Passphrase)
+		if err != nil {
+			return nil,err
+		}
+	}
+	if c.Key != nil { //If the hashed keyfile is provided
+		_, err := hash.Write(c.Key)
+		if err != nil {
+			return nil,err
+		}
+	}
+	if c.Windows != nil { //If the hashed password is provided
+		_, err := hash.Write(c.Windows)
+		if err != nil {
+			return nil,err
+		}
+	}
+	return hash.Sum(nil),nil
+}
 func (c *DBCredentials) buildMasterKey(db *Database) ([]byte, error) {
-	tmp := sha256.Sum256(c.Key)
-	masterKey := tmp[:]
+	masterKey,err := c.buildCompositeKey()
+	if err != nil {
+		return nil,err
+	}
 
 	block, err := aes.NewCipher(db.Headers.TransformSeed)
 	if err != nil {
@@ -37,7 +62,7 @@ func (c *DBCredentials) buildMasterKey(db *Database) ([]byte, error) {
 		crypter.CryptBlocks(masterKey[16:], masterKey[16:])
 	}
 
-	tmp = sha256.Sum256(masterKey)
+	tmp := sha256.Sum256(masterKey)
 	masterKey = tmp[:]
 
 	masterKey = append(db.Headers.MasterSeed, masterKey...)
@@ -49,15 +74,11 @@ func (c *DBCredentials) buildMasterKey(db *Database) ([]byte, error) {
 
 // NewPasswordCredentials builds new DBCredentials from a Password string
 func NewPasswordCredentials(password string) *DBCredentials {
-	credentials := new(DBCredentials)
-	key := sha256.Sum256([]byte(password))
-	credentials.Key = key[:]
-	return credentials
+	hashed := sha256.Sum256([]byte(password))
+	return &DBCredentials{Passphrase:hashed[:]}
 }
-
-// NewKeyCredentials builds new DBCredentials from a key file
-func NewKeyCredentials(location string) (*DBCredentials, error) {
-	credentials := new(DBCredentials)
+//Returns the hashed key from a key file at location, parsing xml if needed
+func ParseKeyFile(location string) ([]byte,error) { 
 	r, err := regexp.Compile("<data>(.+)<\\/data>")
 	if err != nil {
 		return nil, err
@@ -70,12 +91,17 @@ func NewKeyCredentials(location string) (*DBCredentials, error) {
 	if data, err = ioutil.ReadAll(file); err != nil {
 		return nil, err
 	}
-
-	if r.Match(data) {
-		credentials.Key = r.FindSubmatch(data)[1]
-	} else {
-		key := sha256.Sum256(data)
-		credentials.Key = key[:]
+	if r.Match(data) { //If keyfile is in xml form, extract key data
+		data = r.FindSubmatch(data)[1]
 	}
-	return credentials, nil
+	sum := sha256.Sum256(data)
+	return sum[:],nil
+}
+// NewKeyCredentials builds new DBCredentials from a key file
+func NewKeyCredentials(location string) (*DBCredentials, error) {
+	key,err := ParseKeyFile(location)
+	if err != nil {
+		return nil,err
+	}
+	return &DBCredentials{Key:key},nil
 }
