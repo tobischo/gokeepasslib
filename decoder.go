@@ -18,6 +18,7 @@ import (
 var BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
 var VersionSignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
 
+//Stores a reader which is expected to be in kdbx format
 type Decoder struct {
 	r io.Reader
 }
@@ -72,20 +73,25 @@ func (d *Decoder) readData(db *Database) error {
 	}
 	decrypted = decrypted[len(startBytes):]
 
-	zippedBody, err := checkHashBlocks(decrypted)
-	if err != nil {
-		return err
-	}
+	var xmlDecoder *xml.Decoder
+	if db.Headers.CompressionFlags == 1 { //Unzip if the header compression flag is 1 for gzip
+		zippedBody, err := checkHashBlocks(decrypted)
+		if err != nil {
+			return err
+		}
 
-	b := bytes.NewBuffer(zippedBody)
-	r, err := gzip.NewReader(b)
-	if err != nil {
-		return err
+		b := bytes.NewBuffer(zippedBody)
+		r, err := gzip.NewReader(b)
+		if err != nil {
+			return err
+		}
+		defer r.Close()
+		xmlDecoder = xml.NewDecoder(r)
+	} else { //Otherwise assume it not compressed
+		xmlDecoder = xml.NewDecoder(bytes.NewReader(decrypted))
 	}
-	defer r.Close()
-
+	
 	db.Content = &DBContent{}
-	xmlDecoder := xml.NewDecoder(r)
 	xmlDecoder.Decode(db.Content)
 
 	return nil

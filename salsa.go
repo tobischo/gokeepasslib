@@ -11,24 +11,22 @@ var sigmaWords = []uint32{
 }
 
 func (s *SalsaManager) unlockProtectedEntries(gs []Group) {
-	for _, g := range gs {
-		for i, e := range g.Entries {
-			g.Entries[i].
-				Password = s.getUnlockedPassword(&e)
-
-			for j, h := range e.Histories {
-				for k, el := range h.Entries {
-					g.Entries[i].
-						Histories[j].
-						Entries[k].
-						Password = s.getUnlockedPassword(&el)
-				}
-			}
-
+	for i,_ := range gs { //For each top level group
+		s.unlockProtectedEntrySlice(gs[i].Entries) //Unlock the Entries in the group
+		if len(gs[i].Groups) > 0 { //Recursively unlock any subgroups
+			s.unlockProtectedEntries(gs[i].Groups)
 		}
-		if len(g.Groups) > 0 {
-			s.unlockProtectedEntries(g.Groups)
-		}
+	}
+}
+func (s *SalsaManager) unlockProtectedEntrySlice (e []Entry) {
+	for i, _ := range e {
+		s.unlockProtectedEntry(&e[i])
+	}
+}
+func (s *SalsaManager) unlockProtectedEntry(e *Entry) {
+	e.Password = s.getUnlockedPassword(e)
+	for i,_ := range e.Histories {
+		s.unlockProtectedEntrySlice(e.Histories[i].Entries)
 	}
 }
 

@@ -2,6 +2,7 @@ package gokeepasslib
 
 import "encoding/xml"
 
+//Wraps the builtin boolean to provide xml marshalling and demarshalling
 type boolWrapper bool
 
 func (b *boolWrapper) MarshalXML(e *xml.Encoder, start xml.StartElement) error {

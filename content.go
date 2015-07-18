@@ -1,16 +1,18 @@
+//Package gokeepasslib is a library written in go which provides functionality to decrypt and parse keepass 2 files (kdbx)
 package gokeepasslib
 
 import (
 	"encoding/xml"
 	"time"
 )
-
+//Container for all elements of a keepass database
 type DBContent struct {
 	XMLName xml.Name  `xml:"KeePassFile"`
 	Meta    *MetaData `xml:"Meta"`
 	Root    *RootData `xml:"Root"`
 }
 
+//The metadata headers at the top of kdbx files, contains things like the name of the database
 type MetaData struct {
 	Generator                  string        `xml:"Generator"`
 	HeaderHash                 string        `xml:"HeaderHash"`
@@ -47,11 +49,13 @@ type MemProtection struct {
 	ProtectNotes    boolWrapper `xml:"ProtectNotes"`
 }
 
+//Stores the actual content of a database (all enteries sorted into groups and the recycle bin)
 type RootData struct {
 	Groups         []Group             `xml:"Group"`
 	DeletedObjects []DeletedObjectData `xml:"DeletedObjects>DeletedObject"`
 }
 
+//Structure to store entries in their named groups for organization
 type Group struct {
 	UUID                    string      `xml:"UUID"`
 	Name                    string      `xml:"Name"`
@@ -67,6 +71,7 @@ type Group struct {
 	Entries                 []Entry     `xml:"Entry,omitempty"`
 }
 
+//All metadata relating to times for groups and entries, such as last modification time
 type TimeData struct {
 	CreationTime         *time.Time  `xml:"CreationTime"`
 	LastModificationTime *time.Time  `xml:"LastModificationTime"`
@@ -76,7 +81,7 @@ type TimeData struct {
 	UsageCount           int64       `xml:"UsageCount"`
 	LocationChanged      *time.Time  `xml:"LocationChanged"`
 }
-
+//structure for each parsed entry in a keepass database
 type Entry struct {
 	UUID            string       `xml:"UUID"`
 	IconID          int64        `xml:"IconID"`
@@ -91,6 +96,7 @@ type Entry struct {
 	Password        []byte       `xml:"-"`
 }
 
+//Returns true if the e's password has in-memory protection
 func (e *Entry) protected() bool {
 	for _, v := range e.Values {
 		if v.Key == "Password" && bool(v.Value.Protected) {
@@ -100,14 +106,18 @@ func (e *Entry) protected() bool {
 	return false
 }
 
-func (e *Entry) getPassword() string {
+//Gets the value in e corresponding with key k, or an empty string otherwise
+func (e *Entry) get(k string) string {
 	var val string
 	for _, v := range e.Values {
-		if v.Key == "Password" {
+		if v.Key == k {
 			val = v.Value.Content
 		}
 	}
 	return val
+}
+func (e *Entry) getPassword() string {
+	return e.get("Password")
 }
 
 func (e *Entry) getPasswordIndex() int {
@@ -120,15 +130,9 @@ func (e *Entry) getPasswordIndex() int {
 }
 
 func (e *Entry) GetTitle() string {
-	var val string
-	for _, v := range e.Values {
-		if v.Key == "Title" {
-			val = v.Value.Content
-		}
-	}
-	return val
+	return e.get("Title")
 }
-
+//Stores the history (changes) of an entry, a list of previous versions of that entry
 type History struct {
 	Entries []Entry `xml:"Entry"`
 }
@@ -138,6 +142,7 @@ type ValueData struct {
 	Value V      `xml:"Value"`
 }
 
+//Wraper for the content of a value, so that it can store whether it is protected
 type V struct {
 	Content   string      `xml:",innerxml"`
 	Protected boolWrapper `xml:"Protected,attr,omitempty"`
