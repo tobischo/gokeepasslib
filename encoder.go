@@ -18,8 +18,7 @@ type Encoder struct {
 }
 
 func (e *Encoder) Encode(db *Database) error {
-	err := e.writeData(db)
-	return err
+	return e.writeData(db)
 }
 
 func NewEncoder(w io.Writer) *Encoder {
