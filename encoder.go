@@ -68,7 +68,7 @@ func (e *Encoder) writeData(db *Database) error {
 		}	
 	}
 
-	//Appends the stream startmStartBytes from db header to the blocked data, used to verify that the key is correct when decrypting
+	//Appends the startmStreamBytes from db header to the blocked data, used to verify that the key is correct when decrypting
 	hashData = append(db.Headers.StreamStartBytes, hashData...)
 	
 	//Adds padding to data as required to encrypt properly
