@@ -11,16 +11,20 @@ import (
 	"io"
 )
 
+//Size in bytes of the data in each block
 const blockSplitRate = 16384
 
+//Encoder is used to automaticaly encrypt and write a database to a file, network, etc
 type Encoder struct {
 	w io.Writer
 }
 
+//Writes db to e's internal writer
 func (e *Encoder) Encode(db *Database) error {
 	return e.writeData(db)
 }
 
+//Creates a new encoder with writer w, identical to gokeepasslib.Encoder{w}
 func NewEncoder(w io.Writer) *Encoder {
 	return &Encoder{w: w}
 }
@@ -85,34 +89,44 @@ func (e *Encoder) writeData(db *Database) error {
 	return nil
 }
 
+
+/* Converts raw xml data to keepass's block format, which includes a hash of each block to check for data corruption, blocks contain:
+ * (4 bytes) ID : an unique interger id for this block
+ * (32 bytes) sha-256 hash of block data
+ * (4 bytes) size on bytes of the block data
+ * (Data Size Bytes) the actual xml data of the block, will be blockSplitRate bytes at most
+ */
 func hashBlocks(data []byte) ([]byte, error) {
 	b := new(bytes.Buffer)
 
 	i := 0
-	for len(data) > 0 {
+	for len(data) > 0 { //For each block
 		var block []byte
-		if len(data) >= blockSplitRate {
+		if len(data) >= blockSplitRate { //If there is enough data for another block, use blockSplitRate bytes of data for block
 			block = append(block, data[:blockSplitRate]...)
 			data = data[blockSplitRate:]
-		} else {
+		} else { //Otherwise just use what is remaining and clear data to break from the loop
 			block = append(block, data[:len(data)]...)
 			data = make([]byte, 0)
 		}
 
+		//Writes the block id to output, discussed above
 		if err := binary.Write(b, binary.LittleEndian, uint32(i)); err != nil {
 			return nil, err
 		}
 
+		//Hashes block data and appends to output
 		hash := sha256.Sum256(block)
-
 		if _, err := b.Write(hash[:]); err != nil {
 			return nil, err
 		}
 
+		//Writes length of block data to output
 		if err := binary.Write(b, binary.LittleEndian, uint32(len(block))); err != nil {
 			return nil, err
 		}
 
+		//Writes block data
 		if _, err := b.Write(block); err != nil {
 			return nil, err
 		}
@@ -120,10 +134,10 @@ func hashBlocks(data []byte) ([]byte, error) {
 		i++
 	}
 
+	//Adds empty block to output, so keepass knows data stream is over
 	if err := binary.Write(b, binary.LittleEndian, uint32(i)); err != nil {
 		return nil, err
 	}
-
 	endBlock := make([]byte, 36)
 	if _, err := b.Write(endBlock); err != nil {
 		return nil, err
