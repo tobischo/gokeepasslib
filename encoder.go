@@ -14,6 +14,9 @@ import (
 //Size in bytes of the data in each block
 const blockSplitRate = 16384
 
+//Header to be put before xml content in kdbx file
+var xmlHeader = []byte(`<?xml version="1.0" encoding="utf-8" standalone="yes"?>`)
+
 //Encoder is used to automaticaly encrypt and write a database to a file, network, etc
 type Encoder struct {
 	w io.Writer
@@ -29,47 +32,46 @@ func NewEncoder(w io.Writer) *Encoder {
 	return &Encoder{w: w}
 }
 
+//Internal function to write database to encoder's writer, called by Encode
 func (e *Encoder) writeData(db *Database) error {
 	db.LockProtectedEntries()
 
-	xmlHeader := []byte(`<?xml version="1.0" encoding="utf-8" standalone="yes"?>`)
-
+	//Creates XML data with from database content, and appends header to top
 	xmlData, err := xml.MarshalIndent(db.Content, "", "\t")
 	if err != nil {
 		return err
 	}
-
 	xmlData = append(xmlHeader, xmlData...)
 
-	b := new(bytes.Buffer)
-	w := gzip.NewWriter(b)
-	defer w.Close()
+	var hashData []byte
+	if db.Headers.CompressionFlags == 1 { //If database header says to compress with gzip, compress xml data and put into block form
+		b := new(bytes.Buffer)
+		w := gzip.NewWriter(b)
+		defer w.Close()
 
-	if _, err = w.Write(xmlData); err != nil {
-		return err
+		if _, err = w.Write(xmlData); err != nil {
+			return err
+		}
+
+		if err = w.Flush(); err != nil {
+			return err
+		}
+
+		hashData, err = hashBlocks(b.Bytes())
+		if err != nil {
+			return err
+		}		
+	} else { //Otherwise put un-compressed xml content into block form
+		hashData,err = hashBlocks(xmlData)
+		if err != nil {
+			return err
+		}	
 	}
 
-	if err = w.Flush(); err != nil {
-		return err
-	}
-
-	hashData, err := hashBlocks(b.Bytes())
-	if err != nil {
-		return err
-	}
-
+	//Appends the stream startmStartBytes from db header to the blocked data, used to verify that the key is correct when decrypting
 	hashData = append(db.Headers.StreamStartBytes, hashData...)
-
-	masterKey, err := db.Credentials.buildMasterKey(db)
-	if err != nil {
-		return err
-	}
-
-	block, err := aes.NewCipher(masterKey)
-	if err != nil {
-		return err
-	}
-
+	
+	//Adds padding to data as required to encrypt properly
 	if len(hashData)%16 != 0 {
 		padding := make([]byte, 16-(len(hashData)%16))
 		for i := 0; i < len(padding); i++ {
@@ -78,19 +80,47 @@ func (e *Encoder) writeData(db *Database) error {
 		hashData = append(hashData, padding...)
 	}
 
+	//Uses database credentials info to build encryption key
+	masterKey, err := db.Credentials.buildMasterKey(db)
+	if err != nil {
+		return err
+	}
+
+	//Creates an AES cipher block from the masterkey
+	block, err := aes.NewCipher(masterKey)
+	if err != nil {
+		return err
+	}
+
+	//Encrypts block data using AES block with initialization vector from header
 	mode := cipher.NewCBCEncrypter(block, db.Headers.EncryptionIV)
 	encrypted := make([]byte, len(hashData))
 	mode.CryptBlocks(encrypted, hashData)
 
-	db.Signature.WriteSignature(e.w)
-	db.Headers.WriteHeaders(e.w)
-	e.w.Write(encrypted)
+	//Writes file signature (tells program it's a kdbx file of x version)
+	err = db.Signature.WriteSignature(e.w)
+	if err != nil {
+		return err
+	}
+	
+	//Writes headers of database
+	err = db.Headers.WriteHeaders(e.w)
+	if err != nil {
+		return err
+	}
+	
+	//Writes the encrypted database content
+	_,err = e.w.Write(encrypted)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 
-/* Converts raw xml data to keepass's block format, which includes a hash of each block to check for data corruption, blocks contain:
+/* Converts raw xml data to keepass's block format, which includes a hash of each block to check for data corruption, 
+ * Every block contains the following elements:
  * (4 bytes) ID : an unique interger id for this block
  * (32 bytes) sha-256 hash of block data
  * (4 bytes) size on bytes of the block data
