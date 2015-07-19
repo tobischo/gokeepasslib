@@ -71,8 +71,11 @@ func (e *Encoder) writeData(db *Database) error {
 		return err
 	}
 
-	if len(hashData)%32 != 0 {
-		padding := make([]byte, 32-(len(hashData)%32))
+	if len(hashData)%16 != 0 {
+		padding := make([]byte, 16-(len(hashData)%16))
+		for i := 0; i < len(padding); i++ {
+			padding[i] = byte(len(padding))
+		}
 		hashData = append(hashData, padding...)
 	}
 
