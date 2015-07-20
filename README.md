@@ -1,6 +1,8 @@
 gokeepasslib
 ============
 
+![Travis Build state](https://api.travis-ci.org/tobischo/gokeepasslib.svg)
+
 gokeepasslib is a library which allows reading Keepass 2 files (kdbx).
 
 ### Example
