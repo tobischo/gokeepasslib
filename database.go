@@ -29,13 +29,12 @@ func (db *Database) String() string {
 func (db *Database) UnlockProtectedEntries() {
 	key := sha256.Sum256(db.Headers.ProtectedStreamKey)
 	salsaManager := NewSalsaManager(key[:])
-
-	salsaManager.unlockProtectedEntries(db.Content.Root.Groups)
+	salsaManager.UnlockGroups(db.Content.Root.Groups)
 }
 
 func (db *Database) LockProtectedEntries() {
 	key := sha256.Sum256(db.Headers.ProtectedStreamKey)
 	salsaManager := NewSalsaManager(key[:])
 
-	salsaManager.lockProtectedEntries(db.Content.Root.Groups)
+	salsaManager.LockGroups(db.Content.Root.Groups)
 }

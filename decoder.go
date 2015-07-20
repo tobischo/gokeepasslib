@@ -92,9 +92,8 @@ func (d *Decoder) readData(db *Database) error {
 	}
 	
 	db.Content = &DBContent{}
-	xmlDecoder.Decode(db.Content)
-
-	return nil
+	err = xmlDecoder.Decode(db.Content)
+	return err
 }
 
 func checkHashBlocks(hashedBody []byte) ([]byte, error) {

@@ -37,7 +37,7 @@ type MetaData struct {
 	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
 	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
 	LastTopVisibleGroup        string        `xml:"LastTopVisibleGroup"`
-	Binaries                   string        `xml:"Binaries"`
+	Binaries                   Binaries      `xml:"Binaries>Binary"`
 	CustomData                 string        `xml:"CustomData"`
 }
 
@@ -83,17 +83,18 @@ type TimeData struct {
 }
 //structure for each parsed entry in a keepass database
 type Entry struct {
-	UUID            string       `xml:"UUID"`
-	IconID          int64        `xml:"IconID"`
-	ForegroundColor string       `xml:"ForegroundColor"`
-	BackgroundColor string       `xml:"BackgroundColor"`
-	OverrideURL     string       `xml:"OverrideURL"`
-	Tags            string       `xml:"Tags"`
-	Times           TimeData     `xml:"Times"`
-	Values          []ValueData  `xml:"String,omitempty"`
-	AutoType        AutoTypeData `xml:"AutoType"`
-	Histories       []History    `xml:"History"`
-	Password        []byte       `xml:"-"`
+	UUID            string            `xml:"UUID"`
+	IconID          int64             `xml:"IconID"`
+	ForegroundColor string            `xml:"ForegroundColor"`
+	BackgroundColor string            `xml:"BackgroundColor"`
+	OverrideURL     string            `xml:"OverrideURL"`
+	Tags            string            `xml:"Tags"`
+	Times           TimeData          `xml:"Times"`
+	Values          []ValueData       `xml:"String,omitempty"`
+	AutoType        AutoTypeData      `xml:"AutoType"`
+	Histories       []History         `xml:"History"`
+	Password        []byte            `xml:"-"`
+	Binaries        []BinaryReference `xml:"Binary,omitempty"`
 }
 
 //Returns true if the e's password has in-memory protection
@@ -107,30 +108,39 @@ func (e *Entry) protected() bool {
 }
 
 //Gets the value in e corresponding with key k, or an empty string otherwise
-func (e *Entry) get(k string) string {
-	var val string
-	for _, v := range e.Values {
-		if v.Key == k {
-			val = v.Value.Content
+func (e *Entry) Get (key string) (*ValueData) {
+	for i,_ := range e.Values {
+		if e.Values[i].Key == key {
+			return &e.Values[i]
 		}
 	}
-	return val
+	return nil
 }
-func (e *Entry) getPassword() string {
-	return e.get("Password")
+func (e *Entry) GetContent(key string) string {
+	val := e.Get(key)
+	if val == nil {
+		return ""
+	}
+	return val.Value.Content
 }
-
-func (e *Entry) getPasswordIndex() int {
-	for i, v := range e.Values {
-		if v.Key == "Password" {
+func (e *Entry) GetIndex(key string) int {
+	for i,_ := range e.Values {
+		if e.Values[i].Key == key {
 			return i
 		}
 	}
-	return 0
+	return -1
+}
+func (e *Entry) GetPassword() string {
+	return e.GetContent("Password")
+}
+
+func (e *Entry) GetPasswordIndex() int {
+	return e.GetIndex("Password")
 }
 
 func (e *Entry) GetTitle() string {
-	return e.get("Title")
+	return e.GetContent("Title")
 }
 //Stores the history (changes) of an entry, a list of previous versions of that entry
 type History struct {
