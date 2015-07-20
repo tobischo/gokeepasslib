@@ -60,17 +60,17 @@ func (e *Encoder) writeData(db *Database) error {
 		hashData, err = hashBlocks(b.Bytes())
 		if err != nil {
 			return err
-		}		
+		}
 	} else { //Otherwise put un-compressed xml content into block form
-		hashData,err = hashBlocks(xmlData)
+		hashData, err = hashBlocks(xmlData)
 		if err != nil {
 			return err
-		}	
+		}
 	}
 
-	//Appends the startmStreamBytes from db header to the blocked data, used to verify that the key is correct when decrypting
+	//Appends the StreamStartBytes from db header to the blocked data, used to verify that the key is correct when decrypting
 	hashData = append(db.Headers.StreamStartBytes, hashData...)
-	
+
 	//Adds padding to data as required to encrypt properly
 	if len(hashData)%16 != 0 {
 		padding := make([]byte, 16-(len(hashData)%16))
@@ -102,15 +102,15 @@ func (e *Encoder) writeData(db *Database) error {
 	if err != nil {
 		return err
 	}
-	
+
 	//Writes headers of database
 	err = db.Headers.WriteHeaders(e.w)
 	if err != nil {
 		return err
 	}
-	
+
 	//Writes the encrypted database content
-	_,err = e.w.Write(encrypted)
+	_, err = e.w.Write(encrypted)
 	if err != nil {
 		return err
 	}
@@ -118,8 +118,7 @@ func (e *Encoder) writeData(db *Database) error {
 	return nil
 }
 
-
-/* Converts raw xml data to keepass's block format, which includes a hash of each block to check for data corruption, 
+/* Converts raw xml data to keepass's block format, which includes a hash of each block to check for data corruption,
  * Every block contains the following elements:
  * (4 bytes) ID : an unique interger id for this block
  * (32 bytes) sha-256 hash of block data

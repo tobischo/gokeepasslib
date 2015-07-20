@@ -6,7 +6,7 @@ import (
 )
 
 func TestDecodeFile(t *testing.T) {
-	file, err := os.Open("example.kdbx")
+	file, err := os.Open("examples/example.kdbx")
 	if err != nil {
 		t.Fatalf("Failed to open keepass file: %s", err)
 	}
@@ -27,7 +27,7 @@ func TestDecodeFile(t *testing.T) {
 		)
 	}
 
-	f, err := os.Create("tmp.kdbx")
+	f, err := os.Create("examples/tmp.kdbx")
 	if err != nil {
 		t.Fatalf("Failed to open file for writing: %s", err)
 	}
@@ -35,7 +35,7 @@ func TestDecodeFile(t *testing.T) {
 	enc := NewEncoder(f)
 	enc.Encode(db)
 
-	file, err = os.Open("tmp.kdbx")
+	file, err = os.Open("examples/tmp.kdbx")
 	if err != nil {
 		t.Fatalf("Failed to open keepass file: %s", err)
 	}

@@ -7,7 +7,7 @@ gokeepasslib is a library which allows reading Keepass 2 files (kdbx).
 
 ```go
 
-file, _ := os.Open("example.kdbx")
+file, _ := os.Open("examples/example.kdbx")
 
 db := gokeepasslib.NewDatabase()
 db.Credentials = gokeepasslib.NewPasswordCredentials("abcdefg12345678")
