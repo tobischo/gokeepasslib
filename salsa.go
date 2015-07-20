@@ -10,57 +10,6 @@ var sigmaWords = []uint32{
 	0x6b206574,
 }
 
-func (s *SalsaManager) unlockProtectedEntries(gs []Group) {
-	for i,_ := range gs { //For each top level group
-		s.unlockProtectedEntrySlice(gs[i].Entries) //Unlock the Entries in the group
-		if len(gs[i].Groups) > 0 { //Recursively unlock any subgroups
-			s.unlockProtectedEntries(gs[i].Groups)
-		}
-	}
-}
-func (s *SalsaManager) unlockProtectedEntrySlice (e []Entry) {
-	for i, _ := range e {
-		s.unlockProtectedEntry(&e[i])
-	}
-}
-func (s *SalsaManager) unlockProtectedEntry(e *Entry) {
-	e.Password = s.getUnlockedPassword(e)
-	for i,_ := range e.Histories {
-		s.unlockProtectedEntrySlice(e.Histories[i].Entries)
-	}
-}
-
-func (s *SalsaManager) lockProtectedEntries(gs []Group) {
-	for _, g := range gs {
-		for i, e := range g.Entries {
-			valueIndex := e.getPasswordIndex()
-
-			g.Entries[i].
-				Values[valueIndex].
-				Value.
-				Content = s.lockedPassword(&e)
-
-			for j, h := range e.Histories {
-				for k, el := range h.Entries {
-					valueIndex := el.getPasswordIndex()
-
-					g.Entries[i].
-						Histories[j].
-						Entries[k].
-						Values[valueIndex].
-						Value.
-						Content = s.lockedPassword(&el)
-				}
-			}
-
-		}
-		if len(g.Groups) > 0 {
-			s.lockProtectedEntries(g.Groups)
-		}
-
-	}
-}
-
 // SalsaManager is responsible for stream encrypting and decrypting of the passwords
 type SalsaManager struct {
 	State        []uint32
@@ -68,6 +17,56 @@ type SalsaManager struct {
 	block        []byte
 	counterWords [2]int
 	currentBlock []byte
+}
+
+func (s *SalsaManager) UnlockGroups (gs []Group) {
+	for i,_ := range gs { //For each top level group
+		s.UnlockGroup(&gs[i])
+	}
+}
+func (s *SalsaManager) UnlockGroup (g *Group) {
+	s.UnlockEntries(g.Entries)
+	s.UnlockGroups(g.Groups)
+}
+func (s *SalsaManager) UnlockEntries (e []Entry) {
+	for i, _ := range e {
+		s.UnlockEntry(&e[i])
+	}
+}
+func (s *SalsaManager) UnlockEntry (e *Entry) {
+	for i,_ := range e.Values {
+		if bool(e.Values[i].Value.Protected) {
+			e.Values[i].Value.Content = string(s.unpack(e.Values[i].Value.Content))
+		}
+	}
+	for i,_ := range e.Histories {
+		s.UnlockEntries(e.Histories[i].Entries)
+	}
+}
+
+func (s *SalsaManager) LockGroups (gs []Group) {
+	for i,_ := range gs {
+		s.LockGroup(&gs[i])
+	}
+}
+func (s *SalsaManager) LockGroup (g *Group) {
+	s.LockEntries(g.Entries)
+	s.LockGroups(g.Groups)
+}
+func (s *SalsaManager) LockEntries (es []Entry) {
+	for i,_ := range es {
+		s.LockEntry(&es[i])
+	}
+}
+func (s *SalsaManager) LockEntry (e *Entry) {
+	for i,_ := range e.Values {
+		if bool(e.Values[i].Value.Protected) {
+			e.Values[i].Value.Content = s.pack([]byte(e.Values[i].Value.Content))
+		}
+	}
+	for i,_ := range e.Histories {
+		s.UnlockEntries(e.Histories[i].Entries)
+	}
 }
 
 func u8to32little(k []byte, i int) uint32 {
@@ -137,21 +136,6 @@ func (s *SalsaManager) pack(payload []byte) string {
 	lockedPassword := base64.StdEncoding.EncodeToString(data)
 	return lockedPassword
 }
-
-func (s *SalsaManager) lockedPassword(e *Entry) string {
-	if e.protected() {
-		return s.pack(e.Password)
-	}
-	return string(e.Password)
-}
-
-func (s *SalsaManager) getUnlockedPassword(e *Entry) []byte {
-	if e.protected() {
-		return s.unpack(e.getPassword())
-	}
-	return []byte(e.getPassword())
-}
-
 func (s *SalsaManager) reset() {
 	s.blockUsed = 64
 	s.counterWords = [2]int{0, 0}
