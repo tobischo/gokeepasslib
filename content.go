@@ -12,33 +12,51 @@ type DBContent struct {
 	Root    *RootData `xml:"Root"`
 }
 
+//Creates a new DB content with some good defaults
+func NewDBContent () (*DBContent) {
+	content := new(DBContent)
+	content.Meta = NewMetaData()
+	content.Root = NewRootData()
+	return content
+}
+
 //The metadata headers at the top of kdbx files, contains things like the name of the database
 type MetaData struct {
 	Generator                  string        `xml:"Generator"`
 	HeaderHash                 string        `xml:"HeaderHash"`
 	DatabaseName               string        `xml:"DatabaseName"`
-	DatabaseNameChanged        *time.Time    `xml:"DatabaseNameChanged"`
+	DatabaseNameChanged        time.Time    `xml:"DatabaseNameChanged"`
 	DatabaseDescription        string        `xml:"DatabaseDescription"`
-	DatabaseDescriptionChanged *time.Time    `xml:"DatabaseDescriptionChanged"`
+	DatabaseDescriptionChanged time.Time    `xml:"DatabaseDescriptionChanged"`
 	DefaultUserName            string        `xml:"DefaultUserName"`
-	DefaultUserNameChanged     *time.Time    `xml:"DefaultUserNameChanged"`
+	DefaultUserNameChanged     time.Time    `xml:"DefaultUserNameChanged"`
 	MaintenanceHistoryDays     string        `xml:"MaintenanceHistoryDays"`
 	Color                      string        `xml:"Color"`
-	MasterKeyChanged           *time.Time    `xml:"MasterKeyChanged"`
+	MasterKeyChanged           time.Time    `xml:"MasterKeyChanged"`
 	MasterKeyChangeRec         int64         `xml:"MasterKeyChangeRec"`
 	MasterKeyChangeForce       int64         `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection `xml:"MemoryProtection"`
 	RecycleBinEnabled          boolWrapper   `xml:"RecycleBinEnabled"`
 	RecycleBinUUID             string        `xml:"RecycleBinUUID"`
-	RecycleBinChanged          *time.Time    `xml:"RecycleBinChanged"`
+	RecycleBinChanged          time.Time    `xml:"RecycleBinChanged"`
 	EntryTemplatesGroup        string        `xml:"EntryTemplatesGroup"`
-	EntryTemplatesGroupChanged *time.Time    `xml:"EntryTemplatesGroupChanged"`
+	EntryTemplatesGroupChanged time.Time    `xml:"EntryTemplatesGroupChanged"`
 	HistoryMaxItems            int64         `xml:"HistoryMaxItems"`
 	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
 	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
 	LastTopVisibleGroup        string        `xml:"LastTopVisibleGroup"`
 	Binaries                   Binaries      `xml:"Binaries>Binary"`
 	CustomData                 string        `xml:"CustomData"`
+}
+
+//NewMetaData creates a MetaData struct with some defaults set
+func NewMetaData () (*MetaData) {
+	meta := new(MetaData)
+	now := time.Now()
+	meta.MasterKeyChanged = now
+	meta.MasterKeyChangeRec = -1
+	meta.MasterKeyChangeForce = -1
+	return meta
 }
 
 type MemProtection struct {
@@ -53,6 +71,12 @@ type MemProtection struct {
 type RootData struct {
 	Groups         []Group             `xml:"Group"`
 	DeletedObjects []DeletedObjectData `xml:"DeletedObjects>DeletedObject"`
+}
+
+//NewRootData returns a RootData struct with good defaults
+func NewRootData () (*RootData) {
+	root := new(RootData)
+	return root
 }
 
 //Structure to store entries in their named groups for organization
@@ -73,14 +97,28 @@ type Group struct {
 
 //All metadata relating to times for groups and entries, such as last modification time
 type TimeData struct {
-	CreationTime         *time.Time  `xml:"CreationTime"`
-	LastModificationTime *time.Time  `xml:"LastModificationTime"`
-	LastAcessTime        *time.Time  `xml:"LastAcessTime"`
-	ExpiryTime           *time.Time  `xml:"ExpiryTime"`
+	CreationTime         time.Time  `xml:"CreationTime"`
+	LastModificationTime time.Time  `xml:"LastModificationTime"`
+	LastAcessTime        time.Time  `xml:"LastAcessTime"`
+	ExpiryTime           time.Time  `xml:"ExpiryTime"`
 	Expires              boolWrapper `xml:"Expires"`
 	UsageCount           int64       `xml:"UsageCount"`
-	LocationChanged      *time.Time  `xml:"LocationChanged"`
+	LocationChanged      time.Time  `xml:"LocationChanged"`
 }
+
+//NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
+func NewTimeData () (TimeData) {
+	data := TimeData{}
+	now := time.Now()
+	data.CreationTime = now
+	data.LastModificationTime = now
+	data.LastAcessTime = now
+	data.Expires = false
+	data.UsageCount = 0
+	data.LocationChanged = now
+	return data
+}
+
 //structure for each parsed entry in a keepass database
 type Entry struct {
 	UUID            string            `xml:"UUID"`
@@ -172,5 +210,5 @@ type AutoTypeAssociation struct {
 type DeletedObjectData struct {
 	XMLName      xml.Name   `xml:"DeletedObject"`
 	UUID         string     `xml:"UUID"`
-	DeletionTime *time.Time `xml:"DeletionTime"`
+	DeletionTime time.Time `xml:"DeletionTime"`
 }

@@ -20,6 +20,7 @@ type DBCredentials struct {
 func (c *DBCredentials) String() string {
 	return fmt.Sprintf("Hashed Passphrase: %x\nHashed Key: %x\nHashed Windows Auth: %x", c.Passphrase,c.Key,c.Windows)
 }
+
 func (c *DBCredentials) buildCompositeKey () ([]byte,error) {
 	hash := sha256.New()
 	if c.Passphrase != nil { //If the hashed password is provided
@@ -42,6 +43,7 @@ func (c *DBCredentials) buildCompositeKey () ([]byte,error) {
 	}
 	return hash.Sum(nil),nil
 }
+
 func (c *DBCredentials) buildMasterKey(db *Database) ([]byte, error) {
 	masterKey,err := c.buildCompositeKey()
 	if err != nil {
@@ -72,12 +74,13 @@ func (c *DBCredentials) buildMasterKey(db *Database) ([]byte, error) {
 	return masterKey, nil
 }
 
-// NewPasswordCredentials builds new DBCredentials from a Password string
+//NewPasswordCredentials builds a new DBCredentials from a Password string
 func NewPasswordCredentials(password string) *DBCredentials {
 	hashed := sha256.Sum256([]byte(password))
 	return &DBCredentials{Passphrase:hashed[:]}
 }
-//Returns the hashed key from a key file at location, parsing xml if needed
+
+//ParseKeyFile returns the hashed key from a key file at the path specified by location, parsing xml if needed
 func ParseKeyFile(location string) ([]byte,error) { 
 	r, err := regexp.Compile("<data>(.+)<\\/data>")
 	if err != nil {
@@ -97,7 +100,8 @@ func ParseKeyFile(location string) ([]byte,error) {
 	sum := sha256.Sum256(data)
 	return sum[:],nil
 }
-// NewKeyCredentials builds new DBCredentials from a key file
+
+// NewKeyCredentials builds new DBCredentials from a key file at the path specified by location
 func NewKeyCredentials(location string) (*DBCredentials, error) {
 	key,err := ParseKeyFile(location)
 	if err != nil {

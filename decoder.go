@@ -15,9 +15,6 @@ import (
 	"reflect"
 )
 
-var BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
-var VersionSignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
-
 //Stores a reader which is expected to be in kdbx format
 type Decoder struct {
 	r io.Reader
