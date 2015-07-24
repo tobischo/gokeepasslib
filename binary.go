@@ -9,10 +9,10 @@ import (
 	"io"
 )
 
-//Stores a slice of binaries in the metadata header
+//Binaries Stores a slice of binaries in the metadata header of a database
 type Binaries []Binary
 
-//Stores a binary found in the metadata header
+//Binary stores a binary found in the metadata header of a database
 type Binary struct {
 	Content    []byte     `xml:",innerxml"`
 	ID         int         `xml:"ID,attr"`
@@ -23,7 +23,7 @@ func (b Binary) String () (string) {
 	return fmt.Sprintf("ID: %d, Compressed:%t, Content:%x",b.ID,b.Compressed,b.Content)
 }
 
-//Stores a reference to binaries in entries
+//BinaryReference stores a reference to a binary which appears in the xml of an entry
 type BinaryReference struct {
 	Name	 string	   `xml:"Key"`
 	Value struct { 
@@ -35,12 +35,12 @@ func (br BinaryReference) String () (string) {
 	return fmt.Sprintf("ID: %d, File Name: %s",br.Value.ID,br.Name)
 }
 
-//Given a list of binaries bs, returns a reference to a binary with the same id as the reference, or nil
+//Find returns a reference to  a binary in the slice of binaries bs with the same id as br, or nil if none is found
 func (br *BinaryReference) Find (bs Binaries) (*Binary) {
 	return bs.Find(br.Value.ID)
 }
 
-//Returns a reference to a binary with id in binaries, or nil if none found
+//Find returns a reference to a binary with the same ID as id, or nil if none if found
 func (bs Binaries) Find (id int) (*Binary) {
 	for i,_ := range bs {
 		if bs[i].ID == id {
@@ -50,7 +50,7 @@ func (bs Binaries) Find (id int) (*Binary) {
 	return nil
 }
 
-//Returns a reader to read from the binary content, decompressing if nessesary
+//GetContent returns a string which is the plaintext content of a binary, may return an error if something goes wrong in decoding from base64 or decompressing
 func (b Binary) GetContent () (string,error) {
 	decoded := make([]byte,base64.StdEncoding.DecodedLen(len(b.Content)))
 	_,err := base64.StdEncoding.Decode(decoded,b.Content)
