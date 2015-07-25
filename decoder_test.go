@@ -59,12 +59,14 @@ func TestDecodeFile(t *testing.T) {
 	}
 	defer tmpfile.Close()
 	defer os.Remove("examples/tmp.kdbx")
+
 	db = new(Database)
 	db.Credentials = NewPasswordCredentials("abcdefg12345678")
 	err = NewDecoder(tmpfile).Decode(db)
 	if err != nil {
 		t.Fatalf("Failed to decode file: %s", err)
 	}
+
 	err = db.UnlockProtectedEntries()
 	if err != nil {
 		t.Fatalf("Problem unlocking entries. %s",err)
