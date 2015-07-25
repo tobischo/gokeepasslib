@@ -87,7 +87,7 @@ func (d *Decoder) readData(db *Database) error {
 	} else { //Otherwise assume it not compressed
 		xmlDecoder = xml.NewDecoder(bytes.NewReader(decrypted))
 	}
-	
+
 	db.Content = &DBContent{}
 	err = xmlDecoder.Decode(db.Content)
 	return err

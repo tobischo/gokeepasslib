@@ -33,7 +33,7 @@ func TestDecodeFile(t *testing.T) {
 	}
 	err = db.UnlockProtectedEntries()
 	if err != nil {
-		t.Fatalf("Problem unlocking entries. %s",err)
+		t.Fatalf("Problem unlocking entries. %s", err)
 	}
 	pw := db.Content.Root.Groups[0].Groups[0].Entries[0].GetPassword()
 	if string(pw) != "Password" {
@@ -70,7 +70,7 @@ func TestDecodeFile(t *testing.T) {
 
 	err = db.UnlockProtectedEntries()
 	if err != nil {
-		t.Fatalf("Problem unlocking entries. %s",err)
+		t.Fatalf("Problem unlocking entries. %s", err)
 	}
 	pw = db.Content.Root.Groups[0].Groups[0].Entries[0].GetPassword()
 	if pw != "Password" {

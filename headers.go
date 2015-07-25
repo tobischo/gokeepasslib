@@ -1,23 +1,23 @@
 package gokeepasslib
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"crypto/rand"
 )
 
 //Constant enumerator for the inner random stream ID
 const (
-	NoStreamID uint32 = 0
-	ARC4StreamID = 1
-	SalsaStreamID = 2
+	NoStreamID    uint32 = 0
+	ARC4StreamID         = 1
+	SalsaStreamID        = 2
 )
 
 //Constants enumerator for compression flags
 const (
-	NoCompressionFlag uint32 = 0
-	GzipCompressionFlag = 1
+	NoCompressionFlag   uint32 = 0
+	GzipCompressionFlag        = 1
 )
 
 var AESCipherID = []byte{0x31, 0xC1, 0xF2, 0xE6, 0xBF, 0x71, 0x43, 0x50, 0xBE, 0x58, 0x05, 0x21, 0x6A, 0xFC, 0x5A, 0xFF}
@@ -37,31 +37,31 @@ type FileHeaders struct {
 }
 
 //Creates a new FileHeaders with good defaults
-func NewFileHeaders () (*FileHeaders) {
+func NewFileHeaders() *FileHeaders {
 	h := new(FileHeaders)
-	
+
 	h.CipherID = []byte(AESCipherID)
 	h.CompressionFlags = GzipCompressionFlag
-	
-	h.MasterSeed = make([]byte,32)
+
+	h.MasterSeed = make([]byte, 32)
 	rand.Read(h.MasterSeed)
 
-	h.TransformSeed = make([]byte,32)
+	h.TransformSeed = make([]byte, 32)
 	rand.Read(h.TransformSeed)
 
 	h.TransformRounds = 6000
 
-	h.EncryptionIV = make([]byte,16)
+	h.EncryptionIV = make([]byte, 16)
 	rand.Read(h.EncryptionIV)
 
-	h.ProtectedStreamKey = make([]byte,32)
+	h.ProtectedStreamKey = make([]byte, 32)
 	rand.Read(h.ProtectedStreamKey)
-	
-	h.StreamStartBytes = make([]byte,32)
+
+	h.StreamStartBytes = make([]byte, 32)
 	rand.Read(h.StreamStartBytes)
-	
+
 	h.InnerRandomStreamID = SalsaStreamID
-	
+
 	return h
 }
 

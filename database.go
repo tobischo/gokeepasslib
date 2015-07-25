@@ -34,21 +34,21 @@ func (db *Database) String() string {
 }
 
 /* StreamManager returns a ProtectedStreamManager bassed on the db headers, or nil if the type is unsupported
- * Can be used to lock only certain entries instead of calling 
+ * Can be used to lock only certain entries instead of calling
  */
-func (db *Database) StreamManager() (ProtectedStreamManager) {
+func (db *Database) StreamManager() ProtectedStreamManager {
 	switch db.Headers.InnerRandomStreamID {
-		case NoStreamID:
-			return new(InsecureStreamManager)
-		case SalsaStreamID:
-			key := sha256.Sum256(db.Headers.ProtectedStreamKey)
-			return NewSalsaManager(key)
-		default:
-			return nil
+	case NoStreamID:
+		return new(InsecureStreamManager)
+	case SalsaStreamID:
+		key := sha256.Sum256(db.Headers.ProtectedStreamKey)
+		return NewSalsaManager(key)
+	default:
+		return nil
 	}
 }
 
-/* Goes through entire database and encryptes any values in entries with protected=true set. 
+/* Goes through entire database and encryptes any values in entries with protected=true set.
  * This should be called after decoding if you want to view plaintext password in an entry
  * Warning: If you call this when entry values are already unlocked, it will cause them to be unreadable
  */
@@ -57,11 +57,11 @@ func (db *Database) UnlockProtectedEntries() error {
 	if manager == nil {
 		return ErrUnsupportedStreamType
 	}
-	UnlockProtectedGroups(manager,db.Content.Root.Groups)
+	UnlockProtectedGroups(manager, db.Content.Root.Groups)
 	return nil
 }
 
-/* Goes through entire database and decryptes any values in entries with protected=true set. 
+/* Goes through entire database and decryptes any values in entries with protected=true set.
  * Warning: Do not call this if entries are already locked
  * Warning: Encoding a database calls LockProtectedEntries automatically
  */
@@ -70,6 +70,6 @@ func (db *Database) LockProtectedEntries() error {
 	if manager == nil {
 		return ErrUnsupportedStreamType
 	}
-	LockProtectedGroups(manager,db.Content.Root.Groups)
+	LockProtectedGroups(manager, db.Content.Root.Groups)
 	return nil
 }
