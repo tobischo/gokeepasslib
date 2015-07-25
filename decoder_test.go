@@ -10,8 +10,9 @@ func TestDecodeFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open keepass file: %s", err)
 	}
+	defer file.Close()
 
-	db := &Database{}
+	db := new(Database)
 	db.Credentials = NewPasswordCredentials("abcdefg12345678")
 	err = NewDecoder(file).Decode(db)
 	if err != nil {
@@ -50,14 +51,16 @@ func TestDecodeFile(t *testing.T) {
 	enc := NewEncoder(f)
 	enc.Encode(db)
 
-	file, err = os.Open("examples/tmp.kdbx")
+	tmpfile, err := os.Open("examples/tmp.kdbx")
 	if err != nil {
 		t.Fatalf("Failed to open keepass file: %s", err)
 	}
+	defer tmpfile.Close()
+	defer os.Remove("examples/tmp.kdbx")
 
-	db = &Database{}
+	db = new(Database)
 	db.Credentials = NewPasswordCredentials("abcdefg12345678")
-	err = NewDecoder(file).Decode(db)
+	err = NewDecoder(tmpfile).Decode(db)
 	if err != nil {
 		t.Fatalf("Failed to decode file: %s", err)
 	}
@@ -78,12 +81,10 @@ func TestDecodeFile(t *testing.T) {
 			url,
 		)
 	}
-	
-	
+
 	//Creates a brand new kdbx file using only the library
 	newdb := NewDatabase()
 	newdb.Credentials = NewPasswordCredentials("password")
-	t.Log(newdb)
 	newfile,err := os.Create("examples/new.kdbx")
 	if err != nil {
 		t.Fatal(err)
@@ -93,4 +94,5 @@ func TestDecodeFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log("Please open example/new.kdbx with keepass2 to verify that it works")
 }
