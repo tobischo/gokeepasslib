@@ -53,7 +53,7 @@ type MetaData struct {
 func NewMetaData () (*MetaData) {
 	meta := new(MetaData)
 	now := time.Now()
-	*meta.MasterKeyChanged = now
+	meta.MasterKeyChanged = &now
 	meta.MasterKeyChangeRec = -1
 	meta.MasterKeyChangeForce = -1
 	return meta
