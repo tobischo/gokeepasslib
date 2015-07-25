@@ -35,7 +35,7 @@ func (db *Database) String() string {
 
 /* Goes through entire database and encryptes any values in entries with protected=true set. 
  * This should be called after decoding if you want to view plaintext password in an entry
- * 
+ * Warning: If you call this when entry values are already unlocked, it will cause them to be unreadable
  */
 func (db *Database) UnlockProtectedEntries() {
 	key := sha256.Sum256(db.Headers.ProtectedStreamKey)
@@ -43,7 +43,10 @@ func (db *Database) UnlockProtectedEntries() {
 	salsaManager.UnlockGroups(db.Content.Root.Groups)
 }
 
-//Goes through entire database and decryptes any values in entries with protected=true set. 
+/* Goes through entire database and decryptes any values in entries with protected=true set. 
+ * Warning: Do not call this if entries are already locked
+ * Warning: Encoding a database calls LockProtectedEntries automatically
+ */
 func (db *Database) LockProtectedEntries() {
 	key := sha256.Sum256(db.Headers.ProtectedStreamKey)
 	salsaManager := NewSalsaManager(key[:])

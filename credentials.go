@@ -101,7 +101,7 @@ func ParseKeyFile(location string) ([]byte,error) {
 	return sum[:],nil
 }
 
-// NewKeyCredentials builds new DBCredentials from a key file at the path specified by location
+//NewKeyCredentials builds new DBCredentials from a key file at the path specified by location
 func NewKeyCredentials(location string) (*DBCredentials, error) {
 	key,err := ParseKeyFile(location)
 	if err != nil {
