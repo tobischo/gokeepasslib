@@ -71,7 +71,7 @@ func (d *Decoder) readData(db *Database) error {
 	decrypted = decrypted[len(startBytes):]
 
 	var xmlDecoder *xml.Decoder
-	if db.Headers.CompressionFlags == 1 { //Unzip if the header compression flag is 1 for gzip
+	if db.Headers.CompressionFlags == GzipCompressionFlag { //Unzip if the header compression flag is 1 for gzip
 		zippedBody, err := checkHashBlocks(decrypted)
 		if err != nil {
 			return err

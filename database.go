@@ -38,9 +38,9 @@ func (db *Database) String() string {
  */
 func (db *Database) StreamManager() (ProtectedStreamManager) {
 	switch db.Headers.InnerRandomStreamID {
-		case 0:
+		case NoStreamID:
 			return new(InsecureStreamManager)
-		case 2:
+		case SalsaStreamID:
 			key := sha256.Sum256(db.Headers.ProtectedStreamKey)
 			return NewSalsaManager(key[:])
 		default:
