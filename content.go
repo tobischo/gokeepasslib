@@ -25,22 +25,22 @@ type MetaData struct {
 	Generator                  string        `xml:"Generator"`
 	HeaderHash                 string        `xml:"HeaderHash"`
 	DatabaseName               string        `xml:"DatabaseName"`
-	DatabaseNameChanged        time.Time    `xml:"DatabaseNameChanged"`
+	DatabaseNameChanged        *time.Time    `xml:"DatabaseNameChanged"`
 	DatabaseDescription        string        `xml:"DatabaseDescription"`
-	DatabaseDescriptionChanged time.Time    `xml:"DatabaseDescriptionChanged"`
+	DatabaseDescriptionChanged *time.Time    `xml:"DatabaseDescriptionChanged"`
 	DefaultUserName            string        `xml:"DefaultUserName"`
-	DefaultUserNameChanged     time.Time    `xml:"DefaultUserNameChanged"`
+	DefaultUserNameChanged     *time.Time    `xml:"DefaultUserNameChanged"`
 	MaintenanceHistoryDays     string        `xml:"MaintenanceHistoryDays"`
 	Color                      string        `xml:"Color"`
-	MasterKeyChanged           time.Time    `xml:"MasterKeyChanged"`
+	MasterKeyChanged           *time.Time    `xml:"MasterKeyChanged"`
 	MasterKeyChangeRec         int64         `xml:"MasterKeyChangeRec"`
 	MasterKeyChangeForce       int64         `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection `xml:"MemoryProtection"`
 	RecycleBinEnabled          boolWrapper   `xml:"RecycleBinEnabled"`
 	RecycleBinUUID             string        `xml:"RecycleBinUUID"`
-	RecycleBinChanged          time.Time    `xml:"RecycleBinChanged"`
+	RecycleBinChanged          *time.Time    `xml:"RecycleBinChanged"`
 	EntryTemplatesGroup        string        `xml:"EntryTemplatesGroup"`
-	EntryTemplatesGroupChanged time.Time    `xml:"EntryTemplatesGroupChanged"`
+	EntryTemplatesGroupChanged *time.Time    `xml:"EntryTemplatesGroupChanged"`
 	HistoryMaxItems            int64         `xml:"HistoryMaxItems"`
 	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
 	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
@@ -53,7 +53,7 @@ type MetaData struct {
 func NewMetaData () (*MetaData) {
 	meta := new(MetaData)
 	now := time.Now()
-	meta.MasterKeyChanged = now
+	*meta.MasterKeyChanged = now
 	meta.MasterKeyChangeRec = -1
 	meta.MasterKeyChangeForce = -1
 	return meta
@@ -97,25 +97,25 @@ type Group struct {
 
 //All metadata relating to times for groups and entries, such as last modification time
 type TimeData struct {
-	CreationTime         time.Time  `xml:"CreationTime"`
-	LastModificationTime time.Time  `xml:"LastModificationTime"`
-	LastAcessTime        time.Time  `xml:"LastAcessTime"`
-	ExpiryTime           time.Time  `xml:"ExpiryTime"`
+	CreationTime         *time.Time  `xml:"CreationTime"`
+	LastModificationTime *time.Time  `xml:"LastModificationTime"`
+	LastAcessTime        *time.Time  `xml:"LastAcessTime"`
+	ExpiryTime           *time.Time  `xml:"ExpiryTime"`
 	Expires              boolWrapper `xml:"Expires"`
 	UsageCount           int64       `xml:"UsageCount"`
-	LocationChanged      time.Time  `xml:"LocationChanged"`
+	LocationChanged      *time.Time  `xml:"LocationChanged"`
 }
 
 //NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
 func NewTimeData () (TimeData) {
 	data := TimeData{}
 	now := time.Now()
-	data.CreationTime = now
-	data.LastModificationTime = now
-	data.LastAcessTime = now
+	*data.CreationTime = now
+	*data.LastModificationTime = now
+	*data.LastAcessTime = now
 	data.Expires = false
 	data.UsageCount = 0
-	data.LocationChanged = now
+	*data.LocationChanged = now
 	return data
 }
 
@@ -210,5 +210,5 @@ type AutoTypeAssociation struct {
 type DeletedObjectData struct {
 	XMLName      xml.Name   `xml:"DeletedObject"`
 	UUID         string     `xml:"UUID"`
-	DeletionTime time.Time `xml:"DeletionTime"`
+	DeletionTime *time.Time `xml:"DeletionTime"`
 }
