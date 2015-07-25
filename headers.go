@@ -36,33 +36,34 @@ type FileHeaders struct {
 	InnerRandomStreamID uint32 // FieldID: 10
 }
 
-//Creates a new FileHeaders with good defaults
+// NewFileHeaders creates a new FileHeaders with good defaults
 func NewFileHeaders() *FileHeaders {
-	h := new(FileHeaders)
+	masterSeed := make([]byte, 32)
+	rand.Read(masterSeed)
 
-	h.CipherID = []byte(AESCipherID)
-	h.CompressionFlags = GzipCompressionFlag
+	transformSeed := make([]byte, 32)
+	rand.Read(transformSeed)
 
-	h.MasterSeed = make([]byte, 32)
-	rand.Read(h.MasterSeed)
+	encryptionIV := make([]byte, 16)
+	rand.Read(encryptionIV)
 
-	h.TransformSeed = make([]byte, 32)
-	rand.Read(h.TransformSeed)
+	protectedStreamKey := make([]byte, 32)
+	rand.Read(protectedStreamKey)
 
-	h.TransformRounds = 6000
+	streamStartBytes := make([]byte, 32)
+	rand.Read(streamStartBytes)
 
-	h.EncryptionIV = make([]byte, 16)
-	rand.Read(h.EncryptionIV)
-
-	h.ProtectedStreamKey = make([]byte, 32)
-	rand.Read(h.ProtectedStreamKey)
-
-	h.StreamStartBytes = make([]byte, 32)
-	rand.Read(h.StreamStartBytes)
-
-	h.InnerRandomStreamID = SalsaStreamID
-
-	return h
+	return &FileHeaders{
+		CipherID:            []byte(AESCipherID),
+		CompressionFlags:    GzipCompressionFlag,
+		MasterSeed:          masterSeed,
+		TransformSeed:       transformSeed,
+		TransformRounds:     6000,
+		EncryptionIV:        encryptionIV,
+		ProtectedStreamKey:  protectedStreamKey,
+		StreamStartBytes:    streamStartBytes,
+		InnerRandomStreamID: SalsaStreamID,
+	}
 }
 
 func (h FileHeaders) String() string {
@@ -90,6 +91,8 @@ func (h FileHeaders) String() string {
 	)
 }
 
+// ReadHeaders reads the headers from an io.Reader and
+// creates a structure containing the parsed header information
 func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 	headers := new(FileHeaders)
 	for {
@@ -139,6 +142,8 @@ func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 	return headers, nil
 }
 
+// WriteHeaders takes the contents of the corresponding FileHeaders struct
+// and writes them to the given io.Writer
 func (h *FileHeaders) WriteHeaders(w io.Writer) error {
 	for i := 1; i <= 10; i++ {
 		var data []byte

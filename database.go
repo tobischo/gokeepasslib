@@ -2,10 +2,15 @@ package gokeepasslib
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 )
 
-//Stores all contents nessesary for a keepass database file
+// ErrUnsupportedStreamType is retured if no streamManager can be created
+// due to an unsupported InnerRandomStreamID value
+var ErrUnsupportedStreamType = errors.New("Type of stream manager unsupported")
+
+// Database stores all contents nessesary for a keepass database file
 type Database struct {
 	Signature   *FileSignature
 	Headers     *FileHeaders
@@ -13,14 +18,14 @@ type Database struct {
 	Content     *DBContent
 }
 
-//NewDatabase creates a new database with some sensable default settings. To create a database with no settigns per-set, use gokeepasslib.Database{}
+// NewDatabase creates a new database with some sensable default settings. To create a database with no settigns per-set, use gokeepasslib.Database{}
 func NewDatabase() *Database {
-	db := new(Database)
-	db.Signature = &DefaultSig
-	db.Headers = NewFileHeaders()
-	db.Credentials = new(DBCredentials)
-	db.Content = NewDBContent()
-	return db
+	return &Database{
+		Signature:   &DefaultSig,
+		Headers:     NewFileHeaders(),
+		Credentials: new(DBCredentials),
+		Content:     NewDBContent(),
+	}
 }
 
 func (db *Database) String() string {
@@ -33,9 +38,8 @@ func (db *Database) String() string {
 	)
 }
 
-/* StreamManager returns a ProtectedStreamManager bassed on the db headers, or nil if the type is unsupported
- * Can be used to lock only certain entries instead of calling
- */
+// StreamManager returns a ProtectedStreamManager bassed on the db headers, or nil if the type is unsupported
+// Can be used to lock only certain entries instead of calling
 func (db *Database) StreamManager() ProtectedStreamManager {
 	switch db.Headers.InnerRandomStreamID {
 	case NoStreamID:
@@ -48,10 +52,10 @@ func (db *Database) StreamManager() ProtectedStreamManager {
 	}
 }
 
-/* Goes through entire database and encryptes any values in entries with protected=true set.
- * This should be called after decoding if you want to view plaintext password in an entry
- * Warning: If you call this when entry values are already unlocked, it will cause them to be unreadable
- */
+// UnlockProtectedEntries goes through the entire database and encrypts
+// any Values in entries with protected=true set.
+// This should be called after decoding if you want to view plaintext password in an entry
+// Warning: If you call this when entry values are already unlocked, it will cause them to be unreadable
 func (db *Database) UnlockProtectedEntries() error {
 	manager := db.StreamManager()
 	if manager == nil {
@@ -61,10 +65,10 @@ func (db *Database) UnlockProtectedEntries() error {
 	return nil
 }
 
-/* Goes through entire database and decryptes any values in entries with protected=true set.
- * Warning: Do not call this if entries are already locked
- * Warning: Encoding a database calls LockProtectedEntries automatically
- */
+// LockProtectedEntries goes through the entire database and decrypts
+// any Values in entries with protected=true set.
+// Warning: Do not call this if entries are already locked
+// Warning: Encoding a database calls LockProtectedEntries automatically
 func (db *Database) LockProtectedEntries() error {
 	manager := db.StreamManager()
 	if manager == nil {

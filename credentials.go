@@ -13,41 +13,41 @@ import (
 // DBCredentials holds the key used to lock and unlock the database
 type DBCredentials struct {
 	Passphrase []byte //Passphrase if using one, stored in sha256 hash
-	Key []byte //Contents of the keyfile if using one, stored in sha256 hash
-	Windows []byte //Whatever is returned from windows user account auth, stored in sha256 hash
+	Key        []byte //Contents of the keyfile if using one, stored in sha256 hash
+	Windows    []byte //Whatever is returned from windows user account auth, stored in sha256 hash
 }
 
 func (c *DBCredentials) String() string {
-	return fmt.Sprintf("Hashed Passphrase: %x\nHashed Key: %x\nHashed Windows Auth: %x", c.Passphrase,c.Key,c.Windows)
+	return fmt.Sprintf("Hashed Passphrase: %x\nHashed Key: %x\nHashed Windows Auth: %x", c.Passphrase, c.Key, c.Windows)
 }
 
-func (c *DBCredentials) buildCompositeKey () ([]byte,error) {
+func (c *DBCredentials) buildCompositeKey() ([]byte, error) {
 	hash := sha256.New()
 	if c.Passphrase != nil { //If the hashed password is provided
 		_, err := hash.Write(c.Passphrase)
 		if err != nil {
-			return nil,err
+			return nil, err
 		}
 	}
 	if c.Key != nil { //If the hashed keyfile is provided
 		_, err := hash.Write(c.Key)
 		if err != nil {
-			return nil,err
+			return nil, err
 		}
 	}
 	if c.Windows != nil { //If the hashed password is provided
 		_, err := hash.Write(c.Windows)
 		if err != nil {
-			return nil,err
+			return nil, err
 		}
 	}
-	return hash.Sum(nil),nil
+	return hash.Sum(nil), nil
 }
 
 func (c *DBCredentials) buildMasterKey(db *Database) ([]byte, error) {
-	masterKey,err := c.buildCompositeKey()
+	masterKey, err := c.buildCompositeKey()
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	block, err := aes.NewCipher(db.Headers.TransformSeed)
@@ -77,11 +77,11 @@ func (c *DBCredentials) buildMasterKey(db *Database) ([]byte, error) {
 //NewPasswordCredentials builds a new DBCredentials from a Password string
 func NewPasswordCredentials(password string) *DBCredentials {
 	hashed := sha256.Sum256([]byte(password))
-	return &DBCredentials{Passphrase:hashed[:]}
+	return &DBCredentials{Passphrase: hashed[:]}
 }
 
 //ParseKeyFile returns the hashed key from a key file at the path specified by location, parsing xml if needed
-func ParseKeyFile(location string) ([]byte,error) { 
+func ParseKeyFile(location string) ([]byte, error) {
 	r, err := regexp.Compile("<data>(.+)<\\/data>")
 	if err != nil {
 		return nil, err
@@ -98,14 +98,14 @@ func ParseKeyFile(location string) ([]byte,error) {
 		data = r.FindSubmatch(data)[1]
 	}
 	sum := sha256.Sum256(data)
-	return sum[:],nil
+	return sum[:], nil
 }
 
 //NewKeyCredentials builds new DBCredentials from a key file at the path specified by location
 func NewKeyCredentials(location string) (*DBCredentials, error) {
-	key,err := ParseKeyFile(location)
+	key, err := ParseKeyFile(location)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return &DBCredentials{Key:key},nil
+	return &DBCredentials{Key: key}, nil
 }
