@@ -42,7 +42,7 @@ func (db *Database) StreamManager() (ProtectedStreamManager) {
 			return new(InsecureStreamManager)
 		case SalsaStreamID:
 			key := sha256.Sum256(db.Headers.ProtectedStreamKey)
-			return NewSalsaManager(key[:])
+			return NewSalsaManager(key)
 		default:
 			return nil
 	}
