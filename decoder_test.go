@@ -18,6 +18,7 @@ func TestDecodeFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to decode file: %s", err)
 	}
+
 	//Tests out the binary file in example.kdbx
 	binary := db.Content.Root.Groups[0].Groups[1].Entries[0].Binaries[0].Find(db.Content.Meta.Binaries)
 	if binary == nil {
