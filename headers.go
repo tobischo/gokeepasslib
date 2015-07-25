@@ -4,7 +4,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"crypto/rand"
 )
+
+var AESCipherID = []byte{0x31, 0xC1, 0xF2, 0xE6, 0xBF, 0x71, 0x43, 0x50, 0xBE, 0x58, 0x05, 0x21, 0x6A, 0xFC, 0x5A, 0xFF}
+var GzipCompressionFlag = uint32(1)
+var SalsaInnerRandomStreamID = []byte{0x02,0x00,0x00,0x00}
 
 // FileHeaders holds the header information of the Keepass File.
 type FileHeaders struct {
@@ -20,7 +25,34 @@ type FileHeaders struct {
 	InnerRandomStreamID []byte // FieldID: 10
 }
 
-// 0: EndOfHeader
+//Creates a new FileHeaders with good defaults
+func NewFileHeaders () (*FileHeaders) {
+	h := new(FileHeaders)
+	
+	h.CipherID = []byte(AESCipherID)
+	h.CompressionFlags = GzipCompressionFlag
+	
+	h.MasterSeed = make([]byte,32)
+	rand.Read(h.MasterSeed)
+
+	h.TransformSeed = make([]byte,32)
+	rand.Read(h.TransformSeed)
+
+	h.TransformRounds = 6000
+
+	h.EncryptionIV = make([]byte,16)
+	rand.Read(h.EncryptionIV)
+
+	h.ProtectedStreamKey = make([]byte,32)
+	rand.Read(h.ProtectedStreamKey)
+	
+	h.StreamStartBytes = make([]byte,32)
+	rand.Read(h.StreamStartBytes)
+	
+	h.InnerRandomStreamID = SalsaInnerRandomStreamID
+	
+	return h
+}
 
 func (h FileHeaders) String() string {
 	return fmt.Sprintf(

@@ -5,11 +5,20 @@ import (
 	"encoding/xml"
 	"time"
 )
+
 //Container for all elements of a keepass database
 type DBContent struct {
 	XMLName xml.Name  `xml:"KeePassFile"`
 	Meta    *MetaData `xml:"Meta"`
 	Root    *RootData `xml:"Root"`
+}
+
+//Creates a new DB content with some good defaults
+func NewDBContent() *DBContent {
+	content := new(DBContent)
+	content.Meta = NewMetaData()
+	content.Root = NewRootData()
+	return content
 }
 
 //The metadata headers at the top of kdbx files, contains things like the name of the database
@@ -41,6 +50,16 @@ type MetaData struct {
 	CustomData                 string        `xml:"CustomData"`
 }
 
+//NewMetaData creates a MetaData struct with some defaults set
+func NewMetaData() *MetaData {
+	meta := new(MetaData)
+	now := time.Now()
+	meta.MasterKeyChanged = &now
+	meta.MasterKeyChangeRec = -1
+	meta.MasterKeyChangeForce = -1
+	return meta
+}
+
 type MemProtection struct {
 	ProtectTitle    boolWrapper `xml:"ProtectTitle"`
 	ProtectUserName boolWrapper `xml:"ProtectUserName"`
@@ -53,6 +72,12 @@ type MemProtection struct {
 type RootData struct {
 	Groups         []Group             `xml:"Group"`
 	DeletedObjects []DeletedObjectData `xml:"DeletedObjects>DeletedObject"`
+}
+
+//NewRootData returns a RootData struct with good defaults
+func NewRootData() *RootData {
+	root := new(RootData)
+	return root
 }
 
 //Structure to store entries in their named groups for organization
@@ -75,13 +100,27 @@ type Group struct {
 type TimeData struct {
 	CreationTime         *time.Time  `xml:"CreationTime"`
 	LastModificationTime *time.Time  `xml:"LastModificationTime"`
-	LastAcessTime        *time.Time  `xml:"LastAcessTime"`
+	LastAccessTime       *time.Time  `xml:"LastAccessTime"`
 	ExpiryTime           *time.Time  `xml:"ExpiryTime"`
 	Expires              boolWrapper `xml:"Expires"`
 	UsageCount           int64       `xml:"UsageCount"`
 	LocationChanged      *time.Time  `xml:"LocationChanged"`
 }
-//structure for each parsed entry in a keepass database
+
+//NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
+func NewTimeData() TimeData {
+	now := time.Now()
+	return TimeData{
+		CreationTime:         &now,
+		LastModificationTime: &now,
+		LastAccessTime:       &now,
+		LocationChanged:      &now,
+		Expires:              false,
+		UsageCount:           0,
+	}
+}
+
+//Entry is the structure which holds information about a parsed entry in a keepass database
 type Entry struct {
 	UUID            string            `xml:"UUID"`
 	IconID          int64             `xml:"IconID"`
@@ -107,15 +146,17 @@ func (e *Entry) protected() bool {
 	return false
 }
 
-//Gets the value in e corresponding with key k, or an empty string otherwise
-func (e *Entry) Get (key string) (*ValueData) {
-	for i,_ := range e.Values {
+//Get returns the value in e corresponding with key k, or an empty string otherwise
+func (e *Entry) Get(key string) *ValueData {
+	for i, _ := range e.Values {
 		if e.Values[i].Key == key {
 			return &e.Values[i]
 		}
 	}
 	return nil
 }
+
+//GetContent returns the content of the value belonging to the given key in string form
 func (e *Entry) GetContent(key string) string {
 	val := e.Get(key)
 	if val == nil {
@@ -123,36 +164,45 @@ func (e *Entry) GetContent(key string) string {
 	}
 	return val.Value.Content
 }
+
+//GetIndex returns the index of the Value belonging to the given key
 func (e *Entry) GetIndex(key string) int {
-	for i,_ := range e.Values {
+	for i, _ := range e.Values {
 		if e.Values[i].Key == key {
 			return i
 		}
 	}
 	return -1
 }
+
+//GetPassword returns the password of an entry
 func (e *Entry) GetPassword() string {
 	return e.GetContent("Password")
 }
 
+//GetPasswordIndex returns the index in the values slice belonging to the password
 func (e *Entry) GetPasswordIndex() int {
 	return e.GetIndex("Password")
 }
 
+//GetTitle returns the title of an entry
 func (e *Entry) GetTitle() string {
 	return e.GetContent("Title")
 }
-//Stores the history (changes) of an entry, a list of previous versions of that entry
+
+//History stores information about changes made to an entry,
+//in the form of a list of previous versions of that entry
 type History struct {
 	Entries []Entry `xml:"Entry"`
 }
 
+//ValueData is a structure containing key value pairs of information stored in an entry
 type ValueData struct {
 	Key   string `xml:"Key"`
 	Value V      `xml:"Value"`
 }
 
-//Wraper for the content of a value, so that it can store whether it is protected
+//V is a wrapper for the content of a value, so that it can store whether it is protected
 type V struct {
 	Content   string      `xml:",innerxml"`
 	Protected boolWrapper `xml:"Protected,attr,omitempty"`

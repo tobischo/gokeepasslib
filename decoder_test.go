@@ -10,27 +10,27 @@ func TestDecodeFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open keepass file: %s", err)
 	}
+	defer file.Close()
 
-	db := NewDatabase()
+	db := new(Database)
 	db.Credentials = NewPasswordCredentials("abcdefg12345678")
 	err = NewDecoder(file).Decode(db)
 	if err != nil {
 		t.Fatalf("Failed to decode file: %s", err)
 	}
-	
+
 	//Tests out the binary file in example.kdbx
 	binary := db.Content.Root.Groups[0].Groups[1].Entries[0].Binaries[0].Find(db.Content.Meta.Binaries)
 	if binary == nil {
 		t.Fatalf("Failed to find binary")
 	}
-	str,err := binary.GetContent()
+	str, err := binary.GetContent()
 	if err != nil {
-		t.Fatal("Error getting content from binary: ",err,str)
+		t.Fatal("Error getting content from binary: ", err, str)
 	}
 	if str != "Hello world" {
-		t.Fatalf("Binary content was not as expected, expected: `Hello world`, received `%s`",str)
+		t.Fatalf("Binary content was not as expected, expected: `Hello world`, received `%s`", str)
 	}
-	
 	db.UnlockProtectedEntries()
 	pw := db.Content.Root.Groups[0].Groups[0].Entries[0].GetPassword()
 	if string(pw) != "Password" {
@@ -51,14 +51,16 @@ func TestDecodeFile(t *testing.T) {
 	enc := NewEncoder(f)
 	enc.Encode(db)
 
-	file, err = os.Open("examples/tmp.kdbx")
+	tmpfile, err := os.Open("examples/tmp.kdbx")
 	if err != nil {
 		t.Fatalf("Failed to open keepass file: %s", err)
 	}
+	defer tmpfile.Close()
+	defer os.Remove("examples/tmp.kdbx")
 
-	db = NewDatabase()
+	db = new(Database)
 	db.Credentials = NewPasswordCredentials("abcdefg12345678")
-	err = NewDecoder(file).Decode(db)
+	err = NewDecoder(tmpfile).Decode(db)
 	if err != nil {
 		t.Fatalf("Failed to decode file: %s", err)
 	}
@@ -71,7 +73,7 @@ func TestDecodeFile(t *testing.T) {
 			pw,
 		)
 	}
-	
+
 	url := db.Content.Root.Groups[0].Groups[0].Entries[0].GetContent("URL")
 	if url != "http://github.com" {
 		t.Fatalf(
@@ -79,4 +81,20 @@ func TestDecodeFile(t *testing.T) {
 			url,
 		)
 	}
+}
+
+func TestCreateNewFile(t *testing.T) {
+	//Creates a brand new kdbx file using only the library
+	newdb := NewDatabase()
+	newdb.Credentials = NewPasswordCredentials("password")
+	newfile, err := os.Create("examples/new.kdbx")
+	if err != nil {
+		t.Fatal(err)
+	}
+	newencoder := NewEncoder(newfile)
+	err = newencoder.Encode(newdb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Please open example/new.kdbx with keepass2 to verify that it works")
 }

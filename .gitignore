@@ -22,4 +22,5 @@ _testmain.go
 *.exe
 
 #ignore kdbx file created by test
-tmp.kdbx
+examples/tmp.kdbx
+examples/new.kdbx
