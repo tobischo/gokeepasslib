@@ -23,12 +23,12 @@ func TestDecodeFile(t *testing.T) {
 	if binary == nil {
 		t.Fatalf("Failed to find binary")
 	}
-	str,err := binary.GetContent()
+	str, err := binary.GetContent()
 	if err != nil {
-		t.Fatal("Error getting content from binary: ",err,str)
+		t.Fatal("Error getting content from binary: ", err, str)
 	}
 	if str != "Hello world" {
-		t.Fatalf("Binary content was not as expected, expected: `Hello world`, received `%s`",str)
+		t.Fatalf("Binary content was not as expected, expected: `Hello world`, received `%s`", str)
 	}
 	err = db.UnlockProtectedEntries()
 	if err != nil {
@@ -76,7 +76,7 @@ func TestDecodeFile(t *testing.T) {
 			pw,
 		)
 	}
-	
+
 	url := db.Content.Root.Groups[0].Groups[0].Entries[0].GetContent("URL")
 	if url != "http://github.com" {
 		t.Fatalf(
@@ -84,11 +84,13 @@ func TestDecodeFile(t *testing.T) {
 			url,
 		)
 	}
+}
 
+func TestCreateNewFile(t *testing.T) {
 	//Creates a brand new kdbx file using only the library
 	newdb := NewDatabase()
 	newdb.Credentials = NewPasswordCredentials("password")
-	newfile,err := os.Create("examples/new.kdbx")
+	newfile, err := os.Create("examples/new.kdbx")
 	if err != nil {
 		t.Fatal(err)
 	}
