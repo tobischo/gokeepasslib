@@ -110,12 +110,16 @@ type TimeData struct {
 func NewTimeData () (TimeData) {
 	data := TimeData{}
 	now := time.Now()
+	data.CreationTime = new(time.Time)
 	*data.CreationTime = now
+	data.LastModificationTime = new(time.Time)
 	*data.LastModificationTime = now
+	data.LastAcessTime = new(time.Time)
 	*data.LastAcessTime = now
+	data.LocationChanged = new(time.Time)
+	*data.LocationChanged = now
 	data.Expires = false
 	data.UsageCount = 0
-	*data.LocationChanged = now
 	return data
 }
 
