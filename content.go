@@ -99,7 +99,7 @@ type Group struct {
 type TimeData struct {
 	CreationTime         *time.Time  `xml:"CreationTime"`
 	LastModificationTime *time.Time  `xml:"LastModificationTime"`
-	LastAcessTime        *time.Time  `xml:"LastAcessTime"`
+	LastAccessTime        *time.Time  `xml:"LastAccessTime"`
 	ExpiryTime           *time.Time  `xml:"ExpiryTime"`
 	Expires              boolWrapper `xml:"Expires"`
 	UsageCount           int64       `xml:"UsageCount"`
@@ -114,8 +114,8 @@ func NewTimeData () (TimeData) {
 	*data.CreationTime = now
 	data.LastModificationTime = new(time.Time)
 	*data.LastModificationTime = now
-	data.LastAcessTime = new(time.Time)
-	*data.LastAcessTime = now
+	data.LastAccessTime = new(time.Time)
+	*data.LastAccessTime = now
 	data.LocationChanged = new(time.Time)
 	*data.LocationChanged = now
 	data.Expires = false
