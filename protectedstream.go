@@ -10,6 +10,15 @@ type ProtectedStreamManager interface {
 	Pack(payload []byte) string
 }
 
+// InsecureStreamManager is a stream manger which does not encrypt, just stores the plaintext payload
+type InsecureStreamManager struct {}
+func (i InsecureStreamManager) Unpack (payload string) []byte {
+	return []byte(payload)
+}
+func (i InsecureStreamManager) Pack (payload []byte) string {
+	return string(payload)
+}
+
 func UnlockProtectedGroups (p ProtectedStreamManager, gs []Group) {
 	for i,_ := range gs { //For each top level group
 		UnlockProtectedGroup(p,&gs[i])

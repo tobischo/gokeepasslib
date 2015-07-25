@@ -33,9 +33,13 @@ func (db *Database) String() string {
 	)
 }
 
-//StreamManager returns a protected stream manager bassed on the db headers, or nil if the type is unsupported
+/* StreamManager returns a ProtectedStreamManager bassed on the db headers, or nil if the type is unsupported
+ * Can be used to lock only certain entries instead of calling 
+ */
 func (db *Database) StreamManager() (ProtectedStreamManager) {
 	switch db.Headers.InnerRandomStreamID {
+		case 0:
+			return new(InsecureStreamManager)
 		case 2:
 			key := sha256.Sum256(db.Headers.ProtectedStreamKey)
 			return NewSalsaManager(key[:])
