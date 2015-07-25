@@ -7,9 +7,20 @@ import (
 	"crypto/rand"
 )
 
+//Constant enumerator for the inner random stream ID
+const (
+	NoStreamID uint32 = 0
+	ARC4StreamID = 1
+	SalsaStreamID = 2
+)
+
+//Constants enumerator for compression flags
+const (
+	NoCompressionFlag uint32 = 0
+	GzipCompressionFlag = 1
+)
+
 var AESCipherID = []byte{0x31, 0xC1, 0xF2, 0xE6, 0xBF, 0x71, 0x43, 0x50, 0xBE, 0x58, 0x05, 0x21, 0x6A, 0xFC, 0x5A, 0xFF}
-var GzipCompressionFlag = uint32(1)
-var SalsaInnerRandomStreamID = []byte{0x02,0x00,0x00,0x00}
 
 // FileHeaders holds the header information of the Keepass File.
 type FileHeaders struct {
@@ -22,7 +33,7 @@ type FileHeaders struct {
 	EncryptionIV        []byte // FieldID:  7
 	ProtectedStreamKey  []byte // FieldID:  8
 	StreamStartBytes    []byte // FieldID:  9
-	InnerRandomStreamID []byte // FieldID: 10
+	InnerRandomStreamID uint32 // FieldID: 10
 }
 
 //Creates a new FileHeaders with good defaults
@@ -49,7 +60,7 @@ func NewFileHeaders () (*FileHeaders) {
 	h.StreamStartBytes = make([]byte,32)
 	rand.Read(h.StreamStartBytes)
 	
-	h.InnerRandomStreamID = SalsaInnerRandomStreamID
+	h.InnerRandomStreamID = SalsaStreamID
 	
 	return h
 }
@@ -65,7 +76,7 @@ func (h FileHeaders) String() string {
 			"(7) EncryptionIV: %x\n"+
 			"(8) ProtectedStreamKey: %x\n"+
 			"(9) StreamStartBytes: %x\n"+
-			"(10) InnerRandomStreamID: %x\n",
+			"(10) InnerRandomStreamID: %d\n",
 		h.Comment,
 		h.CipherID,
 		h.CompressionFlags,
@@ -117,7 +128,7 @@ func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 		case 9:
 			headers.StreamStartBytes = fieldData
 		case 10:
-			headers.InnerRandomStreamID = fieldData
+			headers.InnerRandomStreamID = binary.LittleEndian.Uint32(fieldData)
 		}
 
 		if fieldID == 0 {
@@ -155,7 +166,9 @@ func (h *FileHeaders) WriteHeaders(w io.Writer) error {
 		case 9:
 			data = append(data, h.StreamStartBytes...)
 		case 10:
-			data = append(data, h.InnerRandomStreamID...)
+			d := make([]byte, 4)
+			binary.LittleEndian.PutUint32(d, h.InnerRandomStreamID)
+			data = append(data, d...)
 		}
 
 		if len(data) > 0 {

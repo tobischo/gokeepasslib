@@ -19,56 +19,6 @@ type SalsaManager struct {
 	currentBlock []byte
 }
 
-func (s *SalsaManager) UnlockGroups (gs []Group) {
-	for i,_ := range gs { //For each top level group
-		s.UnlockGroup(&gs[i])
-	}
-}
-func (s *SalsaManager) UnlockGroup (g *Group) {
-	s.UnlockEntries(g.Entries)
-	s.UnlockGroups(g.Groups)
-}
-func (s *SalsaManager) UnlockEntries (e []Entry) {
-	for i, _ := range e {
-		s.UnlockEntry(&e[i])
-	}
-}
-func (s *SalsaManager) UnlockEntry (e *Entry) {
-	for i,_ := range e.Values {
-		if bool(e.Values[i].Value.Protected) {
-			e.Values[i].Value.Content = string(s.unpack(e.Values[i].Value.Content))
-		}
-	}
-	for i,_ := range e.Histories {
-		s.UnlockEntries(e.Histories[i].Entries)
-	}
-}
-
-func (s *SalsaManager) LockGroups (gs []Group) {
-	for i,_ := range gs {
-		s.LockGroup(&gs[i])
-	}
-}
-func (s *SalsaManager) LockGroup (g *Group) {
-	s.LockEntries(g.Entries)
-	s.LockGroups(g.Groups)
-}
-func (s *SalsaManager) LockEntries (es []Entry) {
-	for i,_ := range es {
-		s.LockEntry(&es[i])
-	}
-}
-func (s *SalsaManager) LockEntry (e *Entry) {
-	for i,_ := range e.Values {
-		if bool(e.Values[i].Value.Protected) {
-			e.Values[i].Value.Content = s.pack([]byte(e.Values[i].Value.Content))
-		}
-	}
-	for i,_ := range e.Histories {
-		s.UnlockEntries(e.Histories[i].Entries)
-	}
-}
-
 func u8to32little(k []byte, i int) uint32 {
 	return uint32(k[i]) |
 		(uint32(k[i+1]) << 8) |
@@ -110,7 +60,7 @@ func NewSalsaManager(key []byte) SalsaManager {
 	return s
 }
 
-func (s *SalsaManager) unpack(payload string) []byte {
+func (s SalsaManager) Unpack(payload string) []byte {
 	var result []byte
 
 	data, _ := base64.StdEncoding.DecodeString(payload)
@@ -124,7 +74,7 @@ func (s *SalsaManager) unpack(payload string) []byte {
 	return result
 }
 
-func (s *SalsaManager) pack(payload []byte) string {
+func (s SalsaManager) Pack(payload []byte) string {
 	var data []byte
 
 	salsaBytes := s.fetchBytes(len(payload))

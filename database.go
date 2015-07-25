@@ -33,22 +33,39 @@ func (db *Database) String() string {
 	)
 }
 
+//StreamManager returns a protected stream manager bassed on the db headers, or nil if the type is unsupported
+func (db *Database) StreamManager() (ProtectedStreamManager) {
+	switch db.Headers.InnerRandomStreamID {
+		case 2:
+			key := sha256.Sum256(db.Headers.ProtectedStreamKey)
+			return NewSalsaManager(key[:])
+		default:
+			return nil
+	}
+}
+
 /* Goes through entire database and encryptes any values in entries with protected=true set. 
  * This should be called after decoding if you want to view plaintext password in an entry
  * Warning: If you call this when entry values are already unlocked, it will cause them to be unreadable
  */
-func (db *Database) UnlockProtectedEntries() {
-	key := sha256.Sum256(db.Headers.ProtectedStreamKey)
-	salsaManager := NewSalsaManager(key[:])
-	salsaManager.UnlockGroups(db.Content.Root.Groups)
+func (db *Database) UnlockProtectedEntries() error {
+	manager := db.StreamManager()
+	if manager == nil {
+		return ErrUnsupportedStreamType
+	}
+	UnlockProtectedGroups(manager,db.Content.Root.Groups)
+	return nil
 }
 
 /* Goes through entire database and decryptes any values in entries with protected=true set. 
  * Warning: Do not call this if entries are already locked
  * Warning: Encoding a database calls LockProtectedEntries automatically
  */
-func (db *Database) LockProtectedEntries() {
-	key := sha256.Sum256(db.Headers.ProtectedStreamKey)
-	salsaManager := NewSalsaManager(key[:])
-	salsaManager.LockGroups(db.Content.Root.Groups)
+func (db *Database) LockProtectedEntries() error {
+	manager := db.StreamManager()
+	if manager == nil {
+		return ErrUnsupportedStreamType
+	}
+	LockProtectedGroups(manager,db.Content.Root.Groups)
+	return nil
 }
