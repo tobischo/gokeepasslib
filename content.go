@@ -1,4 +1,4 @@
-//Package gokeepasslib is a library written in go which provides functionality to decrypt and parse keepass 2 files (kdbx)
+// Package gokeepasslib is a library written in go which provides functionality to decrypt and parse keepass 2 files (kdbx)
 package gokeepasslib
 
 import (
@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-//Container for all elements of a keepass database
+// DBContent is a container for all elements of a keepass database
 type DBContent struct {
 	XMLName xml.Name  `xml:"KeePassFile"`
 	Meta    *MetaData `xml:"Meta"`
 	Root    *RootData `xml:"Root"`
 }
 
-//Creates a new DB content with some good defaults
+// NewDBContent creates a new DB content with some good defaults
 func NewDBContent() *DBContent {
 	content := new(DBContent)
 	content.Meta = NewMetaData()
@@ -21,7 +21,8 @@ func NewDBContent() *DBContent {
 	return content
 }
 
-//The metadata headers at the top of kdbx files, contains things like the name of the database
+// MetaData is the structure for the metadata headers at the top of kdbx files,
+// it contains things like the name of the database
 type MetaData struct {
 	Generator                  string        `xml:"Generator"`
 	HeaderHash                 string        `xml:"HeaderHash"`
@@ -46,11 +47,11 @@ type MetaData struct {
 	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
 	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
 	LastTopVisibleGroup        string        `xml:"LastTopVisibleGroup"`
-	Binaries                   Binaries      `xml:"Binaries>Binary"`
+	//Binaries                   Binaries      `xml:"Binaries>Binary"`
 	CustomData                 string        `xml:"CustomData"`
 }
 
-//NewMetaData creates a MetaData struct with some defaults set
+// NewMetaData creates a MetaData struct with some defaults set
 func NewMetaData() *MetaData {
 	meta := new(MetaData)
 	now := time.Now()
@@ -60,6 +61,7 @@ func NewMetaData() *MetaData {
 	return meta
 }
 
+// MemProtection is a structure containing settings for MemoryProtection
 type MemProtection struct {
 	ProtectTitle    boolWrapper `xml:"ProtectTitle"`
 	ProtectUserName boolWrapper `xml:"ProtectUserName"`
@@ -68,19 +70,19 @@ type MemProtection struct {
 	ProtectNotes    boolWrapper `xml:"ProtectNotes"`
 }
 
-//Stores the actual content of a database (all enteries sorted into groups and the recycle bin)
+// RootData stores the actual content of a database (all enteries sorted into groups and the recycle bin)
 type RootData struct {
 	Groups         []Group             `xml:"Group"`
 	DeletedObjects []DeletedObjectData `xml:"DeletedObjects>DeletedObject"`
 }
 
-//NewRootData returns a RootData struct with good defaults
+// NewRootData returns a RootData struct with good defaults
 func NewRootData() *RootData {
 	root := new(RootData)
 	return root
 }
 
-//Structure to store entries in their named groups for organization
+// Group is a structure to store entries in their named groups for organization
 type Group struct {
 	UUID                    string      `xml:"UUID"`
 	Name                    string      `xml:"Name"`
@@ -96,7 +98,8 @@ type Group struct {
 	Entries                 []Entry     `xml:"Entry,omitempty"`
 }
 
-//All metadata relating to times for groups and entries, such as last modification time
+// TimeData contains all metadata related to times for groups and entries
+// e.g. the last modification time or the creation time
 type TimeData struct {
 	CreationTime         *time.Time  `xml:"CreationTime"`
 	LastModificationTime *time.Time  `xml:"LastModificationTime"`
@@ -107,7 +110,7 @@ type TimeData struct {
 	LocationChanged      *time.Time  `xml:"LocationChanged"`
 }
 
-//NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
+// NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
 func NewTimeData() TimeData {
 	now := time.Now()
 	return TimeData{
@@ -120,7 +123,7 @@ func NewTimeData() TimeData {
 	}
 }
 
-//Entry is the structure which holds information about a parsed entry in a keepass database
+// Entry is the structure which holds information about a parsed entry in a keepass database
 type Entry struct {
 	UUID            string            `xml:"UUID"`
 	IconID          int64             `xml:"IconID"`
@@ -133,10 +136,10 @@ type Entry struct {
 	AutoType        AutoTypeData      `xml:"AutoType"`
 	Histories       []History         `xml:"History"`
 	Password        []byte            `xml:"-"`
-	Binaries        []BinaryReference `xml:"Binary,omitempty"`
+   //Binaries        []BinaryReference `xml:"Binary,omitempty"`
 }
 
-//Returns true if the e's password has in-memory protection
+// Returns true if the e's password has in-memory protection
 func (e *Entry) protected() bool {
 	for _, v := range e.Values {
 		if v.Key == "Password" && bool(v.Value.Protected) {
@@ -146,7 +149,7 @@ func (e *Entry) protected() bool {
 	return false
 }
 
-//Get returns the value in e corresponding with key k, or an empty string otherwise
+// Get returns the value in e corresponding with key k, or an empty string otherwise
 func (e *Entry) Get(key string) *ValueData {
 	for i, _ := range e.Values {
 		if e.Values[i].Key == key {
@@ -156,7 +159,7 @@ func (e *Entry) Get(key string) *ValueData {
 	return nil
 }
 
-//GetContent returns the content of the value belonging to the given key in string form
+// GetContent returns the content of the value belonging to the given key in string form
 func (e *Entry) GetContent(key string) string {
 	val := e.Get(key)
 	if val == nil {
@@ -165,7 +168,7 @@ func (e *Entry) GetContent(key string) string {
 	return val.Value.Content
 }
 
-//GetIndex returns the index of the Value belonging to the given key
+// GetIndex returns the index of the Value belonging to the given key
 func (e *Entry) GetIndex(key string) int {
 	for i, _ := range e.Values {
 		if e.Values[i].Key == key {
@@ -175,34 +178,34 @@ func (e *Entry) GetIndex(key string) int {
 	return -1
 }
 
-//GetPassword returns the password of an entry
+// GetPassword returns the password of an entry
 func (e *Entry) GetPassword() string {
 	return e.GetContent("Password")
 }
 
-//GetPasswordIndex returns the index in the values slice belonging to the password
+// GetPasswordIndex returns the index in the values slice belonging to the password
 func (e *Entry) GetPasswordIndex() int {
 	return e.GetIndex("Password")
 }
 
-//GetTitle returns the title of an entry
+// GetTitle returns the title of an entry
 func (e *Entry) GetTitle() string {
 	return e.GetContent("Title")
 }
 
-//History stores information about changes made to an entry,
-//in the form of a list of previous versions of that entry
+// History stores information about changes made to an entry,
+// in the form of a list of previous versions of that entry
 type History struct {
 	Entries []Entry `xml:"Entry"`
 }
 
-//ValueData is a structure containing key value pairs of information stored in an entry
+// ValueData is a structure containing key value pairs of information stored in an entry
 type ValueData struct {
 	Key   string `xml:"Key"`
 	Value V      `xml:"Value"`
 }
 
-//V is a wrapper for the content of a value, so that it can store whether it is protected
+// V is a wrapper for the content of a value, so that it can store whether it is protected
 type V struct {
 	Content   string      `xml:",innerxml"`
 	Protected boolWrapper `xml:"Protected,attr,omitempty"`

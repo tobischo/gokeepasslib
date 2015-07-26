@@ -44,7 +44,7 @@ func (e *Encoder) writeData(db *Database) error {
 	xmlData = append(xmlHeader, xmlData...)
 
 	var hashData []byte
-	if db.Headers.CompressionFlags == 1 { //If database header says to compress with gzip, compress xml data and put into block form
+	if db.Headers.CompressionFlags == GzipCompressionFlag { //If database header says to compress with gzip, compress xml data and put into block form
 		b := new(bytes.Buffer)
 		w := gzip.NewWriter(b)
 		defer w.Close()

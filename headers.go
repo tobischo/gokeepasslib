@@ -1,15 +1,26 @@
 package gokeepasslib
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"crypto/rand"
+)
+
+//Constant enumerator for the inner random stream ID
+const (
+	NoStreamID    uint32 = 0
+	ARC4StreamID         = 1
+	SalsaStreamID        = 2
+)
+
+//Constants enumerator for compression flags
+const (
+	NoCompressionFlag   uint32 = 0
+	GzipCompressionFlag        = 1
 )
 
 var AESCipherID = []byte{0x31, 0xC1, 0xF2, 0xE6, 0xBF, 0x71, 0x43, 0x50, 0xBE, 0x58, 0x05, 0x21, 0x6A, 0xFC, 0x5A, 0xFF}
-var GzipCompressionFlag = uint32(1)
-var SalsaInnerRandomStreamID = []byte{0x02,0x00,0x00,0x00}
 
 // FileHeaders holds the header information of the Keepass File.
 type FileHeaders struct {
@@ -22,36 +33,37 @@ type FileHeaders struct {
 	EncryptionIV        []byte // FieldID:  7
 	ProtectedStreamKey  []byte // FieldID:  8
 	StreamStartBytes    []byte // FieldID:  9
-	InnerRandomStreamID []byte // FieldID: 10
+	InnerRandomStreamID uint32 // FieldID: 10
 }
 
-//Creates a new FileHeaders with good defaults
-func NewFileHeaders () (*FileHeaders) {
-	h := new(FileHeaders)
-	
-	h.CipherID = []byte(AESCipherID)
-	h.CompressionFlags = GzipCompressionFlag
-	
-	h.MasterSeed = make([]byte,32)
-	rand.Read(h.MasterSeed)
+// NewFileHeaders creates a new FileHeaders with good defaults
+func NewFileHeaders() *FileHeaders {
+	masterSeed := make([]byte, 32)
+	rand.Read(masterSeed)
 
-	h.TransformSeed = make([]byte,32)
-	rand.Read(h.TransformSeed)
+	transformSeed := make([]byte, 32)
+	rand.Read(transformSeed)
 
-	h.TransformRounds = 6000
+	encryptionIV := make([]byte, 16)
+	rand.Read(encryptionIV)
 
-	h.EncryptionIV = make([]byte,16)
-	rand.Read(h.EncryptionIV)
+	protectedStreamKey := make([]byte, 32)
+	rand.Read(protectedStreamKey)
 
-	h.ProtectedStreamKey = make([]byte,32)
-	rand.Read(h.ProtectedStreamKey)
-	
-	h.StreamStartBytes = make([]byte,32)
-	rand.Read(h.StreamStartBytes)
-	
-	h.InnerRandomStreamID = SalsaInnerRandomStreamID
-	
-	return h
+	streamStartBytes := make([]byte, 32)
+	rand.Read(streamStartBytes)
+
+	return &FileHeaders{
+		CipherID:            []byte(AESCipherID),
+		CompressionFlags:    GzipCompressionFlag,
+		MasterSeed:          masterSeed,
+		TransformSeed:       transformSeed,
+		TransformRounds:     6000,
+		EncryptionIV:        encryptionIV,
+		ProtectedStreamKey:  protectedStreamKey,
+		StreamStartBytes:    streamStartBytes,
+		InnerRandomStreamID: SalsaStreamID,
+	}
 }
 
 func (h FileHeaders) String() string {
@@ -65,7 +77,7 @@ func (h FileHeaders) String() string {
 			"(7) EncryptionIV: %x\n"+
 			"(8) ProtectedStreamKey: %x\n"+
 			"(9) StreamStartBytes: %x\n"+
-			"(10) InnerRandomStreamID: %x\n",
+			"(10) InnerRandomStreamID: %d\n",
 		h.Comment,
 		h.CipherID,
 		h.CompressionFlags,
@@ -79,6 +91,8 @@ func (h FileHeaders) String() string {
 	)
 }
 
+// ReadHeaders reads the headers from an io.Reader and
+// creates a structure containing the parsed header information
 func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 	headers := new(FileHeaders)
 	for {
@@ -117,7 +131,7 @@ func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 		case 9:
 			headers.StreamStartBytes = fieldData
 		case 10:
-			headers.InnerRandomStreamID = fieldData
+			headers.InnerRandomStreamID = binary.LittleEndian.Uint32(fieldData)
 		}
 
 		if fieldID == 0 {
@@ -128,6 +142,8 @@ func ReadHeaders(r io.Reader) (*FileHeaders, error) {
 	return headers, nil
 }
 
+// WriteHeaders takes the contents of the corresponding FileHeaders struct
+// and writes them to the given io.Writer
 func (h *FileHeaders) WriteHeaders(w io.Writer) error {
 	for i := 1; i <= 10; i++ {
 		var data []byte
@@ -155,7 +171,9 @@ func (h *FileHeaders) WriteHeaders(w io.Writer) error {
 		case 9:
 			data = append(data, h.StreamStartBytes...)
 		case 10:
-			data = append(data, h.InnerRandomStreamID...)
+			d := make([]byte, 4)
+			binary.LittleEndian.PutUint32(d, h.InnerRandomStreamID)
+			data = append(data, d...)
 		}
 
 		if len(data) > 0 {
