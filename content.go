@@ -47,7 +47,7 @@ type MetaData struct {
 	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
 	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
 	LastTopVisibleGroup        string        `xml:"LastTopVisibleGroup"`
-	//Binaries                   Binaries      `xml:"Binaries>Binary"`
+	Binaries                   Binaries      `xml:"Binaries>Binary"`
 	CustomData                 string        `xml:"CustomData"`
 }
 
@@ -136,7 +136,7 @@ type Entry struct {
 	AutoType        AutoTypeData      `xml:"AutoType"`
 	Histories       []History         `xml:"History"`
 	Password        []byte            `xml:"-"`
-   //Binaries        []BinaryReference `xml:"Binary,omitempty"`
+	Binaries        []BinaryReference `xml:"Binary,omitempty"`
 }
 
 // Returns true if the e's password has in-memory protection

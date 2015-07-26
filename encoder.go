@@ -9,39 +9,44 @@ import (
 	"encoding/binary"
 	"encoding/xml"
 	"io"
+	"regexp"
 )
 
 //Size in bytes of the data in each block
 const blockSplitRate = 16384
 
-//Header to be put before xml content in kdbx file
-var xmlHeader = []byte(`<?xml version="1.0" encoding="utf-8" standalone="yes"?>`)
+// Header to be put before xml content in kdbx file
+var xmlHeader = []byte(`<?xml version="1.0" encoding="utf-8" standalone="yes"?>` + "\n")
 
-//Encoder is used to automaticaly encrypt and write a database to a file, network, etc
+// Encoder is used to automaticaly encrypt and write a database to a file, network, etc
 type Encoder struct {
 	w io.Writer
 }
 
-//Writes db to e's internal writer
+// Encode writes db to e's internal writer
 func (e *Encoder) Encode(db *Database) error {
 	return e.writeData(db)
 }
 
-//Creates a new encoder with writer w, identical to gokeepasslib.Encoder{w}
+// NewEncoder creates a new encoder with writer w, identical to gokeepasslib.Encoder{w}
 func NewEncoder(w io.Writer) *Encoder {
 	return &Encoder{w: w}
 }
 
-//Internal function to write database to encoder's writer, called by Encode
+// writeData is an internal function to write database to encoder's writer, called by Encode
 func (e *Encoder) writeData(db *Database) error {
 	db.LockProtectedEntries()
 
-	//Creates XML data with from database content, and appends header to top
+	// Creates XML data with from database content, and appends header to top
 	xmlData, err := xml.MarshalIndent(db.Content, "", "\t")
 	if err != nil {
 		return err
 	}
 	xmlData = append(xmlHeader, xmlData...)
+	xmlData, err = encodingPostProcessing(xmlData)
+	if err != nil {
+		return err
+	}
 
 	var hashData []byte
 	if db.Headers.CompressionFlags == GzipCompressionFlag { //If database header says to compress with gzip, compress xml data and put into block form
@@ -118,13 +123,12 @@ func (e *Encoder) writeData(db *Database) error {
 	return nil
 }
 
-/* Converts raw xml data to keepass's block format, which includes a hash of each block to check for data corruption,
- * Every block contains the following elements:
- * (4 bytes) ID : an unique interger id for this block
- * (32 bytes) sha-256 hash of block data
- * (4 bytes) size on bytes of the block data
- * (Data Size Bytes) the actual xml data of the block, will be blockSplitRate bytes at most
- */
+// Converts raw xml data to keepass's block format, which includes a hash of each block to check for data corruption,
+// Every block contains the following elements:
+// (4 bytes) ID : an unique interger id for this block
+// (32 bytes) sha-256 hash of block data
+// (4 bytes) size on bytes of the block data
+// (Data Size Bytes) the actual xml data of the block, will be blockSplitRate bytes at most
 func hashBlocks(data []byte) ([]byte, error) {
 	b := new(bytes.Buffer)
 
@@ -173,4 +177,13 @@ func hashBlocks(data []byte) ([]byte, error) {
 	}
 
 	return b.Bytes(), nil
+}
+
+func encodingPostProcessing(data []byte) ([]byte, error) {
+	// Keepass2 requires binary reference values to written as self closing tags
+	binRefReplacement, err := regexp.Compile("<Value Ref=\"(\\d+)\"></Value>")
+	if err != nil {
+		return nil, err
+	}
+	return binRefReplacement.ReplaceAll(data, []byte("<Value Ref=\"$1\"/>")), nil
 }

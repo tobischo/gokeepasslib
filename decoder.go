@@ -15,7 +15,7 @@ import (
 	"reflect"
 )
 
-//Stores a reader which is expected to be in kdbx format
+// Decoder stores a reader which is expected to be in kdbx format
 type Decoder struct {
 	r io.Reader
 }
