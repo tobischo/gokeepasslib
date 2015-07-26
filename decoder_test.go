@@ -92,6 +92,11 @@ func TestDecodeFile(t *testing.T) {
 func TestCreateNewFile(t *testing.T) {
 	//Creates a brand new kdbx file using only the library
 	newdb := NewDatabase()
+	
+	if newdb.Content.Root.Groups[0].Entries[0].GetTitle() != "Sample Entry" {
+		t.Fatalf("NewRootData() seemed to not work, title should be 'Sample Entry', was %s",newdb.Content.Root.Groups[0].Entries[0].GetTitle())
+	}
+	
 	newdb.Credentials = NewPasswordCredentials("password")
 	newfile, err := os.Create("examples/new.kdbx")
 	if err != nil {
