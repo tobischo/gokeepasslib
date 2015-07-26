@@ -22,6 +22,18 @@ func (bs Binaries) Find(id int) *Binary {
 	return nil
 }
 
+func (b *Binaries) Add (c []byte) *Binary {
+	binary := Binary{Compressed:boolWrapper(true)}
+	if len(*b) == 0 {
+		binary.ID = 0
+	} else {
+		binary.ID = (*b)[len(*b)-1].ID+1
+	}
+	binary.SetContent(c)
+	*b = append(*b,binary)
+	return &(*b)[len(*b)-1]
+}
+
 // Binary stores a binary found in the metadata header of a database
 type Binary struct {
 	Content    []byte      `xml:",innerxml"`
