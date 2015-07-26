@@ -12,7 +12,7 @@ import (
 // Binaries Stores a slice of binaries in the metadata header of a database
 type Binaries []Binary
 
-//Find returns a reference to a binary with the same ID as id, or nil if none if found
+// Find returns a reference to a binary with the same ID as id, or nil if none if found
 func (bs Binaries) Find(id int) *Binary {
 	for i, _ := range bs {
 		if bs[i].ID == id {
@@ -22,7 +22,7 @@ func (bs Binaries) Find(id int) *Binary {
 	return nil
 }
 
-//Binary stores a binary found in the metadata header of a database
+// Binary stores a binary found in the metadata header of a database
 type Binary struct {
 	Content    []byte      `xml:",innerxml"`
 	ID         int         `xml:"ID,attr"`
@@ -33,7 +33,7 @@ func (b Binary) String() string {
 	return fmt.Sprintf("ID: %d, Compressed:%t, Content:%x", b.ID, b.Compressed, b.Content)
 }
 
-//GetContent returns a string which is the plaintext content of a binary, may return an error if something goes wrong in decoding from base64 or decompressing
+// GetContent returns a string which is the plaintext content of a binary
 func (b Binary) GetContent() (string, error) {
 	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
 	_, err := base64.StdEncoding.Decode(decoded, b.Content)
@@ -55,7 +55,7 @@ func (b Binary) GetContent() (string, error) {
 	return string(decoded), nil
 }
 
-//SetContent encodes and (if Compressed=true) compresses c and sets b's content
+// SetContent encodes and (if Compressed=true) compresses c and sets b's content
 func (b *Binary) SetContent(c []byte) error {
 	buff := &bytes.Buffer{}
 	writer := base64.NewEncoder(base64.StdEncoding, buff)
@@ -71,7 +71,7 @@ func (b *Binary) SetContent(c []byte) error {
 	return nil
 }
 
-//CreateReference creates a reference with the same id as b with filename f
+// CreateReference creates a reference with the same id as b with filename f
 func (b Binary) CreateReference(f string) BinaryReference {
 	return NewBinaryReference(f, b.ID)
 }
@@ -84,7 +84,7 @@ type BinaryReference struct {
 	} `xml:"Value"`
 }
 
-//NewbinaryReference creates a new BinaryReference with the given name and id
+// NewbinaryReference creates a new BinaryReference with the given name and id
 func NewBinaryReference(name string, id int) BinaryReference {
 	ref := BinaryReference{}
 	ref.Name = name
