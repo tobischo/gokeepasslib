@@ -24,3 +24,6 @@ _testmain.go
 #ignore kdbx file created by test
 examples/tmp.kdbx
 examples/new.kdbx
+
+#ignore results of coverage test
+*.out
