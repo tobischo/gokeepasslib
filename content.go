@@ -79,13 +79,13 @@ type RootData struct {
 // NewRootData returns a RootData struct with good defaults
 func NewRootData() *RootData {
 	root := new(RootData)
-	group := Group{Name:"NewDatabase"}
+	group := Group{Name: "NewDatabase"}
 	group.Times = NewTimeData()
 	entry := Entry{}
 	entry.Times = NewTimeData()
-	entry.Values = append(entry.Values,ValueData{Key:"Title",Value:V{Content:"Sample Entry"},})
-	group.Entries = append(group.Entries,entry)
-	root.Groups = append(root.Groups,group)
+	entry.Values = append(entry.Values, ValueData{Key: "Title", Value: V{Content: "Sample Entry"}})
+	group.Entries = append(group.Entries, entry)
+	root.Groups = append(root.Groups, group)
 	return root
 }
 
