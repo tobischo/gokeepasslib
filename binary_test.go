@@ -9,14 +9,18 @@ var message string = "Hello World!"
 // Tests that binaries can set and get content correctly compressed or uncompressed
 func TestBinary(t *testing.T) {
 	binaries := Binaries{}
-
+	
 	binary := binaries.Add([]byte("test"))
 	binary.ID = 4
 
 	binary2 := binaries.Add([]byte("replace me"))
 	binary2.SetContent([]byte("Hello world!"))
 	if binary2.ID != 5 {
+		t.Fatalf("Binary2 assigned wrong id by binari.Add, should be 5, was %s",binary2.ID)
+	}
 
+	if binaries.Find(2) != nil {
+		t.Fatalf("Binaries.find for id 2 should be nil, wasn't")
 	}
 
 	references := []BinaryReference{}
