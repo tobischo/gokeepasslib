@@ -99,10 +99,12 @@ func NewUUID () UUID {
 	rand.Read(id[:])
 	return id
 }
+
 func (u UUID) MarshalText () (text []byte, err error) {
 	str := base64.StdEncoding.EncodeToString(u[:])
 	return []byte(str),nil
 }
+
 func (u *UUID) UnmarshalText(text []byte) error {
 	id,err := base64.StdEncoding.DecodeString(string(text))
 	if err != nil {
@@ -111,6 +113,8 @@ func (u *UUID) UnmarshalText(text []byte) error {
 	copy((*u)[:],id[:16])
 	return nil
 }
+
+//Compares check if c and u are equal, used for searching for a uuid
 func (u UUID) Compare (c UUID) bool {
 	for i,v := range c {
 		if u[i] != v {
@@ -122,7 +126,7 @@ func (u UUID) Compare (c UUID) bool {
 
 // Group is a structure to store entries in their named groups for organization
 type Group struct {
-	UUID                    UUID      `xml:"UUID"`
+	UUID                    UUID        `xml:"UUID"`
 	Name                    string      `xml:"Name"`
 	Notes                   string      `xml:"Notes"`
 	IconID                  int64       `xml:"IconID"`
@@ -171,7 +175,7 @@ func NewTimeData() TimeData {
 
 // Entry is the structure which holds information about a parsed entry in a keepass database
 type Entry struct {
-	UUID            UUID            `xml:"UUID"`
+	UUID            UUID              `xml:"UUID"`
 	IconID          int64             `xml:"IconID"`
 	ForegroundColor string            `xml:"ForegroundColor"`
 	BackgroundColor string            `xml:"BackgroundColor"`
