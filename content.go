@@ -41,7 +41,7 @@ type MetaData struct {
 	MasterKeyChangeForce       int64         `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection `xml:"MemoryProtection"`
 	RecycleBinEnabled          boolWrapper   `xml:"RecycleBinEnabled"`
-	RecycleBinUUID             UUID        `xml:"RecycleBinUUID"`
+	RecycleBinUUID             UUID          `xml:"RecycleBinUUID"`
 	RecycleBinChanged          *time.Time    `xml:"RecycleBinChanged"`
 	EntryTemplatesGroup        string        `xml:"EntryTemplatesGroup"`
 	EntryTemplatesGroupChanged *time.Time    `xml:"EntryTemplatesGroupChanged"`
@@ -100,7 +100,7 @@ func NewUUID () UUID {
 	return id
 }
 
-func (u UUID) MarshalText () (text []byte, err error) {
+func (u UUID) MarshalText () ([]byte,error) {
 	str := base64.StdEncoding.EncodeToString(u[:])
 	return []byte(str),nil
 }
