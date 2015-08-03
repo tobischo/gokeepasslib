@@ -3,8 +3,6 @@ package gokeepasslib
 import (
 	"testing"
 	"time"
-	
-	"encoding/base64"
 )
 
 func TestNewTimeData(t *testing.T) {
