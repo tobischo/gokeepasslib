@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"time"
 	"crypto/rand"
+	"errors"
 )
 
 // DBContent is a container for all elements of a keepass database
@@ -90,6 +91,8 @@ func NewRootData() *RootData {
 	return root
 }
 
+var ErrInvalidUUIDLength = errors.New("gokeepasslib: length of decoded UUID was not 16")
+
 // UUID stores a universal identifier for each group+entry
 type UUID [16]byte
 
@@ -100,15 +103,20 @@ func NewUUID () UUID {
 	return id
 }
 
-func (u UUID) MarshalText () ([]byte,error) {
-	str := base64.StdEncoding.EncodeToString(u[:])
-	return []byte(str),nil
+func (u UUID) MarshalText () (text []byte,err error) {
+	text = make([]byte,24)
+	base64.StdEncoding.Encode(text,u[:])
+	return
 }
 
 func (u *UUID) UnmarshalText(text []byte) error {
-	id,err := base64.StdEncoding.DecodeString(string(text))
+	id := make([]byte,base64.StdEncoding.DecodedLen(len(text)))
+	length,err := base64.StdEncoding.Decode(id,text)
 	if err != nil {
 		return err
+	}
+	if length != 16 {
+		return ErrInvalidUUIDLength
 	}
 	copy((*u)[:],id[:16])
 	return nil
