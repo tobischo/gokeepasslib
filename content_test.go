@@ -42,10 +42,10 @@ func TestUUID(t *testing.T) {
 	if !two.Compare(one) {
 		t.Fatalf("One and Two UUIDs should be equal, are not")
 	}
-	
+
 	three := UUID{}
 	err = three.UnmarshalText([]byte("rGnBe1gIikK89aZD6n/plABBBB=="))
 	if err != ErrInvalidUUIDLength {
-		t.Fatal("Expected invalid uuid error, got: %s",err)
+		t.Fatal("Expected invalid uuid error, got: %s", err)
 	}
 }
