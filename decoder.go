@@ -24,11 +24,11 @@ func (d *Decoder) Decode(db *Database) error {
 	}
 	db.Signature = s
 
-	h, err := ReadHeaders(d.r)
+	db.Headers = new(FileHeaders)
+	err = db.Headers.ReadFrom(d.r)
 	if err != nil {
 		return err
 	}
-	db.Headers = h
 
 	if err := d.readData(db); err != nil {
 		return err

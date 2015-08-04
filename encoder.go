@@ -61,7 +61,7 @@ func (e *Encoder) writeData(db *Database) error {
 			return err
 		}
 	}
-	hashData,err := EncodeBlocks(xmlData)
+	hashData, err := EncodeBlocks(xmlData)
 
 	//Appends the StreamStartBytes from db header to the blocked data, used to verify that the key is correct when decrypting
 	hashData = append(db.Headers.StreamStartBytes, hashData...)
@@ -99,7 +99,7 @@ func (e *Encoder) writeData(db *Database) error {
 	}
 
 	//Writes headers of database
-	err = db.Headers.WriteHeaders(e.w)
+	err = db.Headers.WriteTo(e.w)
 	if err != nil {
 		return err
 	}
