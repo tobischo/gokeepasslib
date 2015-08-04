@@ -108,7 +108,7 @@ func DecodeBlocks(body []byte) (result []byte, err error) {
 // Every block contains the following elements:
 // (4 bytes) ID : an unique interger id for this block
 // (32 bytes) sha-256 hash of block data
-// (4 bytes) size on bytes of the block data
+// (4 bytes) size in bytes of the block data
 // (Data Size Bytes) the actual xml data of the block, will be blockSplitRate bytes at most
 func EncodeBlocks(data []byte) (result []byte, err error) {
 	var i uint32
