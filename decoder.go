@@ -5,11 +5,8 @@ import (
 	"compress/gzip"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/sha256"
-	"encoding/binary"
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"reflect"
@@ -72,7 +69,7 @@ func (d *Decoder) readData(db *Database) error {
 
 	var xmlDecoder *xml.Decoder
 	if db.Headers.CompressionFlags == GzipCompressionFlag { //Unzip if the header compression flag is 1 for gzip
-		zippedBody, err := checkHashBlocks(decrypted)
+		zippedBody, err := DecodeBlocks(decrypted)
 		if err != nil {
 			return err
 		}
@@ -91,32 +88,4 @@ func (d *Decoder) readData(db *Database) error {
 	db.Content = &DBContent{}
 	err = xmlDecoder.Decode(db.Content)
 	return err
-}
-
-func checkHashBlocks(hashedBody []byte) ([]byte, error) {
-	var result []byte
-
-	for len(hashedBody) > 0 {
-		index := binary.LittleEndian.Uint32(hashedBody[:4])
-		hashedBody = hashedBody[4:]
-		blockHash := hashedBody[:32]
-		hashedBody = hashedBody[32:]
-		blockLength := binary.LittleEndian.Uint32(hashedBody[:4])
-		hashedBody = hashedBody[4:]
-
-		if blockLength > 0 {
-			blockData := hashedBody[:blockLength]
-			hashedBody = hashedBody[blockLength:]
-			calculatedHash := sha256.Sum256(blockData)
-
-			if !reflect.DeepEqual(calculatedHash[:], blockHash[:]) {
-				return nil, fmt.Errorf("Hash mismatch. Database seems to be corrupt at index %d", index)
-			}
-			result = append(result, blockData...)
-		} else {
-			break
-		}
-	}
-
-	return result, nil
 }
