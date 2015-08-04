@@ -2,11 +2,11 @@
 package gokeepasslib
 
 import (
-	"encoding/xml"
-	"encoding/base64"
-	"time"
 	"crypto/rand"
+	"encoding/base64"
+	"encoding/xml"
 	"errors"
+	"time"
 )
 
 // DBContent is a container for all elements of a keepass database
@@ -91,40 +91,44 @@ func NewRootData() *RootData {
 	return root
 }
 
+// ErrInvalidUUIDLength is an error which is returned during unmarshaling if the UUID does not have 16 bytes length
 var ErrInvalidUUIDLength = errors.New("gokeepasslib: length of decoded UUID was not 16")
 
 // UUID stores a universal identifier for each group+entry
 type UUID [16]byte
 
 // NewUUID returns a new randomly generated UUID
-func NewUUID () UUID {
+func NewUUID() UUID {
 	var id UUID
 	rand.Read(id[:])
 	return id
 }
 
-func (u UUID) MarshalText () (text []byte,err error) {
-	text = make([]byte,24)
-	base64.StdEncoding.Encode(text,u[:])
-	return
+// MarshalText is a marshaler method to encode uuid content as base 64 and return it
+func (u UUID) MarshalText() ([]byte, error) {
+	text := make([]byte, 24)
+	base64.StdEncoding.Encode(text, u[:])
+	return text, nil
 }
 
+// UnmarshalText unmarshals a byte slice into a UUID by decoding the given data from base64
 func (u *UUID) UnmarshalText(text []byte) error {
-	id := make([]byte,base64.StdEncoding.DecodedLen(len(text)))
-	length,err := base64.StdEncoding.Decode(id,text)
+	id := make([]byte, base64.StdEncoding.DecodedLen(len(text)))
+	length, err := base64.StdEncoding.Decode(id, text)
 	if err != nil {
 		return err
 	}
 	if length != 16 {
 		return ErrInvalidUUIDLength
 	}
-	copy((*u)[:],id[:16])
+	copy((*u)[:], id[:16])
 	return nil
 }
 
-//Compares check if c and u are equal, used for searching for a uuid
-func (u UUID) Compare (c UUID) bool {
-	for i,v := range c {
+// Compare allowes to check whether two instance of UUID are equal in value.
+// This is used for searching a uuid
+func (u UUID) Compare(c UUID) bool {
+	for i, v := range c {
 		if u[i] != v {
 			return false
 		}
@@ -149,7 +153,7 @@ type Group struct {
 }
 
 //NewGroup returns a new group with time data and uuid set
-func NewGroup () Group {
+func NewGroup() Group {
 	g := Group{}
 	g.Times = NewTimeData()
 	g.UUID = NewUUID()
@@ -198,7 +202,7 @@ type Entry struct {
 }
 
 // NewEntry return a new entry with time data and uuid set
-func NewEntry () Entry {
+func NewEntry() Entry {
 	e := Entry{}
 	e.Times = NewTimeData()
 	e.UUID = NewUUID()
@@ -290,6 +294,6 @@ type AutoTypeAssociation struct {
 
 type DeletedObjectData struct {
 	XMLName      xml.Name   `xml:"DeletedObject"`
-	UUID         UUID     `xml:"UUID"`
+	UUID         UUID       `xml:"UUID"`
 	DeletionTime *time.Time `xml:"DeletionTime"`
 }
