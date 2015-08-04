@@ -2,7 +2,10 @@
 package gokeepasslib
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/xml"
+	"errors"
 	"time"
 )
 
@@ -39,7 +42,7 @@ type MetaData struct {
 	MasterKeyChangeForce       int64         `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection `xml:"MemoryProtection"`
 	RecycleBinEnabled          boolWrapper   `xml:"RecycleBinEnabled"`
-	RecycleBinUUID             string        `xml:"RecycleBinUUID"`
+	RecycleBinUUID             UUID          `xml:"RecycleBinUUID"`
 	RecycleBinChanged          *time.Time    `xml:"RecycleBinChanged"`
 	EntryTemplatesGroup        string        `xml:"EntryTemplatesGroup"`
 	EntryTemplatesGroupChanged *time.Time    `xml:"EntryTemplatesGroupChanged"`
@@ -79,19 +82,63 @@ type RootData struct {
 // NewRootData returns a RootData struct with good defaults
 func NewRootData() *RootData {
 	root := new(RootData)
-	group := Group{Name: "NewDatabase"}
-	group.Times = NewTimeData()
-	entry := Entry{}
-	entry.Times = NewTimeData()
+	group := NewGroup()
+	group.Name = "NewDatabase"
+	entry := NewEntry()
 	entry.Values = append(entry.Values, ValueData{Key: "Title", Value: V{Content: "Sample Entry"}})
 	group.Entries = append(group.Entries, entry)
 	root.Groups = append(root.Groups, group)
 	return root
 }
 
+// ErrInvalidUUIDLength is an error which is returned during unmarshaling if the UUID does not have 16 bytes length
+var ErrInvalidUUIDLength = errors.New("gokeepasslib: length of decoded UUID was not 16")
+
+// UUID stores a universal identifier for each group+entry
+type UUID [16]byte
+
+// NewUUID returns a new randomly generated UUID
+func NewUUID() UUID {
+	var id UUID
+	rand.Read(id[:])
+	return id
+}
+
+// MarshalText is a marshaler method to encode uuid content as base 64 and return it
+func (u UUID) MarshalText() ([]byte, error) {
+	text := make([]byte, 24)
+	base64.StdEncoding.Encode(text, u[:])
+	return text, nil
+}
+
+// UnmarshalText unmarshals a byte slice into a UUID by decoding the given data from base64
+func (u *UUID) UnmarshalText(text []byte) error {
+	id := make([]byte, base64.StdEncoding.DecodedLen(len(text)))
+	length, err := base64.StdEncoding.Decode(id, text)
+	if err != nil {
+		return err
+	}
+	if length != 16 {
+		return ErrInvalidUUIDLength
+	}
+	copy((*u)[:], id[:16])
+	return nil
+}
+
+// Compare allowes to check whether two instance of UUID are equal in value.
+// This is used for searching a uuid
+func (u UUID) Compare(c UUID) bool {
+	for i, v := range c {
+		if u[i] != v {
+			return false
+		}
+	}
+	return true
+}
+
 // Group is a structure to store entries in their named groups for organization
 type Group struct {
-	UUID                    string      `xml:"UUID"`
+	UUID                    UUID        `xml:"UUID"`
 	Name                    string      `xml:"Name"`
 	Notes                   string      `xml:"Notes"`
 	IconID                  int64       `xml:"IconID"`
@@ -103,6 +150,14 @@ type Group struct {
 	LastTopVisibleEntry     string      `xml:"LastTopVisibleEntry"`
 	Groups                  []Group     `xml:"Group,omitempty"`
 	Entries                 []Entry     `xml:"Entry,omitempty"`
+}
+
+//NewGroup returns a new group with time data and uuid set
+func NewGroup() Group {
+	g := Group{}
+	g.Times = NewTimeData()
+	g.UUID = NewUUID()
+	return g
 }
 
 // TimeData contains all metadata related to times for groups and entries
@@ -132,7 +187,7 @@ func NewTimeData() TimeData {
 
 // Entry is the structure which holds information about a parsed entry in a keepass database
 type Entry struct {
-	UUID            string            `xml:"UUID"`
+	UUID            UUID              `xml:"UUID"`
 	IconID          int64             `xml:"IconID"`
 	ForegroundColor string            `xml:"ForegroundColor"`
 	BackgroundColor string            `xml:"BackgroundColor"`
@@ -144,6 +199,14 @@ type Entry struct {
 	Histories       []History         `xml:"History"`
 	Password        []byte            `xml:"-"`
 	Binaries        []BinaryReference `xml:"Binary,omitempty"`
+}
+
+// NewEntry return a new entry with time data and uuid set
+func NewEntry() Entry {
+	e := Entry{}
+	e.Times = NewTimeData()
+	e.UUID = NewUUID()
+	return e
 }
 
 // Returns true if the e's password has in-memory protection
@@ -175,7 +238,7 @@ func (e *Entry) GetContent(key string) string {
 	return val.Value.Content
 }
 
-// GetIndex returns the index of the Value belonging to the given key
+// GetIndex returns the index of the Value belonging to the given key, or -1 if none is found
 func (e *Entry) GetIndex(key string) int {
 	for i, _ := range e.Values {
 		if e.Values[i].Key == key {
@@ -231,6 +294,6 @@ type AutoTypeAssociation struct {
 
 type DeletedObjectData struct {
 	XMLName      xml.Name   `xml:"DeletedObject"`
-	UUID         string     `xml:"UUID"`
+	UUID         UUID       `xml:"UUID"`
 	DeletionTime *time.Time `xml:"DeletionTime"`
 }
