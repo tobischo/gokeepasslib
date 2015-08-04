@@ -3,8 +3,6 @@ package gokeepasslib
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/aes"
-	"crypto/cipher"
 	"encoding/xml"
 	"io"
 	"regexp"
@@ -75,20 +73,10 @@ func (e *Encoder) writeData(db *Database) error {
 		hashData = append(hashData, padding...)
 	}
 
-	//Uses database credentials info to build encryption key
-	masterKey, err := db.Credentials.buildMasterKey(db)
+	mode,err := db.Encrypter()
 	if err != nil {
 		return err
 	}
-
-	//Creates an AES cipher block from the masterkey
-	block, err := aes.NewCipher(masterKey)
-	if err != nil {
-		return err
-	}
-
-	//Encrypts block data using AES block with initialization vector from header
-	mode := cipher.NewCBCEncrypter(block, db.Headers.EncryptionIV)
 	encrypted := make([]byte, len(hashData))
 	mode.CryptBlocks(encrypted, hashData)
 

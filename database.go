@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"crypto/aes"
+	"crypto/cipher"
 )
 
 // ErrUnsupportedStreamType is retured if no streamManager can be created
@@ -76,4 +78,28 @@ func (db *Database) LockProtectedEntries() error {
 	}
 	LockProtectedGroups(manager, db.Content.Root.Groups)
 	return nil
+}
+
+func (db *Database) Decrypter() (cipher.BlockMode,error) {
+	block,err := db.Cipher()
+	if err != nil {
+		return nil,err
+	}
+	return cipher.NewCBCDecrypter(block, db.Headers.EncryptionIV),nil
+}
+func (db *Database) Encrypter() (cipher.BlockMode,error) {
+	block,err := db.Cipher()
+	if err != nil {
+		return nil,err
+	}
+	//Encrypts block data using AES block with initialization vector from header
+	return cipher.NewCBCEncrypter(block, db.Headers.EncryptionIV),nil
+}
+func (db *Database) Cipher() (cipher.Block,error) {
+	masterKey, err := db.Credentials.buildMasterKey(db)
+	if err != nil {
+		return nil,err
+	}
+
+	return aes.NewCipher(masterKey)
 }
