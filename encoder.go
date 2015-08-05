@@ -5,15 +5,10 @@ import (
 	"compress/gzip"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/sha256"
-	"encoding/binary"
 	"encoding/xml"
 	"io"
 	"regexp"
 )
-
-//Size in bytes of the data in each block
-const blockSplitRate = 16384
 
 // Header to be put before xml content in kdbx file
 var xmlHeader = []byte(`<?xml version="1.0" encoding="utf-8" standalone="yes"?>` + "\n")
@@ -48,7 +43,6 @@ func (e *Encoder) writeData(db *Database) error {
 		return err
 	}
 
-	var hashData []byte
 	if db.Headers.CompressionFlags == GzipCompressionFlag { //If database header says to compress with gzip, compress xml data and put into block form
 		b := new(bytes.Buffer)
 		w := gzip.NewWriter(b)
@@ -62,16 +56,12 @@ func (e *Encoder) writeData(db *Database) error {
 			return err
 		}
 
-		hashData, err = hashBlocks(b.Bytes())
-		if err != nil {
-			return err
-		}
-	} else { //Otherwise put un-compressed xml content into block form
-		hashData, err = hashBlocks(xmlData)
+		xmlData = b.Bytes()
 		if err != nil {
 			return err
 		}
 	}
+	hashData, err := EncodeBlocks(xmlData)
 
 	//Appends the StreamStartBytes from db header to the blocked data, used to verify that the key is correct when decrypting
 	hashData = append(db.Headers.StreamStartBytes, hashData...)
@@ -121,62 +111,6 @@ func (e *Encoder) writeData(db *Database) error {
 	}
 
 	return nil
-}
-
-// Converts raw xml data to keepass's block format, which includes a hash of each block to check for data corruption,
-// Every block contains the following elements:
-// (4 bytes) ID : an unique interger id for this block
-// (32 bytes) sha-256 hash of block data
-// (4 bytes) size on bytes of the block data
-// (Data Size Bytes) the actual xml data of the block, will be blockSplitRate bytes at most
-func hashBlocks(data []byte) ([]byte, error) {
-	b := new(bytes.Buffer)
-
-	i := 0
-	for len(data) > 0 { //For each block
-		var block []byte
-		if len(data) >= blockSplitRate { //If there is enough data for another block, use blockSplitRate bytes of data for block
-			block = append(block, data[:blockSplitRate]...)
-			data = data[blockSplitRate:]
-		} else { //Otherwise just use what is remaining and clear data to break from the loop
-			block = append(block, data[:len(data)]...)
-			data = make([]byte, 0)
-		}
-
-		//Writes the block id to output, discussed above
-		if err := binary.Write(b, binary.LittleEndian, uint32(i)); err != nil {
-			return nil, err
-		}
-
-		//Hashes block data and appends to output
-		hash := sha256.Sum256(block)
-		if _, err := b.Write(hash[:]); err != nil {
-			return nil, err
-		}
-
-		//Writes length of block data to output
-		if err := binary.Write(b, binary.LittleEndian, uint32(len(block))); err != nil {
-			return nil, err
-		}
-
-		//Writes block data
-		if _, err := b.Write(block); err != nil {
-			return nil, err
-		}
-
-		i++
-	}
-
-	//Adds empty block to output, so keepass knows data stream is over
-	if err := binary.Write(b, binary.LittleEndian, uint32(i)); err != nil {
-		return nil, err
-	}
-	endBlock := make([]byte, 36)
-	if _, err := b.Write(endBlock); err != nil {
-		return nil, err
-	}
-
-	return b.Bytes(), nil
 }
 
 func encodingPostProcessing(data []byte) ([]byte, error) {
