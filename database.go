@@ -12,8 +12,7 @@ import (
 // due to an unsupported InnerRandomStreamID value
 var ErrUnsupportedStreamType = errors.New("Type of stream manager unsupported")
 
-
-var ErrRequiredAttributeMissing string
+type ErrRequiredAttributeMissing string
 func (e ErrRequiredAttributeMissing) Error () string {
 	return fmt.Sprintf("gokeepasslib: operation can not be performed if database does not have %s",e)
 }
