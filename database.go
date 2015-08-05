@@ -48,6 +48,9 @@ func (db *Database) String() string {
 // StreamManager returns a ProtectedStreamManager bassed on the db headers, or nil if the type is unsupported
 // Can be used to lock only certain entries instead of calling
 func (db *Database) StreamManager() ProtectedStreamManager {
+	if db.Header == nil {
+		return nil
+	}
 	switch db.Headers.InnerRandomStreamID {
 	case NoStreamID:
 		return new(InsecureStreamManager)
