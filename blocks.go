@@ -25,7 +25,7 @@ func (e ErrCorruptBlock) Error() string {
 var ErrBlockTooSmall = errors.New("gokeepasslib: block is too small")
 
 // ErrEmptyBlock is returned by decoder when a block is empty,ignored if is the last block in the file
-var ErrEmptyBlock = errors.New("gokeepasslib: block appears to be empty/clossing block")
+var ErrEmptyBlock = errors.New("gokeepasslib: block appears to be empty/closing block")
 
 //minsize is the smallest size a block can be
 const minsize int = 40
