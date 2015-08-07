@@ -149,42 +149,53 @@ func (h *FileHeaders) ReadFrom(r io.Reader) error {
 
 // WriteHeaders takes the contents of the corresponding FileHeaders struct
 // and writes them to the given io.Writer
-func (h *FileHeaders) WriteTo(w io.Writer) error {
-	for i := 1; i <= 10; i++ {
-		var data []byte
-		switch i {
-		case 1:
-			data = append(data, h.Comment...)
-		case 2:
-			data = append(data, h.CipherID...)
-		case 3:
-			d := make([]byte, 4)
-			binary.LittleEndian.PutUint32(d, h.CompressionFlags)
-			data = append(data, d...)
-		case 4:
-			data = append(data, h.MasterSeed...)
-		case 5:
-			data = append(data, h.TransformSeed...)
-		case 6:
-			d := make([]byte, 8)
-			binary.LittleEndian.PutUint64(d, h.TransformRounds)
-			data = append(data, d...)
-		case 7:
-			data = append(data, h.EncryptionIV...)
-		case 8:
-			data = append(data, h.ProtectedStreamKey...)
-		case 9:
-			data = append(data, h.StreamStartBytes...)
-		case 10:
-			d := make([]byte, 4)
-			binary.LittleEndian.PutUint32(d, h.InnerRandomStreamID)
-			data = append(data, d...)
-		}
-		if err := NewHeader(i, data).WriteTo(w); err != nil {
-			return err
-		}
+func (headers *FileHeaders) WriteTo(w io.Writer) error {
+	var header Header
+	var err error
+	header = NewHeader(1,headers.Comment)
+	if err = header.WriteTo(w); err != nil {
+		return err
 	}
-	err := EndHeader.WriteTo(w)
+	header = NewHeader(2, headers.CipherID)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(3,make([]byte,4))
+	binary.LittleEndian.PutUint32(header.Data, headers.CompressionFlags)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(4, headers.MasterSeed)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(5, headers.TransformSeed)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(6,make([]byte,8))
+	binary.LittleEndian.PutUint64(header.Data, headers.TransformRounds)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(7, headers.EncryptionIV)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(8, headers.ProtectedStreamKey)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(9, headers.StreamStartBytes)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(10,make([]byte,4))
+	binary.LittleEndian.PutUint32(header.Data, headers.InnerRandomStreamID)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}	
+	err = EndHeader.WriteTo(w)
 	return err
 }
 
@@ -230,6 +241,9 @@ func (h Header) WriteTo(w io.Writer) error {
 		}
 	}
 	return nil
+}
+func (h *Header) FixLength() {
+	h.Length = uint16(len(h.Data))
 }
 func (h Header) String() string {
 	return fmt.Sprintf("ID: %d, Length: %d, Data: %x", h.ID, h.Length, h.Data)
