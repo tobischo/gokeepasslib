@@ -79,7 +79,7 @@ func (h FileHeaders) String() string {
 	return fmt.Sprintf(
 		"(1) Comment: %x\n"+
 			"(2) CipherID: %x\n"+
-			"(3) CompressionFlags: %x\n"+
+			"(3) CompressionFlags: %d\n"+
 			"(4) MasterSeed: %x\n"+
 			"(5) TransformSeed: %x\n"+
 			"(6) TransformRounds: %d\n"+
@@ -147,7 +147,7 @@ func (h *FileHeaders) ReadFrom(r io.Reader) error {
 	}
 }
 
-// WriteHeaders takes the contents of the corresponding FileHeaders struct
+// WriteTo takes the contents of the corresponding FileHeaders struct
 // and writes them to the given io.Writer
 func (headers *FileHeaders) WriteTo(w io.Writer) error {
 	var header Header
