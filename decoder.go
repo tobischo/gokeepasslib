@@ -22,8 +22,7 @@ func (d *Decoder) Decode(db *Database) (err error) {
 	}
 
 	db.Headers = new(FileHeaders)
-	err = db.Headers.ReadFrom(d.r)
-	if err != nil {
+	if err = db.Headers.ReadFrom(d.r); err != nil {
 		return err
 	}
 
