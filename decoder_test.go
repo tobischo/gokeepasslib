@@ -55,7 +55,7 @@ func TestDecodeFile(t *testing.T) {
 	enc := NewEncoder(f)
 	err = enc.Encode(db)
 	if err != nil {
-		t.Fatalf("Failed to encode file: %s",err)
+		t.Fatalf("Failed to encode file: %s", err)
 	}
 
 	tmpfile, err := os.Open("examples/tmp.kdbx")

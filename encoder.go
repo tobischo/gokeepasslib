@@ -88,7 +88,7 @@ func (e *Encoder) writeData(db *Database) error {
 		hashData = append(hashData, padding...)
 	}
 
-	mode,err := db.Encrypter()
+	mode, err := db.Encrypter()
 	if err != nil {
 		return err
 	}
