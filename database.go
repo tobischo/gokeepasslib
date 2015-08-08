@@ -12,6 +12,7 @@ import (
 // due to an unsupported InnerRandomStreamID value
 var ErrUnsupportedStreamType = errors.New("Type of stream manager unsupported")
 
+// ErrRequiredAttributeMissing is returned if a required value is not given
 type ErrRequiredAttributeMissing string
 
 func (e ErrRequiredAttributeMissing) Error() string {
@@ -89,6 +90,7 @@ func (db *Database) LockProtectedEntries() error {
 	return nil
 }
 
+// Decrypter initializes a CBC decrypter for the database
 func (db *Database) Decrypter() (cipher.BlockMode, error) {
 	block, err := db.Cipher()
 	if err != nil {
@@ -96,6 +98,8 @@ func (db *Database) Decrypter() (cipher.BlockMode, error) {
 	}
 	return cipher.NewCBCDecrypter(block, db.Headers.EncryptionIV), nil
 }
+
+// Encrypter initializes a CBC encrypter for the database
 func (db *Database) Encrypter() (cipher.BlockMode, error) {
 	if db.Headers == nil {
 		return nil, ErrRequiredAttributeMissing("Headers")
@@ -110,6 +114,8 @@ func (db *Database) Encrypter() (cipher.BlockMode, error) {
 	//Encrypts block data using AES block with initialization vector from header
 	return cipher.NewCBCEncrypter(block, db.Headers.EncryptionIV), nil
 }
+
+// Cipher returns a new aes cipher initialized with the master key
 func (db *Database) Cipher() (cipher.Block, error) {
 	if db.Credentials == nil {
 		return nil, ErrRequiredAttributeMissing("Credentials")
