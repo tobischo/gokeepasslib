@@ -81,20 +81,17 @@ func (e *Encoder) writeData(db *Database) error {
 	mode.CryptBlocks(encrypted, hashData)
 
 	//Writes file signature (tells program it's a kdbx file of x version)
-	err = db.Signature.WriteSignature(e.w)
-	if err != nil {
+	if err = db.Signature.WriteTo(e.w); err != nil {
 		return err
 	}
 
 	//Writes headers of database
-	err = db.Headers.WriteTo(e.w)
-	if err != nil {
+	if err = db.Headers.WriteTo(e.w); err != nil {
 		return err
 	}
 
 	//Writes the encrypted database content
-	_, err = e.w.Write(encrypted)
-	if err != nil {
+	if _, err = e.w.Write(encrypted); err != nil {
 		return err
 	}
 

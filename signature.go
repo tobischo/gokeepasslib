@@ -2,7 +2,6 @@ package gokeepasslib
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 )
@@ -16,8 +15,23 @@ var VersionSignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
 //FileVersion is the most recent valid file version signature for kdbx files
 var FileVersion = [...]byte{0x01, 0x00, 0x03, 0x00}
 
+//MajorVersion
+const MajorVersion = 3
+
+//MinorVersion
+const MinorVersion = 1
+
 //A full valid default signature struct for new databases
-var DefaultSig = FileSignature{BaseSignature, VersionSignature, FileVersion}
+var DefaultSig = FileSignature{BaseSignature, VersionSignature,MinorVersion,MajorVersion}
+
+type ErrInvalidSignature struct {
+	Name string
+	Is interface{}
+	Shouldbe interface{}
+}
+func (e ErrInvalidSignature) Error () string {
+	return fmt.Sprintf("gokeepasslib: invalid signature. %s is %x. Should be %x",e.Name,e.Is,e.Shouldbe)
+}
 
 // FileSignature holds the Keepass File Signature.
 // The first 4 Bytes are the Base Signature,
@@ -26,37 +40,40 @@ var DefaultSig = FileSignature{BaseSignature, VersionSignature, FileVersion}
 type FileSignature struct {
 	BaseSignature    [4]byte
 	VersionSignature [4]byte
-	FileVersion      [4]byte
+	MinorVersion     uint16
+	MajorVersion     uint16
 }
 
 func (s FileSignature) String() string {
-	return fmt.Sprintf("Base: %x, Version: %x, FileVersion: %x",
+	return fmt.Sprintf("Base: %x, Version: %x, Format Version: %d.%d",
 		s.BaseSignature,
 		s.VersionSignature,
-		s.FileVersion,
+		s.MajorVersion,
+		s.MinorVersion,
 	)
 }
-
-func ReadSignature(r io.Reader) (*FileSignature, error) {
-	sig := new(FileSignature)
-	if err := binary.Read(r, binary.LittleEndian, sig); err != nil {
-		return nil, err
+func (s FileSignature) Validate() error {
+	if s.BaseSignature != BaseSignature {
+		return ErrInvalidSignature{"BaseSignature",s.BaseSignature,BaseSignature}
 	}
-
-	if sig.BaseSignature != BaseSignature {
-		return nil, errors.New("BaseSignature not valid")
+	if s.VersionSignature != VersionSignature {
+		return ErrInvalidSignature{"VersionSignature",s.VersionSignature,VersionSignature}
 	}
-	if sig.VersionSignature != VersionSignature {
-		return nil, errors.New("VersionSignature not valid")
+	if s.MinorVersion != MinorVersion {
+		return ErrInvalidSignature{"MinorVersion",s.MinorVersion,MinorVersion}
 	}
-
-	return sig, nil
+	if s.MajorVersion != MajorVersion {
+		return ErrInvalidSignature{"MajorVersion",s.MajorVersion,MajorVersion}
+	}
+	return nil
 }
-
-func (s *FileSignature) WriteSignature(w io.Writer) error {
-	if err := binary.Write(w, binary.LittleEndian, s); err != nil {
+func (s *FileSignature) ReadFrom(r io.Reader) error {
+	if err := binary.Read(r, binary.LittleEndian, s); err != nil {
 		return err
 	}
+	return s.Validate()
+}
 
-	return nil
+func (s FileSignature) WriteTo(w io.Writer) error {
+	return binary.Write(w, binary.LittleEndian, s)
 }

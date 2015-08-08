@@ -15,12 +15,11 @@ type Decoder struct {
 	r io.Reader
 }
 
-func (d *Decoder) Decode(db *Database) error {
-	s, err := ReadSignature(d.r)
-	if err != nil {
-		return err
+func (d *Decoder) Decode(db *Database) (err error) {
+	db.Signature = new(FileSignature)
+	if err = db.Signature.ReadFrom(d.r); err != nil {
+		return  err
 	}
-	db.Signature = s
 
 	db.Headers = new(FileHeaders)
 	err = db.Headers.ReadFrom(d.r)
