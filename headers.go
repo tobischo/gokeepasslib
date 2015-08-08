@@ -3,6 +3,7 @@ package gokeepasslib
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -21,6 +22,14 @@ const (
 )
 
 var AESCipherID = []byte{0x31, 0xC1, 0xF2, 0xE6, 0xBF, 0x71, 0x43, 0x50, 0xBE, 0x58, 0x05, 0x21, 0x6A, 0xFC, 0x5A, 0xFF}
+
+var ErrEndOfHeaders = errors.New("gokeepasslib: header id was 0, end of headers")
+
+type ErrUnknownHeaderID int
+
+func (i ErrUnknownHeaderID) Error() string {
+	return fmt.Sprintf("gokeepasslib: unknown header ID of %d", i)
+}
 
 // FileHeaders holds the header information of the Keepass File.
 type FileHeaders struct {
@@ -70,7 +79,7 @@ func (h FileHeaders) String() string {
 	return fmt.Sprintf(
 		"(1) Comment: %x\n"+
 			"(2) CipherID: %x\n"+
-			"(3) CompressionFlags: %x\n"+
+			"(3) CompressionFlags: %d\n"+
 			"(4) MasterSeed: %x\n"+
 			"(5) TransformSeed: %x\n"+
 			"(6) TransformRounds: %d\n"+
@@ -91,124 +100,151 @@ func (h FileHeaders) String() string {
 	)
 }
 
-// ReadHeaders reads the headers from an io.Reader and
-// creates a structure containing the parsed header information
-func ReadHeaders(r io.Reader) (*FileHeaders, error) {
-	headers := new(FileHeaders)
-	for {
-		var fieldID byte
-		if err := binary.Read(r, binary.LittleEndian, &fieldID); err != nil {
-			return nil, err
-		}
-
-		var fieldLength [2]byte
-		if err := binary.Read(r, binary.LittleEndian, &fieldLength); err != nil {
-			return nil, err
-		}
-
-		var fieldData = make([]byte, binary.LittleEndian.Uint16(fieldLength[:]))
-		if err := binary.Read(r, binary.LittleEndian, &fieldData); err != nil {
-			return nil, err
-		}
-
-		switch fieldID {
-		case 1:
-			headers.Comment = fieldData
-		case 2:
-			headers.CipherID = fieldData
-		case 3:
-			headers.CompressionFlags = binary.LittleEndian.Uint32(fieldData)
-		case 4:
-			headers.MasterSeed = fieldData
-		case 5:
-			headers.TransformSeed = fieldData
-		case 6:
-			headers.TransformRounds = binary.LittleEndian.Uint64(fieldData)
-		case 7:
-			headers.EncryptionIV = fieldData
-		case 8:
-			headers.ProtectedStreamKey = fieldData
-		case 9:
-			headers.StreamStartBytes = fieldData
-		case 10:
-			headers.InnerRandomStreamID = binary.LittleEndian.Uint32(fieldData)
-		}
-
-		if fieldID == 0 {
-			break
-		}
+func (headers *FileHeaders) SetHeader(h Header) error {
+	switch h.ID {
+	case 0:
+		return ErrEndOfHeaders
+	case 1:
+		headers.Comment = h.Data
+	case 2:
+		headers.CipherID = h.Data
+	case 3:
+		headers.CompressionFlags = binary.LittleEndian.Uint32(h.Data)
+	case 4:
+		headers.MasterSeed = h.Data
+	case 5:
+		headers.TransformSeed = h.Data
+	case 6:
+		headers.TransformRounds = binary.LittleEndian.Uint64(h.Data)
+	case 7:
+		headers.EncryptionIV = h.Data
+	case 8:
+		headers.ProtectedStreamKey = h.Data
+	case 9:
+		headers.StreamStartBytes = h.Data
+	case 10:
+		headers.InnerRandomStreamID = binary.LittleEndian.Uint32(h.Data)
+	default:
+		return ErrUnknownHeaderID(h.ID)
 	}
-
-	return headers, nil
+	return nil
 }
 
-// WriteHeaders takes the contents of the corresponding FileHeaders struct
+// ReadHeaders reads the headers from an io.Reader and
+// creates a structure containing the parsed header information
+func (h *FileHeaders) ReadFrom(r io.Reader) error {
+	var header Header
+	for {
+		if err := header.ReadFrom(r); err != nil {
+			return err
+		}
+		if err := h.SetHeader(header); err != nil {
+			if err == ErrEndOfHeaders {
+				return nil
+			}
+			return err
+		}
+	}
+}
+
+// WriteTo takes the contents of the corresponding FileHeaders struct
 // and writes them to the given io.Writer
-func (h *FileHeaders) WriteHeaders(w io.Writer) error {
-	for i := 1; i <= 10; i++ {
-		var data []byte
-		switch i {
-		case 1:
-			data = append(data, h.Comment...)
-		case 2:
-			data = append(data, h.CipherID...)
-		case 3:
-			d := make([]byte, 4)
-			binary.LittleEndian.PutUint32(d, h.CompressionFlags)
-			data = append(data, d...)
-		case 4:
-			data = append(data, h.MasterSeed...)
-		case 5:
-			data = append(data, h.TransformSeed...)
-		case 6:
-			d := make([]byte, 8)
-			binary.LittleEndian.PutUint64(d, h.TransformRounds)
-			data = append(data, d...)
-		case 7:
-			data = append(data, h.EncryptionIV...)
-		case 8:
-			data = append(data, h.ProtectedStreamKey...)
-		case 9:
-			data = append(data, h.StreamStartBytes...)
-		case 10:
-			d := make([]byte, 4)
-			binary.LittleEndian.PutUint32(d, h.InnerRandomStreamID)
-			data = append(data, d...)
-		}
-
-		if len(data) > 0 {
-			err := binary.Write(w, binary.LittleEndian, uint8(i))
-			if err != nil {
-				return err
-			}
-
-			l := len(data)
-			err = binary.Write(w, binary.LittleEndian, uint16(l))
-			if err != nil {
-				return err
-			}
-
-			err = binary.Write(w, binary.LittleEndian, data)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// End of header
-	err := binary.Write(w, binary.LittleEndian, uint8(0))
-	if err != nil {
+func (headers *FileHeaders) WriteTo(w io.Writer) error {
+	var header Header
+	var err error
+	header = NewHeader(1, headers.Comment)
+	if err = header.WriteTo(w); err != nil {
 		return err
 	}
-
-	err = binary.Write(w, binary.LittleEndian, uint16(4))
-	if err != nil {
+	header = NewHeader(2, headers.CipherID)
+	if err = header.WriteTo(w); err != nil {
 		return err
 	}
-
-	if _, err := w.Write([]byte{0x0d, 0x0a, 0x0d, 0x0a}); err != nil {
+	header = NewHeader(3, make([]byte, 4))
+	binary.LittleEndian.PutUint32(header.Data, headers.CompressionFlags)
+	if err = header.WriteTo(w); err != nil {
 		return err
 	}
+	header = NewHeader(4, headers.MasterSeed)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(5, headers.TransformSeed)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(6, make([]byte, 8))
+	binary.LittleEndian.PutUint64(header.Data, headers.TransformRounds)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(7, headers.EncryptionIV)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(8, headers.ProtectedStreamKey)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(9, headers.StreamStartBytes)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	header = NewHeader(10, make([]byte, 4))
+	binary.LittleEndian.PutUint32(header.Data, headers.InnerRandomStreamID)
+	if err = header.WriteTo(w); err != nil {
+		return err
+	}
+	err = EndHeader.WriteTo(w)
+	return err
+}
 
+var EndHeader = Header{0, 4, []byte{0x0d, 0x0a, 0x0d, 0x0a}}
+
+type Header struct {
+	ID     uint8
+	Length uint16
+	Data   []byte
+}
+
+// NewHeader creates a new header ,setting length automaticaly
+func NewHeader(id int, data []byte) Header {
+	return Header{
+		ID:     uint8(id),
+		Length: uint16(len(data)),
+		Data:   data,
+	}
+}
+func (h *Header) ReadFrom(r io.Reader) error {
+	if err := binary.Read(r, binary.LittleEndian, &h.ID); err != nil {
+		return err
+	}
+	if err := binary.Read(r, binary.LittleEndian, &h.Length); err != nil {
+		return err
+	}
+	h.Data = make([]byte, h.Length)
+	if err := binary.Read(r, binary.LittleEndian, h.Data); err != nil {
+		return err
+	}
 	return nil
+}
+func (h Header) WriteTo(w io.Writer) error {
+	if len(h.Data) > 0 {
+		if err := binary.Write(w, binary.LittleEndian, h.ID); err != nil {
+			return err
+		}
+		if err := binary.Write(w, binary.LittleEndian, h.Length); err != nil {
+			return err
+		}
+		if err := binary.Write(w, binary.LittleEndian, h.Data); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (h *Header) FixLength() {
+	h.Length = uint16(len(h.Data))
+}
+func (h Header) String() string {
+	return fmt.Sprintf("ID: %d, Length: %d, Data: %x", h.ID, h.Length, h.Data)
 }

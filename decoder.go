@@ -3,8 +3,6 @@ package gokeepasslib
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/aes"
-	"crypto/cipher"
 	"encoding/xml"
 	"errors"
 	"io"
@@ -24,11 +22,11 @@ func (d *Decoder) Decode(db *Database) error {
 	}
 	db.Signature = s
 
-	h, err := ReadHeaders(d.r)
+	db.Headers = new(FileHeaders)
+	err = db.Headers.ReadFrom(d.r)
 	if err != nil {
 		return err
 	}
-	db.Headers = h
 
 	if err := d.readData(db); err != nil {
 		return err
@@ -42,22 +40,15 @@ func NewDecoder(r io.Reader) *Decoder {
 }
 
 func (d *Decoder) readData(db *Database) error {
-	masterKey, err := db.Credentials.buildMasterKey(db)
-	if err != nil {
-		return err
-	}
-
-	block, err := aes.NewCipher(masterKey)
-	if err != nil {
-		return err
-	}
-
 	in, err := ioutil.ReadAll(d.r)
 	if err != nil {
 		return err
 	}
 
-	mode := cipher.NewCBCDecrypter(block, db.Headers.EncryptionIV)
+	mode, err := db.Decrypter()
+	if err != nil {
+		return err
+	}
 	decrypted := make([]byte, len(in))
 	mode.CryptBlocks(decrypted, in)
 

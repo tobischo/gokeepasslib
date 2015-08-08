@@ -1,6 +1,8 @@
 package gokeepasslib
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/sha256"
 	"errors"
 	"fmt"
@@ -9,6 +11,13 @@ import (
 // ErrUnsupportedStreamType is retured if no streamManager can be created
 // due to an unsupported InnerRandomStreamID value
 var ErrUnsupportedStreamType = errors.New("Type of stream manager unsupported")
+
+// ErrRequiredAttributeMissing is returned if a required value is not given
+type ErrRequiredAttributeMissing string
+
+func (e ErrRequiredAttributeMissing) Error() string {
+	return fmt.Sprintf("gokeepasslib: operation can not be performed if database does not have %s", e)
+}
 
 // Database stores all contents nessesary for a keepass database file
 type Database struct {
@@ -41,6 +50,9 @@ func (db *Database) String() string {
 // StreamManager returns a ProtectedStreamManager bassed on the db headers, or nil if the type is unsupported
 // Can be used to lock only certain entries instead of calling
 func (db *Database) StreamManager() ProtectedStreamManager {
+	if db.Headers == nil {
+		return nil
+	}
 	switch db.Headers.InnerRandomStreamID {
 	case NoStreamID:
 		return new(InsecureStreamManager)
@@ -76,4 +88,41 @@ func (db *Database) LockProtectedEntries() error {
 	}
 	LockProtectedGroups(manager, db.Content.Root.Groups)
 	return nil
+}
+
+// Decrypter initializes a CBC decrypter for the database
+func (db *Database) Decrypter() (cipher.BlockMode, error) {
+	block, err := db.Cipher()
+	if err != nil {
+		return nil, err
+	}
+	return cipher.NewCBCDecrypter(block, db.Headers.EncryptionIV), nil
+}
+
+// Encrypter initializes a CBC encrypter for the database
+func (db *Database) Encrypter() (cipher.BlockMode, error) {
+	if db.Headers == nil {
+		return nil, ErrRequiredAttributeMissing("Headers")
+	}
+	if db.Headers.EncryptionIV == nil {
+		return nil, ErrRequiredAttributeMissing("Headers.EncryptionIV")
+	}
+	block, err := db.Cipher()
+	if err != nil {
+		return nil, err
+	}
+	//Encrypts block data using AES block with initialization vector from header
+	return cipher.NewCBCEncrypter(block, db.Headers.EncryptionIV), nil
+}
+
+// Cipher returns a new aes cipher initialized with the master key
+func (db *Database) Cipher() (cipher.Block, error) {
+	if db.Credentials == nil {
+		return nil, ErrRequiredAttributeMissing("Credentials")
+	}
+	masterKey, err := db.Credentials.buildMasterKey(db)
+	if err != nil {
+		return nil, err
+	}
+	return aes.NewCipher(masterKey)
 }

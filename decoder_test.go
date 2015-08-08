@@ -53,7 +53,10 @@ func TestDecodeFile(t *testing.T) {
 	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = "http://github.com"
 
 	enc := NewEncoder(f)
-	enc.Encode(db)
+	err = enc.Encode(db)
+	if err != nil {
+		t.Fatalf("Failed to encode file: %s", err)
+	}
 
 	tmpfile, err := os.Open("examples/tmp.kdbx")
 	if err != nil {
