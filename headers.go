@@ -152,7 +152,7 @@ func (h *FileHeaders) ReadFrom(r io.Reader) error {
 func (headers *FileHeaders) WriteTo(w io.Writer) error {
 	var header Header
 	var err error
-	header = NewHeader(1,headers.Comment)
+	header = NewHeader(1, headers.Comment)
 	if err = header.WriteTo(w); err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (headers *FileHeaders) WriteTo(w io.Writer) error {
 	if err = header.WriteTo(w); err != nil {
 		return err
 	}
-	header = NewHeader(3,make([]byte,4))
+	header = NewHeader(3, make([]byte, 4))
 	binary.LittleEndian.PutUint32(header.Data, headers.CompressionFlags)
 	if err = header.WriteTo(w); err != nil {
 		return err
@@ -173,7 +173,7 @@ func (headers *FileHeaders) WriteTo(w io.Writer) error {
 	if err = header.WriteTo(w); err != nil {
 		return err
 	}
-	header = NewHeader(6,make([]byte,8))
+	header = NewHeader(6, make([]byte, 8))
 	binary.LittleEndian.PutUint64(header.Data, headers.TransformRounds)
 	if err = header.WriteTo(w); err != nil {
 		return err
@@ -190,11 +190,11 @@ func (headers *FileHeaders) WriteTo(w io.Writer) error {
 	if err = header.WriteTo(w); err != nil {
 		return err
 	}
-	header = NewHeader(10,make([]byte,4))
+	header = NewHeader(10, make([]byte, 4))
 	binary.LittleEndian.PutUint32(header.Data, headers.InnerRandomStreamID)
 	if err = header.WriteTo(w); err != nil {
 		return err
-	}	
+	}
 	err = EndHeader.WriteTo(w)
 	return err
 }

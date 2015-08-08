@@ -44,8 +44,8 @@ func (d *Decoder) readData(db *Database) error {
 	if err != nil {
 		return err
 	}
-	
-	mode,err := db.Decrypter()
+
+	mode, err := db.Decrypter()
 	if err != nil {
 		return err
 	}

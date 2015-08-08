@@ -1,11 +1,11 @@
 package gokeepasslib
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"crypto/aes"
-	"crypto/cipher"
 )
 
 // ErrUnsupportedStreamType is retured if no streamManager can be created
@@ -13,8 +13,9 @@ import (
 var ErrUnsupportedStreamType = errors.New("Type of stream manager unsupported")
 
 type ErrRequiredAttributeMissing string
-func (e ErrRequiredAttributeMissing) Error () string {
-	return fmt.Sprintf("gokeepasslib: operation can not be performed if database does not have %s",e)
+
+func (e ErrRequiredAttributeMissing) Error() string {
+	return fmt.Sprintf("gokeepasslib: operation can not be performed if database does not have %s", e)
 }
 
 // Database stores all contents nessesary for a keepass database file
@@ -88,34 +89,34 @@ func (db *Database) LockProtectedEntries() error {
 	return nil
 }
 
-func (db *Database) Decrypter() (cipher.BlockMode,error) {
-	block,err := db.Cipher()
+func (db *Database) Decrypter() (cipher.BlockMode, error) {
+	block, err := db.Cipher()
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return cipher.NewCBCDecrypter(block, db.Headers.EncryptionIV),nil
+	return cipher.NewCBCDecrypter(block, db.Headers.EncryptionIV), nil
 }
-func (db *Database) Encrypter() (cipher.BlockMode,error) {
+func (db *Database) Encrypter() (cipher.BlockMode, error) {
 	if db.Headers == nil {
 		return nil, ErrRequiredAttributeMissing("Headers")
 	}
 	if db.Headers.EncryptionIV == nil {
 		return nil, ErrRequiredAttributeMissing("Headers.EncryptionIV")
 	}
-	block,err := db.Cipher()
+	block, err := db.Cipher()
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	//Encrypts block data using AES block with initialization vector from header
-	return cipher.NewCBCEncrypter(block, db.Headers.EncryptionIV),nil
+	return cipher.NewCBCEncrypter(block, db.Headers.EncryptionIV), nil
 }
-func (db *Database) Cipher() (cipher.Block,error) {
+func (db *Database) Cipher() (cipher.Block, error) {
 	if db.Credentials == nil {
 		return nil, ErrRequiredAttributeMissing("Credentials")
 	}
 	masterKey, err := db.Credentials.buildMasterKey(db)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	return aes.NewCipher(masterKey)
 }
