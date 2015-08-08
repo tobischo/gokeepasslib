@@ -12,9 +12,6 @@ var BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
 //VersionSignature is the valid version signature for kdbx files
 var VersionSignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
 
-//FileVersion is the most recent valid file version signature for kdbx files
-var FileVersion = [...]byte{0x01, 0x00, 0x03, 0x00}
-
 //MajorVersion
 const MajorVersion = 3
 
