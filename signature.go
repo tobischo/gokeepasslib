@@ -10,7 +10,7 @@ import (
 var BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
 
 //VersionSignature is the valid version signature for kdbx files
-var VersionSignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
+var SecondarySignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
 
 //MajorVersion
 const MajorVersion = 3
@@ -19,15 +19,16 @@ const MajorVersion = 3
 const MinorVersion = 1
 
 //A full valid default signature struct for new databases
-var DefaultSig = FileSignature{BaseSignature, VersionSignature,MinorVersion,MajorVersion}
+var DefaultSig = FileSignature{BaseSignature, SecondarySignature, MinorVersion, MajorVersion}
 
 type ErrInvalidSignature struct {
-	Name string
-	Is interface{}
+	Name     string
+	Is       interface{}
 	Shouldbe interface{}
 }
-func (e ErrInvalidSignature) Error () string {
-	return fmt.Sprintf("gokeepasslib: invalid signature. %s is %x. Should be %x",e.Name,e.Is,e.Shouldbe)
+
+func (e ErrInvalidSignature) Error() string {
+	return fmt.Sprintf("gokeepasslib: invalid signature. %s is %x. Should be %x", e.Name, e.Is, e.Shouldbe)
 }
 
 // FileSignature holds the Keepass File Signature.
@@ -35,32 +36,32 @@ func (e ErrInvalidSignature) Error () string {
 // followed by 4 Bytes for the Version of the Format
 // which is followed by 4 Bytes for the File Version
 type FileSignature struct {
-	BaseSignature    [4]byte
-	VersionSignature [4]byte
-	MinorVersion     uint16
-	MajorVersion     uint16
+	BaseSignature      [4]byte
+	SecondarySignature [4]byte
+	MinorVersion       uint16
+	MajorVersion       uint16
 }
 
 func (s FileSignature) String() string {
-	return fmt.Sprintf("Base: %x, Version: %x, Format Version: %d.%d",
+	return fmt.Sprintf("Base: %x, Secondary: %x, Format Version: %d.%d",
 		s.BaseSignature,
-		s.VersionSignature,
+		s.SecondarySignature,
 		s.MajorVersion,
 		s.MinorVersion,
 	)
 }
 func (s FileSignature) Validate() error {
 	if s.BaseSignature != BaseSignature {
-		return ErrInvalidSignature{"BaseSignature",s.BaseSignature,BaseSignature}
+		return ErrInvalidSignature{"Base Signature", s.BaseSignature, BaseSignature}
 	}
-	if s.VersionSignature != VersionSignature {
-		return ErrInvalidSignature{"VersionSignature",s.VersionSignature,VersionSignature}
+	if s.SecondarySignature != SecondarySignature {
+		return ErrInvalidSignature{"Secondary Signature", s.SecondarySignature, SecondarySignature}
 	}
 	if s.MinorVersion != MinorVersion {
-		return ErrInvalidSignature{"MinorVersion",s.MinorVersion,MinorVersion}
+		return ErrInvalidSignature{"Minor Version", s.MinorVersion, MinorVersion}
 	}
 	if s.MajorVersion != MajorVersion {
-		return ErrInvalidSignature{"MajorVersion",s.MajorVersion,MajorVersion}
+		return ErrInvalidSignature{"Major Version", s.MajorVersion, MajorVersion}
 	}
 	return nil
 }

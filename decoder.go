@@ -18,7 +18,7 @@ type Decoder struct {
 func (d *Decoder) Decode(db *Database) (err error) {
 	db.Signature = new(FileSignature)
 	if err = db.Signature.ReadFrom(d.r); err != nil {
-		return  err
+		return err
 	}
 
 	db.Headers = new(FileHeaders)

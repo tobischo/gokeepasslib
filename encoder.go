@@ -27,12 +27,12 @@ func (e *Encoder) Encode(db *Database) (err error) {
 	if err = db.Headers.WriteTo(e.w); err != nil {
 		return err
 	}
-	
+
 	//Write database content, encrypted
 	if err = e.writeData(db); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
