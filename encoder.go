@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"encoding/xml"
 	"io"
-	"regexp"
 )
 
 // Header to be put before xml content in kdbx file
@@ -36,10 +35,6 @@ func (e *Encoder) writeData(db *Database) error {
 		return err
 	}
 	xmlData = append(xmlHeader, xmlData...)
-	xmlData, err = encodingPostProcessing(xmlData)
-	if err != nil {
-		return err
-	}
 
 	if db.Headers.CompressionFlags == GzipCompressionFlag { //If database header says to compress with gzip, compress xml data and put into block form
 		b := new(bytes.Buffer)
@@ -99,13 +94,4 @@ func (e *Encoder) writeData(db *Database) error {
 	}
 
 	return nil
-}
-
-func encodingPostProcessing(data []byte) ([]byte, error) {
-	// Keepass2 requires binary reference values to written as self closing tags
-	binRefReplacement, err := regexp.Compile("<Value Ref=\"(\\d+)\"></Value>")
-	if err != nil {
-		return nil, err
-	}
-	return binRefReplacement.ReplaceAll(data, []byte("<Value Ref=\"$1\"/>")), nil
 }
