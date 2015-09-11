@@ -44,6 +44,15 @@ func TestDecodeFile(t *testing.T) {
 		)
 	}
 
+	// Also properly decoded the second entry
+	pw = db.Content.Root.Groups[0].Groups[0].Entries[1].GetPassword()
+	if string(pw) != "AnotherPassword" {
+		t.Fatalf(
+			"Failed to decode password: should be 'AnotherPassword' not '%s'",
+			pw,
+		)
+	}
+
 	f, err := os.Create("examples/tmp.kdbx")
 	if err != nil {
 		t.Fatalf("Failed to open file for writing: %s", err)

@@ -197,7 +197,6 @@ type Entry struct {
 	Values          []ValueData       `xml:"String,omitempty"`
 	AutoType        AutoTypeData      `xml:"AutoType"`
 	Histories       []History         `xml:"History"`
-	Password        []byte            `xml:"-"`
 	Binaries        []BinaryReference `xml:"Binary,omitempty"`
 }
 
