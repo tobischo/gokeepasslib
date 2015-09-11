@@ -1,12 +1,12 @@
 language: go
 
+env:
+ - GO15VENDOREXPERIMENT=1
+
 install:
   - go get golang.org/x/crypto/salsa20
 
 script: go test
-
-env:
- - GO15VENDOREXPERIMENT=1
 
 go:
   - 1.4

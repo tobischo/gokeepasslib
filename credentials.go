@@ -109,3 +109,16 @@ func NewKeyCredentials(location string) (*DBCredentials, error) {
 	}
 	return &DBCredentials{Key: key}, nil
 }
+
+//NewPasswordAndKeyCredentials builds new DBCredentials from a password and the key file at the path specified by location
+func NewPasswordAndKeyCredentials(password, location string) (*DBCredentials, error) {
+	credentials, err := NewKeyCredentials(location)
+	if err != nil {
+		return nil, err
+	}
+
+	hashed := sha256.Sum256([]byte(password))
+	credentials.Passphrase = hashed[:]
+
+	return credentials, nil
+}
