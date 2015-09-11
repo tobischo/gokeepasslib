@@ -1,5 +1,8 @@
 language: go
 
+install:
+  - go get golang.org/x/crypto/salsa20
+
 script: go test
 
 go:
