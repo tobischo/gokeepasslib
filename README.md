@@ -30,7 +30,7 @@ func main() {
 
 	entry := db.Content.Root.Groups[0].Groups[0].Entries[0]
 	fmt.Println(entry.GetTitle())
-	fmt.Println(string(entry.GetPassword()))
+	fmt.Println(entry.GetPassword())
 }
 ```
 
