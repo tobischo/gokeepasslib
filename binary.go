@@ -22,6 +22,7 @@ func (bs Binaries) Find(id int) *Binary {
 	return nil
 }
 
+// Add appends binary data to the slice
 func (b *Binaries) Add(c []byte) *Binary {
 	binary := Binary{Compressed: boolWrapper(true)}
 	if len(*b) == 0 {
@@ -96,7 +97,7 @@ type BinaryReference struct {
 	} `xml:"Value"`
 }
 
-// NewbinaryReference creates a new BinaryReference with the given name and id
+// NewBinaryReference creates a new BinaryReference with the given name and id
 func NewBinaryReference(name string, id int) BinaryReference {
 	ref := BinaryReference{}
 	ref.Name = name
