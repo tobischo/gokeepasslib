@@ -21,6 +21,7 @@ const MinorVersion = 1
 //A full valid default signature struct for new databases
 var DefaultSig = FileSignature{BaseSignature, SecondarySignature, MinorVersion, MajorVersion}
 
+//ErrInvalidSignature is the error returned if the file signature is invalid
 type ErrInvalidSignature struct {
 	Name     string
 	Is       interface{}
@@ -50,6 +51,8 @@ func (s FileSignature) String() string {
 		s.MinorVersion,
 	)
 }
+
+// Validate checks the file signature for validity
 func (s FileSignature) Validate() error {
 	if s.BaseSignature != BaseSignature {
 		return ErrInvalidSignature{"Base Signature", s.BaseSignature, BaseSignature}
@@ -65,6 +68,8 @@ func (s FileSignature) Validate() error {
 	}
 	return nil
 }
+
+// ReadFrom reads and validates the FileSignature from an io.Reader
 func (s *FileSignature) ReadFrom(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, s); err != nil {
 		return err
@@ -72,6 +77,7 @@ func (s *FileSignature) ReadFrom(r io.Reader) error {
 	return s.Validate()
 }
 
+// WriteTo writes the FileSignature to a given writer
 func (s FileSignature) WriteTo(w io.Writer) error {
 	return binary.Write(w, binary.LittleEndian, s)
 }
