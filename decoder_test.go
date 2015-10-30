@@ -116,7 +116,7 @@ func TestCreateNewFile(t *testing.T) {
 
 	newdb.Credentials = NewPasswordCredentials("password")
 
-	err = newdb.LockProtectedEntries()
+	err := newdb.LockProtectedEntries()
 	if err != nil {
 		t.Fatalf("Problem locking entries. %s", err)
 	}
