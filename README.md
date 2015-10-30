@@ -34,6 +34,10 @@ func main() {
 }
 ```
 
+Note the `db.UnlockProtectedEntries()` call: you have to unlock protected entries before using the database
+and call `db.LockProtectedEntries()` before saving it to ensure that the passwords are not stored in plaintext in the xml.
+In kdbx files, which are encrypted using the file credentials, fields are protected with another stream cipher.
+
 ### TODO
 
 * Add godoc comments
