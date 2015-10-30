@@ -42,8 +42,6 @@ func NewEncoder(w io.Writer) *Encoder {
 
 // writeData is an internal function to write database to encoder's writer, called by Encode
 func (e *Encoder) writeData(db *Database) error {
-	db.LockProtectedEntries()
-
 	// Creates XML data with from database content, and appends header to top
 	xmlData, err := xml.MarshalIndent(db.Content, "", "\t")
 	if err != nil {

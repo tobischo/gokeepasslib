@@ -61,6 +61,11 @@ func TestDecodeFile(t *testing.T) {
 	//Changes the value of a entry element to see if the change stays after decoding
 	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = "http://github.com"
 
+	err = db.LockProtectedEntries()
+	if err != nil {
+		t.Fatalf("Problem locking entries. %s", err)
+	}
+
 	enc := NewEncoder(f)
 	err = enc.Encode(db)
 	if err != nil {
@@ -110,6 +115,12 @@ func TestCreateNewFile(t *testing.T) {
 	}
 
 	newdb.Credentials = NewPasswordCredentials("password")
+
+	err = newdb.LockProtectedEntries()
+	if err != nil {
+		t.Fatalf("Problem locking entries. %s", err)
+	}
+
 	newfile, err := os.Create("examples/new.kdbx")
 	if err != nil {
 		t.Fatal(err)
