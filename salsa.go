@@ -15,7 +15,7 @@ type SalsaManager struct {
 	State        []uint32
 	blockUsed    int
 	block        []byte
-	counterWords [2]int
+	counterWords [2]uint32
 	currentBlock []byte
 }
 
@@ -139,7 +139,7 @@ func (s *SalsaManager) Pack(payload []byte) string {
 
 func (s *SalsaManager) reset() {
 	s.blockUsed = 64
-	s.counterWords = [2]int{0, 0}
+	s.counterWords = [2]uint32{0, 0}
 }
 
 func (s *SalsaManager) incrementCounter() {
