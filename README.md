@@ -40,7 +40,7 @@ In kdbx files, which are encrypted using the file credentials, fields are protec
 
 ### Example: writing a file
 
-See [examples/example-writing.go](example-writing.go)
+See [examples/example-writing.go](examples/example-writing.go)
 
 ### TODO
 
