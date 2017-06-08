@@ -1,13 +1,18 @@
 package main
 
 import (
-	"github.com/tobischo/gokeepasslib"
 	"log"
 	"os"
+
+	"github.com/tobischo/gokeepasslib"
 )
 
 func mkValue(key string, value string) gokeepasslib.ValueData {
 	return gokeepasslib.ValueData{Key: key, Value: gokeepasslib.V{Content: value}}
+}
+
+func mkProtectedValue(key string, value string) gokeepasslib.ValueData {
+	return gokeepasslib.ValueData{Key: key, Value: gokeepasslib.V{Content: value, Protected: true}}
 }
 
 func main() {
@@ -28,7 +33,7 @@ func main() {
 	entry := gokeepasslib.NewEntry()
 	entry.Values = append(entry.Values, mkValue("Title", "My GMail password"))
 	entry.Values = append(entry.Values, mkValue("UserName", "example@gmail.com"))
-	entry.Values = append(entry.Values, mkValue("Password", "hunter2"))
+	entry.Values = append(entry.Values, mkProtectedValue("Password", "hunter2"))
 
 	rootGroup.Entries = append(rootGroup.Entries, entry)
 
@@ -52,6 +57,9 @@ func main() {
 			},
 		},
 	}
+
+	// Lock entries using stream cipher
+	db.LockProtectedEntries()
 
 	// and encode it into the file
 
