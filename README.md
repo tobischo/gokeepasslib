@@ -8,7 +8,7 @@ gokeepasslib is a library which allows reading Keepass 2 files (kdbx).
 Note: only Keepass v2.30 or higher is properly supported since earlier versions do not allow empty XML tags but expected self-closing tags (which is valid XML but not really supported by Golang on XML marshaling)
 Basically: this lib can probably read most Keepass2 files, but only Keepass v2.30 can be expected to read files created in this lib.
 
-### Example
+### Example: reading a file
 
 ```go
 package main
@@ -37,6 +37,10 @@ func main() {
 Note the `db.UnlockProtectedEntries()` call: you have to unlock protected entries before using the database
 and call `db.LockProtectedEntries()` before saving it to ensure that the passwords are not stored in plaintext in the xml.
 In kdbx files, which are encrypted using the file credentials, fields are protected with another stream cipher.
+
+### Example: writing a file
+
+See [examples/example-writing.go](examples/example-writing.go)
 
 ### TODO
 
