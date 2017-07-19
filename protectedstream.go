@@ -73,6 +73,6 @@ func LockProtectedEntry(p ProtectedStreamManager, e *Entry) {
 		}
 	}
 	for i, _ := range e.Histories {
-		UnlockProtectedEntries(p, e.Histories[i].Entries)
+		LockProtectedEntries(p, e.Histories[i].Entries)
 	}
 }
