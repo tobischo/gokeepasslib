@@ -148,8 +148,8 @@ type Group struct {
 	EnableAutoType          string      `xml:"EnableAutoType"`
 	EnableSearching         string      `xml:"EnableSearching"`
 	LastTopVisibleEntry     string      `xml:"LastTopVisibleEntry"`
-	Groups                  []Group     `xml:"Group,omitempty"`
 	Entries                 []Entry     `xml:"Entry,omitempty"`
+	Groups                  []Group     `xml:"Group,omitempty"`
 }
 
 //NewGroup returns a new group with time data and uuid set
