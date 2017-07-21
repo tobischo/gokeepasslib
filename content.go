@@ -281,9 +281,9 @@ type V struct {
 }
 
 type AutoTypeData struct {
-	Enabled                 boolWrapper         `xml:"Enabled"`
-	DataTransferObfuscation int64               `xml:"DataTransferObfuscation"`
-	Association             AutoTypeAssociation `xml:"Association"`
+	Enabled                 boolWrapper          `xml:"Enabled"`
+	DataTransferObfuscation int64                `xml:"DataTransferObfuscation"`
+	Association             *AutoTypeAssociation `xml:"Association,omitempty"`
 }
 
 type AutoTypeAssociation struct {
