@@ -1,6 +1,8 @@
 package gokeepasslib
 
 import (
+	"encoding/xml"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -46,6 +48,57 @@ func TestUUID(t *testing.T) {
 	three := UUID{}
 	err = three.UnmarshalText([]byte("rGnBe1gIikK89aZD6n/plABBBB=="))
 	if err != ErrInvalidUUIDLength {
-		t.Fatal("Expected invalid uuid error, got: %s", err)
+		t.Fatalf("Expected invalid uuid error, got: %s", err)
+	}
+}
+
+func TestVUnmarshal(t *testing.T) {
+	v := &V{}
+
+	data := []byte(`<Value Protected="True">&lt;some content &amp; to be decoded &quot; &gt;
+	</Value>`)
+
+	expectedV := &V{
+		Content: `<some content & to be decoded " >
+	`,
+		Protected: true,
+	}
+
+	err := xml.Unmarshal(data, v)
+	if err != nil {
+		t.Fatalf("Received an unexpected error unmarshaling V: %v", err)
+	}
+
+	if !reflect.DeepEqual(v, expectedV) {
+		t.Fatalf(
+			"Did not receive expected V %#v, received: %#v",
+			expectedV,
+			v,
+		)
+	}
+}
+
+func TestVMarshal(t *testing.T) {
+	v := &V{
+		Content: `<some content & to be encoded " >
+	`,
+		Protected: true,
+	}
+
+	expectedData := []byte(`<V Protected="True">` +
+		`&lt;some content &amp; to be encoded &#34; &gt;&#xA;&#x9;` +
+		`</V>`)
+
+	data, err := xml.Marshal(v)
+	if err != nil {
+		t.Fatalf("Received an unexpected error marshaling V: %v", err)
+	}
+
+	if !reflect.DeepEqual(data, expectedData) {
+		t.Fatalf(
+			"Did not receive expected data %s, received: %s",
+			expectedData,
+			data,
+		)
 	}
 }

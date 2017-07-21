@@ -276,7 +276,7 @@ type ValueData struct {
 
 // V is a wrapper for the content of a value, so that it can store whether it is protected
 type V struct {
-	Content   string      `xml:",innerxml"`
+	Content   string      `xml:",chardata"`
 	Protected boolWrapper `xml:"Protected,attr,omitempty"`
 }
 
