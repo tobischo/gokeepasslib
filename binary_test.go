@@ -16,7 +16,7 @@ func TestBinary(t *testing.T) {
 	binary2 := binaries.Add([]byte("replace me"))
 	binary2.SetContent([]byte("Hello world!"))
 	if binary2.ID != 5 {
-		t.Fatalf("Binary2 assigned wrong id by binaries.Add, should be 5, was %s", binary2.ID)
+		t.Fatalf("Binary2 assigned wrong id by binaries.Add, should be 5, was %d", binary2.ID)
 	}
 
 	if binaries.Find(2) != nil {

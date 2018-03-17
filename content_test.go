@@ -30,7 +30,7 @@ func TestUUID(t *testing.T) {
 	one := UUID{}
 	err := one.UnmarshalText([]byte("rGnBe1gIikK89aZD6n/plA=="))
 	if err != nil {
-		t.Fatalf("Error unmarshaling uuid", err)
+		t.Fatalf("Error unmarshaling uuid: %s", err.Error())
 	}
 	mar, err := one.MarshalText()
 	if err != nil {
