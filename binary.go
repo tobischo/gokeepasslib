@@ -79,7 +79,9 @@ func (b *Binary) SetContent(c []byte) error {
 	if err != nil {
 		return err
 	}
-	writer.Close()
+	if err := writer.Close(); err != nil {
+		return err
+	}
 	b.Content = buff.Bytes()
 	return nil
 }

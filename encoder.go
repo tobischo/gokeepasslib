@@ -52,13 +52,15 @@ func (e *Encoder) writeData(db *Database) error {
 	if db.Headers.CompressionFlags == GzipCompressionFlag { //If database header says to compress with gzip, compress xml data and put into block form
 		b := new(bytes.Buffer)
 		w := gzip.NewWriter(b)
-		defer w.Close()
 
 		if _, err = w.Write(xmlData); err != nil {
 			return err
 		}
 
-		if err = w.Flush(); err != nil {
+		// Close() needs to be explicitly called to write Gzip stream footer,
+		// Flush() is not enough. some gzip decoders treat missing footer as error
+		// while some don't). internally Close() also does flush.
+		if err = w.Close(); err != nil {
 			return err
 		}
 
