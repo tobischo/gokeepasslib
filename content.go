@@ -35,7 +35,7 @@ type MetaData struct {
 	DatabaseDescriptionChanged *time.Time    `xml:"DatabaseDescriptionChanged"`
 	DefaultUserName            string        `xml:"DefaultUserName"`
 	DefaultUserNameChanged     *time.Time    `xml:"DefaultUserNameChanged"`
-	MaintenanceHistoryDays     string        `xml:"MaintenanceHistoryDays"`
+	MaintenanceHistoryDays     int64         `xml:"MaintenanceHistoryDays"`
 	Color                      string        `xml:"Color"`
 	MasterKeyChanged           *time.Time    `xml:"MasterKeyChanged"`
 	MasterKeyChangeRec         int64         `xml:"MasterKeyChangeRec"`
@@ -56,12 +56,16 @@ type MetaData struct {
 
 // NewMetaData creates a MetaData struct with some defaults set
 func NewMetaData() *MetaData {
-	meta := new(MetaData)
 	now := time.Now()
-	meta.MasterKeyChanged = &now
-	meta.MasterKeyChangeRec = -1
-	meta.MasterKeyChangeForce = -1
-	return meta
+
+	return &MetaData{
+		MasterKeyChanged:       &now,
+		MasterKeyChangeRec:     -1,
+		MasterKeyChangeForce:   -1,
+		HistoryMaxItems:        10,
+		HistoryMaxSize:         6291456, // 6 MB
+		MaintenanceHistoryDays: 365,
+	}
 }
 
 // MemProtection is a structure containing settings for MemoryProtection
@@ -145,8 +149,8 @@ type Group struct {
 	Times                   TimeData    `xml:"Times"`
 	IsExpanded              boolWrapper `xml:"IsExpanded"`
 	DefaultAutoTypeSequence string      `xml:"DefaultAutoTypeSequence"`
-	EnableAutoType          string      `xml:"EnableAutoType"`
-	EnableSearching         string      `xml:"EnableSearching"`
+	EnableAutoType          boolWrapper `xml:"EnableAutoType"`
+	EnableSearching         boolWrapper `xml:"EnableSearching"`
 	LastTopVisibleEntry     string      `xml:"LastTopVisibleEntry"`
 	Entries                 []Entry     `xml:"Entry,omitempty"`
 	Groups                  []Group     `xml:"Group,omitempty"`
@@ -154,10 +158,12 @@ type Group struct {
 
 //NewGroup returns a new group with time data and uuid set
 func NewGroup() Group {
-	g := Group{}
-	g.Times = NewTimeData()
-	g.UUID = NewUUID()
-	return g
+	return Group{
+		EnableAutoType:  boolWrapper(true),
+		EnableSearching: boolWrapper(true),
+		Times:           NewTimeData(),
+		UUID:            NewUUID(),
+	}
 }
 
 // TimeData contains all metadata related to times for groups and entries
