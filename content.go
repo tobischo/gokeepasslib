@@ -6,29 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
-	"time"
 )
-
-type KeePassTime time.Time
-
-func Now() KeePassTime {
-	return KeePassTime(time.Now().In(time.UTC))
-}
-func (kt KeePassTime) MarshalText() ([]byte, error) {
-	t := time.Time(kt)
-	if y := t.Year(); y < 0 || y >= 10000 {
-		return nil, errors.New("KeePassTime.MarshalText: year outside of range [0,9999]")
-	}
-
-	b := make([]byte, 0, len(time.RFC3339))
-	return t.AppendFormat(b, time.RFC3339), nil
-}
-func (kt *KeePassTime) UnmarshalText(data []byte) error {
-	// Fractional seconds are handled implicitly by Parse.
-	t, err := time.Parse(time.RFC3339, string(data))
-	*kt = KeePassTime(t)
-	return err
-}
 
 // DBContent is a container for all elements of a keepass database
 type DBContent struct {
@@ -51,22 +29,22 @@ type MetaData struct {
 	Generator                  string        `xml:"Generator"`
 	HeaderHash                 string        `xml:"HeaderHash"`
 	DatabaseName               string        `xml:"DatabaseName"`
-	DatabaseNameChanged        *KeePassTime  `xml:"DatabaseNameChanged"`
+	DatabaseNameChanged        *timeWrapper  `xml:"DatabaseNameChanged"`
 	DatabaseDescription        string        `xml:"DatabaseDescription"`
-	DatabaseDescriptionChanged *KeePassTime  `xml:"DatabaseDescriptionChanged"`
+	DatabaseDescriptionChanged *timeWrapper  `xml:"DatabaseDescriptionChanged"`
 	DefaultUserName            string        `xml:"DefaultUserName"`
-	DefaultUserNameChanged     *KeePassTime  `xml:"DefaultUserNameChanged"`
+	DefaultUserNameChanged     *timeWrapper  `xml:"DefaultUserNameChanged"`
 	MaintenanceHistoryDays     int64         `xml:"MaintenanceHistoryDays"`
 	Color                      string        `xml:"Color"`
-	MasterKeyChanged           *KeePassTime  `xml:"MasterKeyChanged"`
+	MasterKeyChanged           *timeWrapper  `xml:"MasterKeyChanged"`
 	MasterKeyChangeRec         int64         `xml:"MasterKeyChangeRec"`
 	MasterKeyChangeForce       int64         `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection `xml:"MemoryProtection"`
 	RecycleBinEnabled          boolWrapper   `xml:"RecycleBinEnabled"`
 	RecycleBinUUID             UUID          `xml:"RecycleBinUUID"`
-	RecycleBinChanged          *KeePassTime  `xml:"RecycleBinChanged"`
+	RecycleBinChanged          *timeWrapper  `xml:"RecycleBinChanged"`
 	EntryTemplatesGroup        string        `xml:"EntryTemplatesGroup"`
-	EntryTemplatesGroupChanged *KeePassTime  `xml:"EntryTemplatesGroupChanged"`
+	EntryTemplatesGroupChanged *timeWrapper  `xml:"EntryTemplatesGroupChanged"`
 	HistoryMaxItems            int64         `xml:"HistoryMaxItems"`
 	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
 	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
@@ -190,13 +168,13 @@ func NewGroup() Group {
 // TimeData contains all metadata related to times for groups and entries
 // e.g. the last modification time or the creation time
 type TimeData struct {
-	CreationTime         *KeePassTime `xml:"CreationTime"`
-	LastModificationTime *KeePassTime `xml:"LastModificationTime"`
-	LastAccessTime       *KeePassTime `xml:"LastAccessTime"`
-	ExpiryTime           *KeePassTime `xml:"ExpiryTime"`
+	CreationTime         *timeWrapper `xml:"CreationTime"`
+	LastModificationTime *timeWrapper `xml:"LastModificationTime"`
+	LastAccessTime       *timeWrapper `xml:"LastAccessTime"`
+	ExpiryTime           *timeWrapper `xml:"ExpiryTime"`
 	Expires              boolWrapper  `xml:"Expires"`
 	UsageCount           int64        `xml:"UsageCount"`
-	LocationChanged      *KeePassTime `xml:"LocationChanged"`
+	LocationChanged      *timeWrapper `xml:"LocationChanged"`
 }
 
 // NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
@@ -321,5 +299,5 @@ type AutoTypeAssociation struct {
 type DeletedObjectData struct {
 	XMLName      xml.Name     `xml:"DeletedObject"`
 	UUID         UUID         `xml:"UUID"`
-	DeletionTime *KeePassTime `xml:"DeletionTime"`
+	DeletionTime *timeWrapper `xml:"DeletionTime"`
 }
