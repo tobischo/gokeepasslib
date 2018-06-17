@@ -61,6 +61,9 @@ func TestDecodeFile(t *testing.T) {
 	//Changes the value of a entry element to see if the change stays after decoding
 	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = "http://github.com"
 
+	// Generate new headers to test header hash
+	db.Headers = NewFileHeaders()
+
 	err = db.LockProtectedEntries()
 	if err != nil {
 		t.Fatalf("Problem locking entries. %s", err)

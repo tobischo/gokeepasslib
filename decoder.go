@@ -76,5 +76,13 @@ func (d *Decoder) readData(db *Database) error {
 
 	db.Content = &DBContent{}
 	err = xmlDecoder.Decode(db.Content)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if db.Content.Meta.HeaderHash != db.buildHeaderHash() {
+		return errors.New("HeaderHash invalid")
+	}
+
+	return nil
 }

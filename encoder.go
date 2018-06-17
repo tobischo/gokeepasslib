@@ -3,8 +3,6 @@ package gokeepasslib
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/xml"
 	"io"
 )
@@ -19,12 +17,8 @@ type Encoder struct {
 
 // Encode writes db to e's internal writer
 func (e *Encoder) Encode(db *Database) (err error) {
-	//Caculate hash
-	buf := bytes.NewBuffer(make([]byte, 0))
-	db.Signature.WriteTo(buf)
-	db.Headers.WriteTo(buf)
-	hash := sha256.Sum256([]byte(buf.Bytes()))
-	db.Content.Meta.HeaderHash = base64.StdEncoding.EncodeToString(hash[:])
+	//Calculate hash
+	db.Content.Meta.HeaderHash = db.buildHeaderHash()
 	//Writes file signature (tells program it's a kdbx file of x version)
 	if err = db.Signature.WriteTo(e.w); err != nil {
 		return err
