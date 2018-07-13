@@ -17,8 +17,6 @@ type Encoder struct {
 
 // Encode writes db to e's internal writer
 func (e *Encoder) Encode(db *Database) (err error) {
-	//Calculate hash
-	db.Content.Meta.HeaderHash = db.buildHeaderHash()
 	//Writes file signature (tells program it's a kdbx file of x version)
 	if err = db.Signature.WriteTo(e.w); err != nil {
 		return err
@@ -28,6 +26,10 @@ func (e *Encoder) Encode(db *Database) (err error) {
 	if err = db.Headers.WriteTo(e.w); err != nil {
 		return err
 	}
+
+	//Calculate hash
+	//Has to happen after headers are written because kept raw data is updated
+	db.Content.Meta.HeaderHash = db.buildHeaderHash()
 
 	//Write database content, encrypted
 	if err = e.writeData(db); err != nil {

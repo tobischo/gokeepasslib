@@ -131,11 +131,11 @@ func (db *Database) Cipher() (cipher.Block, error) {
 
 func (db *Database) buildHeaderHash() string {
 	//Calculate hash
-	buf := bytes.NewBuffer(make([]byte, 0))
+	buffer := bytes.NewBuffer(make([]byte, 0))
 
-	db.Signature.WriteTo(buf)
-	db.Headers.WriteTo(buf)
+	db.Signature.WriteTo(buffer)
+	buffer.Write(db.Headers.RawData)
 
-	hash := sha256.Sum256([]byte(buf.Bytes()))
+	hash := sha256.Sum256([]byte(buffer.Bytes()))
 	return base64.StdEncoding.EncodeToString(hash[:])
 }

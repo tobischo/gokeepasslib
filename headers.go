@@ -1,6 +1,7 @@
 package gokeepasslib
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
@@ -33,6 +34,7 @@ func (i ErrUnknownHeaderID) Error() string {
 
 // FileHeaders holds the header information of the Keepass File.
 type FileHeaders struct {
+	RawData             []byte
 	Comment             []byte // FieldID:  1
 	CipherID            []byte // FieldID:  2
 	CompressionFlags    uint32 // FieldID:  3
@@ -133,11 +135,17 @@ func (headers *FileHeaders) SetHeader(h Header) error {
 // ReadHeaders reads the headers from an io.Reader and
 // creates a structure containing the parsed header information
 func (h *FileHeaders) ReadFrom(r io.Reader) error {
+	buffer := bytes.NewBuffer([]byte{})
+
+	tR := io.TeeReader(r, buffer)
+
 	var header Header
 	for {
-		if err := header.ReadFrom(r); err != nil {
+		if err := header.ReadFrom(tR); err != nil {
 			return err
 		}
+		// Update raw data after each successful read
+		h.RawData = buffer.Bytes()
 		if err := h.SetHeader(header); err != nil {
 			if err == ErrEndOfHeaders {
 				return nil
@@ -150,52 +158,62 @@ func (h *FileHeaders) ReadFrom(r io.Reader) error {
 // WriteTo takes the contents of the corresponding FileHeaders struct
 // and writes them to the given io.Writer
 func (headers *FileHeaders) WriteTo(w io.Writer) error {
+	buffer := bytes.NewBuffer([]byte{})
+
 	var header Header
 	var err error
 	header = NewHeader(1, headers.Comment)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
 	header = NewHeader(2, headers.CipherID)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
 	header = NewHeader(3, make([]byte, 4))
 	binary.LittleEndian.PutUint32(header.Data, headers.CompressionFlags)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
 	header = NewHeader(4, headers.MasterSeed)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
 	header = NewHeader(5, headers.TransformSeed)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
 	header = NewHeader(6, make([]byte, 8))
 	binary.LittleEndian.PutUint64(header.Data, headers.TransformRounds)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
 	header = NewHeader(7, headers.EncryptionIV)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
 	header = NewHeader(8, headers.ProtectedStreamKey)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
 	header = NewHeader(9, headers.StreamStartBytes)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
 	header = NewHeader(10, make([]byte, 4))
 	binary.LittleEndian.PutUint32(header.Data, headers.InnerRandomStreamID)
-	if err = header.WriteTo(w); err != nil {
+	if err = header.WriteTo(buffer); err != nil {
 		return err
 	}
-	err = EndHeader.WriteTo(w)
+	if err = EndHeader.WriteTo(buffer); err != nil {
+		return err
+	}
+
+	// Update raw data headers and write to given writer
+	headers.RawData = buffer.Bytes()
+
+	_, err = w.Write(buffer.Bytes())
+
 	return err
 }
 
