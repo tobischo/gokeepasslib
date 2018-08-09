@@ -52,4 +52,4 @@ See [examples/example-writing.go](examples/example-writing.go)
 [LICENSE](LICENSE.md)
 
 ### Copyright
-Copyright &copy; 2015 Tobias Schoknecht. All rights reserved.
+Copyright &copy; 2018 Tobias Schoknecht. All rights reserved.
