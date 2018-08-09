@@ -24,7 +24,7 @@ func (bs Binaries) Find(id int) *Binary {
 
 // Add appends binary data to the slice
 func (b *Binaries) Add(c []byte) *Binary {
-	binary := Binary{Compressed: boolWrapper(true)}
+	binary := Binary{Compressed: BoolWrapper(true)}
 	if len(*b) == 0 {
 		binary.ID = 0
 	} else {
@@ -39,7 +39,7 @@ func (b *Binaries) Add(c []byte) *Binary {
 type Binary struct {
 	Content    []byte      `xml:",innerxml"`
 	ID         int         `xml:"ID,attr"`
-	Compressed boolWrapper `xml:"Compressed,attr"`
+	Compressed BoolWrapper `xml:"Compressed,attr"`
 }
 
 func (b Binary) String() string {

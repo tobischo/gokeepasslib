@@ -29,22 +29,22 @@ type MetaData struct {
 	Generator                  string        `xml:"Generator"`
 	HeaderHash                 string        `xml:"HeaderHash"`
 	DatabaseName               string        `xml:"DatabaseName"`
-	DatabaseNameChanged        *timeWrapper  `xml:"DatabaseNameChanged"`
+	DatabaseNameChanged        *TimeWrapper  `xml:"DatabaseNameChanged"`
 	DatabaseDescription        string        `xml:"DatabaseDescription"`
-	DatabaseDescriptionChanged *timeWrapper  `xml:"DatabaseDescriptionChanged"`
+	DatabaseDescriptionChanged *TimeWrapper  `xml:"DatabaseDescriptionChanged"`
 	DefaultUserName            string        `xml:"DefaultUserName"`
-	DefaultUserNameChanged     *timeWrapper  `xml:"DefaultUserNameChanged"`
+	DefaultUserNameChanged     *TimeWrapper  `xml:"DefaultUserNameChanged"`
 	MaintenanceHistoryDays     int64         `xml:"MaintenanceHistoryDays"`
 	Color                      string        `xml:"Color"`
-	MasterKeyChanged           *timeWrapper  `xml:"MasterKeyChanged"`
+	MasterKeyChanged           *TimeWrapper  `xml:"MasterKeyChanged"`
 	MasterKeyChangeRec         int64         `xml:"MasterKeyChangeRec"`
 	MasterKeyChangeForce       int64         `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection `xml:"MemoryProtection"`
-	RecycleBinEnabled          boolWrapper   `xml:"RecycleBinEnabled"`
+	RecycleBinEnabled          BoolWrapper   `xml:"RecycleBinEnabled"`
 	RecycleBinUUID             UUID          `xml:"RecycleBinUUID"`
-	RecycleBinChanged          *timeWrapper  `xml:"RecycleBinChanged"`
+	RecycleBinChanged          *TimeWrapper  `xml:"RecycleBinChanged"`
 	EntryTemplatesGroup        string        `xml:"EntryTemplatesGroup"`
-	EntryTemplatesGroupChanged *timeWrapper  `xml:"EntryTemplatesGroupChanged"`
+	EntryTemplatesGroupChanged *TimeWrapper  `xml:"EntryTemplatesGroupChanged"`
 	HistoryMaxItems            int64         `xml:"HistoryMaxItems"`
 	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
 	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
@@ -69,11 +69,11 @@ func NewMetaData() *MetaData {
 
 // MemProtection is a structure containing settings for MemoryProtection
 type MemProtection struct {
-	ProtectTitle    boolWrapper `xml:"ProtectTitle"`
-	ProtectUserName boolWrapper `xml:"ProtectUserName"`
-	ProtectPassword boolWrapper `xml:"ProtectPassword"`
-	ProtectURL      boolWrapper `xml:"ProtectURL"`
-	ProtectNotes    boolWrapper `xml:"ProtectNotes"`
+	ProtectTitle    BoolWrapper `xml:"ProtectTitle"`
+	ProtectUserName BoolWrapper `xml:"ProtectUserName"`
+	ProtectPassword BoolWrapper `xml:"ProtectPassword"`
+	ProtectURL      BoolWrapper `xml:"ProtectURL"`
+	ProtectNotes    BoolWrapper `xml:"ProtectNotes"`
 }
 
 // RootData stores the actual content of a database (all enteries sorted into groups and the recycle bin)
@@ -146,10 +146,10 @@ type Group struct {
 	Notes                   string      `xml:"Notes"`
 	IconID                  int64       `xml:"IconID"`
 	Times                   TimeData    `xml:"Times"`
-	IsExpanded              boolWrapper `xml:"IsExpanded"`
+	IsExpanded              BoolWrapper `xml:"IsExpanded"`
 	DefaultAutoTypeSequence string      `xml:"DefaultAutoTypeSequence"`
-	EnableAutoType          boolWrapper `xml:"EnableAutoType"`
-	EnableSearching         boolWrapper `xml:"EnableSearching"`
+	EnableAutoType          BoolWrapper `xml:"EnableAutoType"`
+	EnableSearching         BoolWrapper `xml:"EnableSearching"`
 	LastTopVisibleEntry     string      `xml:"LastTopVisibleEntry"`
 	Entries                 []Entry     `xml:"Entry,omitempty"`
 	Groups                  []Group     `xml:"Group,omitempty"`
@@ -158,8 +158,8 @@ type Group struct {
 //NewGroup returns a new group with time data and uuid set
 func NewGroup() Group {
 	return Group{
-		EnableAutoType:  boolWrapper(true),
-		EnableSearching: boolWrapper(true),
+		EnableAutoType:  BoolWrapper(true),
+		EnableSearching: BoolWrapper(true),
 		Times:           NewTimeData(),
 		UUID:            NewUUID(),
 	}
@@ -168,13 +168,13 @@ func NewGroup() Group {
 // TimeData contains all metadata related to times for groups and entries
 // e.g. the last modification time or the creation time
 type TimeData struct {
-	CreationTime         *timeWrapper `xml:"CreationTime"`
-	LastModificationTime *timeWrapper `xml:"LastModificationTime"`
-	LastAccessTime       *timeWrapper `xml:"LastAccessTime"`
-	ExpiryTime           *timeWrapper `xml:"ExpiryTime"`
-	Expires              boolWrapper  `xml:"Expires"`
+	CreationTime         *TimeWrapper `xml:"CreationTime"`
+	LastModificationTime *TimeWrapper `xml:"LastModificationTime"`
+	LastAccessTime       *TimeWrapper `xml:"LastAccessTime"`
+	ExpiryTime           *TimeWrapper `xml:"ExpiryTime"`
+	Expires              BoolWrapper  `xml:"Expires"`
 	UsageCount           int64        `xml:"UsageCount"`
-	LocationChanged      *timeWrapper `xml:"LocationChanged"`
+	LocationChanged      *TimeWrapper `xml:"LocationChanged"`
 }
 
 // NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
@@ -282,11 +282,11 @@ type ValueData struct {
 // V is a wrapper for the content of a value, so that it can store whether it is protected
 type V struct {
 	Content   string      `xml:",chardata"`
-	Protected boolWrapper `xml:"Protected,attr,omitempty"`
+	Protected BoolWrapper `xml:"Protected,attr,omitempty"`
 }
 
 type AutoTypeData struct {
-	Enabled                 boolWrapper          `xml:"Enabled"`
+	Enabled                 BoolWrapper          `xml:"Enabled"`
 	DataTransferObfuscation int64                `xml:"DataTransferObfuscation"`
 	Association             *AutoTypeAssociation `xml:"Association,omitempty"`
 }
@@ -299,5 +299,5 @@ type AutoTypeAssociation struct {
 type DeletedObjectData struct {
 	XMLName      xml.Name     `xml:"DeletedObject"`
 	UUID         UUID         `xml:"UUID"`
-	DeletionTime *timeWrapper `xml:"DeletionTime"`
+	DeletionTime *TimeWrapper `xml:"DeletionTime"`
 }

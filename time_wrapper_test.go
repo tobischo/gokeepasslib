@@ -52,7 +52,7 @@ func TestTimeWrapperMarshalText(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			value := c.valueFn()
 
-			data, err := timeWrapper(value).MarshalText()
+			data, err := TimeWrapper(value).MarshalText()
 			if err != c.expErr {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
@@ -86,7 +86,7 @@ func TestTimeWrapperUnmarshalText(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.title, func(t *testing.T) {
 
-			timeWrap := &timeWrapper{}
+			timeWrap := &TimeWrapper{}
 			err := timeWrap.UnmarshalText([]byte(c.value))
 			if err != c.expErr {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
