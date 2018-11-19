@@ -30,7 +30,7 @@ func NewCryptoStream(id uint32, key []byte) (CryptoStream, error) {
 }
 
 func UnlockProtectedGroups(p CryptoStream, gs []Group) {
-	for i, _ := range gs { //For each top level group
+	for i := range gs { //For each top level group
 		UnlockProtectedGroup(p, &gs[i])
 	}
 }
@@ -41,24 +41,24 @@ func UnlockProtectedGroup(p CryptoStream, g *Group) {
 }
 
 func UnlockProtectedEntries(p CryptoStream, e []Entry) {
-	for i, _ := range e {
+	for i := range e {
 		UnlockProtectedEntry(p, &e[i])
 	}
 }
 
 func UnlockProtectedEntry(p CryptoStream, e *Entry) {
-	for i, _ := range e.Values {
+	for i := range e.Values {
 		if bool(e.Values[i].Value.Protected) {
 			e.Values[i].Value.Content = string(p.Unpack(e.Values[i].Value.Content))
 		}
 	}
-	for i, _ := range e.Histories {
+	for i := range e.Histories {
 		UnlockProtectedEntries(p, e.Histories[i].Entries)
 	}
 }
 
 func LockProtectedGroups(p CryptoStream, gs []Group) {
-	for i, _ := range gs {
+	for i := range gs {
 		LockProtectedGroup(p, &gs[i])
 	}
 }
@@ -69,18 +69,18 @@ func LockProtectedGroup(p CryptoStream, g *Group) {
 }
 
 func LockProtectedEntries(p CryptoStream, es []Entry) {
-	for i, _ := range es {
+	for i := range es {
 		LockProtectedEntry(p, &es[i])
 	}
 }
 
 func LockProtectedEntry(p CryptoStream, e *Entry) {
-	for i, _ := range e.Values {
+	for i := range e.Values {
 		if bool(e.Values[i].Value.Protected) {
 			e.Values[i].Value.Content = p.Pack([]byte(e.Values[i].Value.Content))
 		}
 	}
-	for i, _ := range e.Histories {
+	for i := range e.Histories {
 		LockProtectedEntries(p, e.Histories[i].Entries)
 	}
 }

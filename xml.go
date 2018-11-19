@@ -236,7 +236,7 @@ func (e *Entry) protected() bool {
 
 // Get returns the value in e corresponding with key k, or an empty string otherwise
 func (e *Entry) Get(key string) *ValueData {
-	for i, _ := range e.Values {
+	for i := range e.Values {
 		if e.Values[i].Key == key {
 			return &e.Values[i]
 		}
@@ -255,7 +255,7 @@ func (e *Entry) GetContent(key string) string {
 
 // GetIndex returns the index of the Value belonging to the given key, or -1 if none is found
 func (e *Entry) GetIndex(key string) int {
-	for i, _ := range e.Values {
+	for i := range e.Values {
 		if e.Values[i].Key == key {
 			return i
 		}

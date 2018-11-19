@@ -2,6 +2,8 @@ language: go
 
 install: true
 
+before_script: go get
+
 script: go test
 
 go:

@@ -32,7 +32,7 @@ type BinaryReference struct {
 
 // Find returns a reference to a binary with the same ID as id, or nil if none if found
 func (bs Binaries) Find(id int) *Binary {
-	for i, _ := range bs {
+	for i := range bs {
 		if bs[i].ID == id {
 			return &bs[i]
 		}
