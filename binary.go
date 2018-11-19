@@ -44,22 +44,21 @@ func (bs Binaries) Find(id int) *Binary {
 func (br *BinaryReference) Find(db *Database) *Binary {
 	if db.Header.IsKdbx4() {
 		return db.Content.InnerHeader.Binaries.Find(br.Value.ID)
-	} else {
-		return db.Content.Meta.Binaries.Find(br.Value.ID)
 	}
+	return db.Content.Meta.Binaries.Find(br.Value.ID)
 }
 
 // Add appends binary data to the slice
-func (b *Binaries) Add(c []byte) *Binary {
+func (bs *Binaries) Add(c []byte) *Binary {
 	binary := Binary{Compressed: BoolWrapper(true)}
-	if len(*b) == 0 {
+	if len(*bs) == 0 {
 		binary.ID = 0
 	} else {
-		binary.ID = (*b)[len(*b)-1].ID + 1
+		binary.ID = (*bs)[len(*bs)-1].ID + 1
 	}
 	binary.SetContent(c)
-	*b = append(*b, binary)
-	return &(*b)[len(*b)-1]
+	*bs = append(*bs, binary)
+	return &(*bs)[len(*bs)-1]
 }
 
 // GetContent returns a string which is the plaintext content of a binary
