@@ -13,6 +13,7 @@ var sigmaWords = []uint32{
 	0x6b206574,
 }
 
+// SalsaManager is a Salas20 cipher that implements CryptoStream interface
 type SalsaManager struct {
 	State        []uint32
 	blockUsed    int
@@ -32,7 +33,7 @@ func rotl32(x uint32, b uint) uint32 {
 	return ((x << b) | (x >> (32 - b)))
 }
 
-// NewSalsaManager initializes a new Password
+// NewSalsaManager initialize a new SalsaManager interfaced with CryptoStream
 func NewSalsaManager(key []byte) (*SalsaManager, error) {
 	hash := sha256.Sum256(key)
 	state := make([]uint32, 16)

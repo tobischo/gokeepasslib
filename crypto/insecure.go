@@ -1,7 +1,9 @@
 package crypto
 
+// InsecureManager is a fake cipher that implements CryptoStream interface
 type InsecureManager struct{}
 
+// NewInsecureManager initialize a new InsecureManager interfaced with CryptoStream
 func NewInsecureManager() *InsecureManager {
 	return new(InsecureManager)
 }

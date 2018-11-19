@@ -8,10 +8,12 @@ import (
 	"github.com/aead/chacha20"
 )
 
+// ChaChaManager is a ChaCha20 cipher that implements CryptoStream interface
 type ChaChaManager struct {
 	cipher cipher.Stream
 }
 
+// NewChaChaManager initialize a new ChaChaManager interfaced with CryptoStream
 func NewChaChaManager(key []byte) (*ChaChaManager, error) {
 	hash := sha512.Sum512(key)
 

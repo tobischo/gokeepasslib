@@ -7,6 +7,8 @@ import (
 	"errors"
 )
 
+// MetaData is the structure for the metadata headers at the top of kdbx files,
+// it contains things like the name of the database
 type MetaData struct {
 	Generator                  string        `xml:"Generator"`
 	HeaderHash                 string        `xml:"HeaderHash"`
@@ -35,6 +37,7 @@ type MetaData struct {
 	CustomData                 []CustomData  `xml:"CustomData>Item"`
 }
 
+// MemProtection is a structure containing settings for MemoryProtection
 type MemProtection struct {
 	ProtectTitle    BoolWrapper `xml:"ProtectTitle"`
 	ProtectUserName BoolWrapper `xml:"ProtectUserName"`
@@ -43,11 +46,13 @@ type MemProtection struct {
 	ProtectNotes    BoolWrapper `xml:"ProtectNotes"`
 }
 
+// RootData stores the actual content of a database (all enteries sorted into groups and the recycle bin)
 type RootData struct {
 	Groups         []Group             `xml:"Group"`
 	DeletedObjects []DeletedObjectData `xml:"DeletedObjects>DeletedObject"`
 }
 
+// Group is a structure to store entries in their named groups for organization
 type Group struct {
 	UUID                    UUID        `xml:"UUID"`
 	Name                    string      `xml:"Name"`
@@ -63,6 +68,11 @@ type Group struct {
 	Groups                  []Group     `xml:"Group,omitempty"`
 }
 
+// UUID stores a universal identifier for each group+entry
+type UUID [16]byte
+
+// TimeData contains all metadata related to times for groups and entries
+// e.g. the last modification time or the creation time
 type TimeData struct {
 	CreationTime         *TimeWrapper `xml:"CreationTime"`
 	LastModificationTime *TimeWrapper `xml:"LastModificationTime"`
@@ -73,6 +83,7 @@ type TimeData struct {
 	LocationChanged      *TimeWrapper `xml:"LocationChanged"`
 }
 
+// Entry is the structure which holds information about a parsed entry in a keepass database
 type Entry struct {
 	UUID            UUID              `xml:"UUID"`
 	IconID          int64             `xml:"IconID"`
@@ -87,8 +98,8 @@ type Entry struct {
 	Binaries        []BinaryReference `xml:"Binary,omitempty"`
 }
 
-type UUID [16]byte
-
+// History stores information about changes made to an entry,
+// in the form of a list of previous versions of that entry
 type History struct {
 	Entries []Entry `xml:"Entry"`
 }
@@ -99,30 +110,33 @@ type ValueData struct {
 	Value V      `xml:"Value"`
 }
 
+// V is a wrapper for the content of a value, so that it can store whether it is protected
 type V struct {
 	Content   string      `xml:",chardata"`
 	Protected BoolWrapper `xml:"Protected,attr,omitempty"`
 }
 
+// AutoTypeData is a structure containing auto type settings of an entry
 type AutoTypeData struct {
 	Enabled                 BoolWrapper          `xml:"Enabled"`
 	DataTransferObfuscation int64                `xml:"DataTransferObfuscation"`
 	Association             *AutoTypeAssociation `xml:"Association,omitempty"`
 }
 
+// AutoTypeAssociation is a structure that store the keystroke sequence of a window for AutoTypeData
 type AutoTypeAssociation struct {
 	Window            string `xml:"Window"`
 	KeystrokeSequence string `xml:"KeystrokeSequence"`
 }
 
+// DeletedObjectData is the structure for a deleted object
 type DeletedObjectData struct {
 	XMLName      xml.Name     `xml:"DeletedObject"`
 	UUID         UUID         `xml:"UUID"`
 	DeletionTime *TimeWrapper `xml:"DeletionTime"`
 }
 
-//type CustomData []CustomDataItem
-
+// CustomData is the structure for plugins custom data
 type CustomData struct {
 	XMLName xml.Name `xml:"Item"`
 	Key     string   `xml:"Key"`
@@ -185,6 +199,7 @@ func NewTimeData() TimeData {
 	}
 }
 
+// NewEntry return a new entry with time data and uuid set
 func NewEntry() Entry {
 	e := Entry{}
 	e.Times = NewTimeData()

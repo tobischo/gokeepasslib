@@ -97,7 +97,7 @@ func (db *Database) UnlockProtectedEntries() error {
 	if manager == nil {
 		return ErrUnsupportedStreamType
 	}
-	UnlockProtectedGroups(manager, db.Content.Root.Groups)
+	unlockProtectedGroups(manager, db.Content.Root.Groups)
 	return nil
 }
 
@@ -113,7 +113,7 @@ func (db *Database) LockProtectedEntries() error {
 	if manager == nil {
 		return ErrUnsupportedStreamType
 	}
-	LockProtectedGroups(manager, db.Content.Root.Groups)
+	lockProtectedGroups(manager, db.Content.Root.Groups)
 	return nil
 }
 
