@@ -52,7 +52,7 @@ func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
 	}
 
 	if db.Header.IsKdbx4() {
-		if reflect.DeepEqual(db.Header.FileHeaders.KdfParameters.UUID, KDF_ARGON2) {
+		if reflect.DeepEqual(db.Header.FileHeaders.KdfParameters.UUID, KdfArgon2) {
 			// Argon 2
 			transformedKey = argon2.Key2d(
 				[]byte(transformedKey),                             // Master key

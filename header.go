@@ -17,7 +17,7 @@ var BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
 // SecondarySignature is the valid version signature for kdbx files
 var SecondarySignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
 
-// A full valid default signature struct for new databases (KDBX v3.1)
+// DefaultSig is the full valid default signature struct for new databases (KDBX v3.1)
 var DefaultSig = Signature{BaseSignature, SecondarySignature, 1, 3}
 
 // CompressionFlags enum
@@ -26,27 +26,15 @@ const (
 	GzipCompressionFlag        = 1
 )
 
-// VariantDictionary type enum
-const (
-	VD_TERMINATOR byte = 0x00
-	VD_UInt32          = 0x04
-	VD_UInt64          = 0x05
-	VD_Bool            = 0x08
-	VD_Int32           = 0x0C
-	VD_Int64           = 0x0D
-	VD_String          = 0x18
-	VD_ByteArray       = 0x42
-)
-
 // Ciphers
-var CIPHER_AES = []byte{0x31, 0xC1, 0xF2, 0xE6, 0xBF, 0x71, 0x43, 0x50, 0xBE, 0x58, 0x05, 0x21, 0x6A, 0xFC, 0x5A, 0xFF}
-var CIPHER_TWOFISH = []byte{0xAD, 0x68, 0xF2, 0x9F, 0x57, 0x6F, 0x4B, 0xB9, 0xA3, 0x6A, 0xD4, 0x7A, 0xF9, 0x65, 0x34, 0x6C}
-var CIPHER_CHACHA20 = []byte{0xD6, 0x03, 0x8A, 0x2B, 0x8B, 0x6F, 0x4C, 0xB5, 0xA5, 0x24, 0x33, 0x9A, 0x31, 0xDB, 0xB5, 0x9A}
+var CipherAES = []byte{0x31, 0xC1, 0xF2, 0xE6, 0xBF, 0x71, 0x43, 0x50, 0xBE, 0x58, 0x05, 0x21, 0x6A, 0xFC, 0x5A, 0xFF}
+var CipherTwoFish = []byte{0xAD, 0x68, 0xF2, 0x9F, 0x57, 0x6F, 0x4B, 0xB9, 0xA3, 0x6A, 0xD4, 0x7A, 0xF9, 0x65, 0x34, 0x6C}
+var CipherChaCha20 = []byte{0xD6, 0x03, 0x8A, 0x2B, 0x8B, 0x6F, 0x4C, 0xB5, 0xA5, 0x24, 0x33, 0x9A, 0x31, 0xDB, 0xB5, 0x9A}
 
 // Kdfs
-var KDF_AES_3 = []byte{0xC9, 0xD9, 0xF3, 0x9A, 0x62, 0x8A, 0x44, 0x60, 0xBF, 0x74, 0x0D, 0x08, 0xC1, 0x8A, 0x4F, 0xEA}
-var KDF_AES_4 = []byte{0x7C, 0x02, 0xBB, 0x82, 0x79, 0xA7, 0x4A, 0xC0, 0x92, 0x7D, 0x11, 0x4A, 0x00, 0x64, 0x82, 0x38}
-var KDF_ARGON2 = []byte{0xEF, 0x63, 0x6D, 0xDF, 0x8C, 0x29, 0x44, 0x4B, 0x91, 0xF7, 0xA9, 0xA4, 0x03, 0xE3, 0x0A, 0x0C}
+var KdfAES3 = []byte{0xC9, 0xD9, 0xF3, 0x9A, 0x62, 0x8A, 0x44, 0x60, 0xBF, 0x74, 0x0D, 0x08, 0xC1, 0x8A, 0x4F, 0xEA}
+var KdfAES4 = []byte{0x7C, 0x02, 0xBB, 0x82, 0x79, 0xA7, 0x4A, 0xC0, 0x92, 0x7D, 0x11, 0x4A, 0x00, 0x64, 0x82, 0x38}
+var KdfArgon2 = []byte{0xEF, 0x63, 0x6D, 0xDF, 0x8C, 0x29, 0x44, 0x4B, 0x91, 0xF7, 0xA9, 0xA4, 0x03, 0xE3, 0x0A, 0x0C}
 
 // Header of a database
 // RawData is the byte array of the data
@@ -138,7 +126,7 @@ func NewFileHeaders() *FileHeaders {
 	rand.Read(streamStartBytes)
 
 	return &FileHeaders{
-		CipherID:            []byte(CIPHER_AES),
+		CipherID:            []byte(CipherAES),
 		CompressionFlags:    GzipCompressionFlag,
 		MasterSeed:          masterSeed,
 		TransformSeed:       transformSeed,
@@ -319,7 +307,7 @@ func (vd *VariantDictionary) readVariantDictionary(data []byte) error {
 			return err
 		}
 
-		if vdi.Type != VD_TERMINATOR {
+		if vdi.Type != 0x00 {
 			if err := binary.Read(r, binary.LittleEndian, &vdi.NameLength); err != nil {
 				return err
 			}
@@ -344,6 +332,7 @@ func (vd *VariantDictionary) readVariantDictionary(data []byte) error {
 	return nil
 }
 
+// Write into the given io.Writer the FileHeaders structure
 func (h *DBHeader) WriteTo(w io.Writer) error {
 	var buffer bytes.Buffer
 	mw := io.MultiWriter(w, &buffer)
@@ -361,24 +350,20 @@ func (h *DBHeader) WriteTo(w io.Writer) error {
 	return nil
 }
 
+// Write Kdbx v4 header structure
 func (fh FileHeaders) WriteTo4(w io.Writer, buf *bytes.Buffer) error {
+	compressionFlags := make([]byte, 4)
+	binary.LittleEndian.PutUint32(compressionFlags, fh.CompressionFlags)
+
 	if err := writeTo4Header(w, 1, fh.Comment); err != nil {
 		return err
 	}
 	if err := writeTo4Header(w, 2, fh.CipherID); err != nil {
 		return err
 	}
-
-	if err := binary.Write(w, binary.LittleEndian, uint8(3)); err != nil {
+	if err := writeTo4Header(w, 3, compressionFlags); err != nil {
 		return err
 	}
-	if err := binary.Write(w, binary.LittleEndian, uint32(4)); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, fh.CompressionFlags); err != nil {
-		return err
-	}
-
 	if err := writeTo4Header(w, 4, fh.MasterSeed); err != nil {
 		return err
 	}
@@ -391,15 +376,8 @@ func (fh FileHeaders) WriteTo4(w io.Writer, buf *bytes.Buffer) error {
 	if err := writeTo4VariantDictionary(w, 12, fh.PublicCustomData); err != nil {
 		return err
 	}
-
 	// End of header
-	if err := binary.Write(w, binary.LittleEndian, uint8(0)); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, uint32(4)); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, []byte{0x0D, 0x0A, 0x0D, 0x0A}); err != nil {
+	if err := writeTo4Header(w, 0, []byte{0x0D, 0x0A, 0x0D, 0x0A}); err != nil {
 		return err
 	}
 	return nil
@@ -443,7 +421,7 @@ func writeTo4VariantDictionary(w io.Writer, id uint8, data *VariantDictionary) e
 				return err
 			}
 		}
-		if err := binary.Write(&buffer, binary.LittleEndian, VD_TERMINATOR); err != nil {
+		if err := binary.Write(&buffer, binary.LittleEndian, []byte{0x00}); err != nil {
 			return err
 		}
 
@@ -461,41 +439,35 @@ func writeTo4VariantDictionary(w io.Writer, id uint8, data *VariantDictionary) e
 	return nil
 }
 
+// Write Kdbx v3.1 header structure
 func (fh FileHeaders) WriteTo31(w io.Writer) error {
+	compressionFlags := make([]byte, 4)
+	binary.LittleEndian.PutUint32(compressionFlags, fh.CompressionFlags)
+
+	transformRounds := make([]byte, 8)
+	binary.LittleEndian.PutUint64(transformRounds, fh.TransformRounds)
+
+	innerRandomStreamID := make([]byte, 4)
+	binary.LittleEndian.PutUint32(innerRandomStreamID, fh.InnerRandomStreamID)
+
 	if err := writeTo31Header(w, 1, fh.Comment); err != nil {
 		return err
 	}
 	if err := writeTo31Header(w, 2, fh.CipherID); err != nil {
 		return err
 	}
-
-	if err := binary.Write(w, binary.LittleEndian, uint8(3)); err != nil {
+	if err := writeTo31Header(w, 3, compressionFlags); err != nil {
 		return err
 	}
-	if err := binary.Write(w, binary.LittleEndian, uint16(4)); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, fh.CompressionFlags); err != nil {
-		return err
-	}
-
 	if err := writeTo31Header(w, 4, fh.MasterSeed); err != nil {
 		return err
 	}
 	if err := writeTo31Header(w, 5, fh.TransformSeed); err != nil {
 		return err
 	}
-
-	if err := binary.Write(w, binary.LittleEndian, uint8(6)); err != nil {
+	if err := writeTo31Header(w, 6, transformRounds); err != nil {
 		return err
 	}
-	if err := binary.Write(w, binary.LittleEndian, uint16(8)); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, fh.TransformRounds); err != nil {
-		return err
-	}
-
 	if err := writeTo31Header(w, 7, fh.EncryptionIV); err != nil {
 		return err
 	}
@@ -505,25 +477,11 @@ func (fh FileHeaders) WriteTo31(w io.Writer) error {
 	if err := writeTo31Header(w, 9, fh.StreamStartBytes); err != nil {
 		return err
 	}
-
-	if err := binary.Write(w, binary.LittleEndian, uint8(10)); err != nil {
+	if err := writeTo31Header(w, 10, innerRandomStreamID); err != nil {
 		return err
 	}
-	if err := binary.Write(w, binary.LittleEndian, uint16(4)); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, fh.InnerRandomStreamID); err != nil {
-		return err
-	}
-
 	// End of header
-	if err := binary.Write(w, binary.LittleEndian, uint8(0)); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, uint16(4)); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, []byte{0x0D, 0x0A, 0x0D, 0x0A}); err != nil {
+	if err := writeTo31Header(w, 0, []byte{0x0D, 0x0A, 0x0D, 0x0A}); err != nil {
 		return err
 	}
 	return nil
