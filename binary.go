@@ -10,7 +10,25 @@ import (
 )
 
 // Binaries Stores a slice of binaries in the metadata header of a database
+// This will be used only on KDBX 3.1
+// Since KDBX 4, binaries are stored into the InnerHeader
 type Binaries []Binary
+
+// Binary stores a binary found in the metadata header of a database
+type Binary struct {
+	ID               int         `xml:"ID,attr"`         // Index of binary (Manually counted on KDBX v4)
+	MemoryProtection byte        `xml:"-"`               // Only KDBX v4
+	Content          []byte      `xml:",innerxml"`       // Content
+	Compressed       BoolWrapper `xml:"Compressed,attr"` // Only KDBX v3.1
+}
+
+// BinaryReference stores a reference to a binary which appears in the xml of an entry
+type BinaryReference struct {
+	Name  string `xml:"Key"`
+	Value struct {
+		ID int `xml:"Ref,attr"`
+	} `xml:"Value"`
+}
 
 // Find returns a reference to a binary with the same ID as id, or nil if none if found
 func (bs Binaries) Find(id int) *Binary {
@@ -20,6 +38,15 @@ func (bs Binaries) Find(id int) *Binary {
 		}
 	}
 	return nil
+}
+
+// Find returns a reference to a binary in the database db with the same id as br, or nil if none is found
+func (br *BinaryReference) Find(db *Database) *Binary {
+	if db.Header.IsKdbx4() {
+		return db.Content.InnerHeader.Binaries.Find(br.Value.ID)
+	} else {
+		return db.Content.Meta.Binaries.Find(br.Value.ID)
+	}
 }
 
 // Add appends binary data to the slice
@@ -35,24 +62,17 @@ func (b *Binaries) Add(c []byte) *Binary {
 	return &(*b)[len(*b)-1]
 }
 
-// Binary stores a binary found in the metadata header of a database
-type Binary struct {
-	Content    []byte      `xml:",innerxml"`
-	ID         int         `xml:"ID,attr"`
-	Compressed BoolWrapper `xml:"Compressed,attr"`
-}
-
-func (b Binary) String() string {
-	return fmt.Sprintf("ID: %d, Compressed:%t, Content:%x", b.ID, b.Compressed, b.Content)
-}
-
 // GetContent returns a string which is the plaintext content of a binary
 func (b Binary) GetContent() (string, error) {
-	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
+	var decoded []byte
+	// Check for base64 content (KDBX 3.1), if it fail try with KDBX 4
+	decoded = make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
 	_, err := base64.StdEncoding.Decode(decoded, b.Content)
 	if err != nil {
-		return "", err
+		// KDBX 4 doesn't encode it
+		decoded = b.Content[:]
 	}
+
 	if b.Compressed {
 		reader, err := gzip.NewReader(bytes.NewReader(decoded))
 		if err != nil {
@@ -91,14 +111,6 @@ func (b Binary) CreateReference(f string) BinaryReference {
 	return NewBinaryReference(f, b.ID)
 }
 
-// BinaryReference stores a reference to a binary which appears in the xml of an entry
-type BinaryReference struct {
-	Name  string `xml:"Key"`
-	Value struct {
-		ID int `xml:"Ref,attr"`
-	} `xml:"Value"`
-}
-
 // NewBinaryReference creates a new BinaryReference with the given name and id
 func NewBinaryReference(name string, id int) BinaryReference {
 	ref := BinaryReference{}
@@ -107,11 +119,9 @@ func NewBinaryReference(name string, id int) BinaryReference {
 	return ref
 }
 
+func (b Binary) String() string {
+	return fmt.Sprintf("ID: %d, MemoryProtection: %x, Compressed:%t, Content:%x", b.ID, b.MemoryProtection, b.Compressed, b.Content)
+}
 func (br BinaryReference) String() string {
 	return fmt.Sprintf("ID: %d, File Name: %s", br.Value.ID, br.Name)
-}
-
-// Find returns a reference to  a binary in the slice of binaries bs with the same id as br, or nil if none is found
-func (br *BinaryReference) Find(bs Binaries) *Binary {
-	return bs.Find(br.Value.ID)
 }

@@ -1,6 +1,9 @@
-package gokeepasslib
+package crypto
 
-import "encoding/base64"
+import (
+	"crypto/sha256"
+	"encoding/base64"
+)
 
 var iv = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
 var sigmaWords = []uint32{
@@ -10,63 +13,12 @@ var sigmaWords = []uint32{
 	0x6b206574,
 }
 
-// SalsaManager is responsible for stream encrypting and decrypting of the passwords
 type SalsaManager struct {
 	State        []uint32
 	blockUsed    int
 	block        []byte
 	counterWords [2]uint32
 	currentBlock []byte
-}
-
-func (s *SalsaManager) UnlockGroups(gs []Group) {
-	for i, _ := range gs { //For each top level group
-		s.UnlockGroup(&gs[i])
-	}
-}
-func (s *SalsaManager) UnlockGroup(g *Group) {
-	s.UnlockEntries(g.Entries)
-	s.UnlockGroups(g.Groups)
-}
-func (s *SalsaManager) UnlockEntries(e []Entry) {
-	for i, _ := range e {
-		s.UnlockEntry(&e[i])
-	}
-}
-func (s *SalsaManager) UnlockEntry(e *Entry) {
-	for i, _ := range e.Values {
-		if bool(e.Values[i].Value.Protected) {
-			e.Values[i].Value.Content = string(s.Unpack(e.Values[i].Value.Content))
-		}
-	}
-	for i, _ := range e.Histories {
-		s.UnlockEntries(e.Histories[i].Entries)
-	}
-}
-
-func (s *SalsaManager) LockGroups(gs []Group) {
-	for i, _ := range gs {
-		s.LockGroup(&gs[i])
-	}
-}
-func (s *SalsaManager) LockGroup(g *Group) {
-	s.LockEntries(g.Entries)
-	s.LockGroups(g.Groups)
-}
-func (s *SalsaManager) LockEntries(es []Entry) {
-	for i, _ := range es {
-		s.LockEntry(&es[i])
-	}
-}
-func (s *SalsaManager) LockEntry(e *Entry) {
-	for i, _ := range e.Values {
-		if bool(e.Values[i].Value.Protected) {
-			e.Values[i].Value.Content = s.Pack([]byte(e.Values[i].Value.Content))
-		}
-	}
-	for i, _ := range e.Histories {
-		s.UnlockEntries(e.Histories[i].Entries)
-	}
 }
 
 func u8to32little(k []byte, i int) uint32 {
@@ -81,17 +33,18 @@ func rotl32(x uint32, b uint) uint32 {
 }
 
 // NewSalsaManager initializes a new Password
-func NewSalsaManager(key [32]byte) *SalsaManager {
+func NewSalsaManager(key []byte) (*SalsaManager, error) {
+	hash := sha256.Sum256(key)
 	state := make([]uint32, 16)
 
-	state[1] = u8to32little(key[:], 0)
-	state[2] = u8to32little(key[:], 4)
-	state[3] = u8to32little(key[:], 8)
-	state[4] = u8to32little(key[:], 12)
-	state[11] = u8to32little(key[:], 16)
-	state[12] = u8to32little(key[:], 20)
-	state[13] = u8to32little(key[:], 24)
-	state[14] = u8to32little(key[:], 28)
+	state[1] = u8to32little(hash[:], 0)
+	state[2] = u8to32little(hash[:], 4)
+	state[3] = u8to32little(hash[:], 8)
+	state[4] = u8to32little(hash[:], 12)
+	state[11] = u8to32little(hash[:], 16)
+	state[12] = u8to32little(hash[:], 20)
+	state[13] = u8to32little(hash[:], 24)
+	state[14] = u8to32little(hash[:], 28)
 	state[0] = sigmaWords[0]
 	state[5] = sigmaWords[1]
 	state[10] = sigmaWords[2]
@@ -107,7 +60,7 @@ func NewSalsaManager(key [32]byte) *SalsaManager {
 		currentBlock: make([]byte, 0),
 	}
 	s.reset()
-	return &s
+	return &s, nil
 }
 
 func (s *SalsaManager) Unpack(payload string) []byte {
@@ -120,7 +73,6 @@ func (s *SalsaManager) Unpack(payload string) []byte {
 	for i := 0; i < len(data); i++ {
 		result = append(result, salsaBytes[i]^data[i])
 	}
-
 	return result
 }
 

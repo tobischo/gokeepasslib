@@ -4,10 +4,15 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
+	"crypto/sha512"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"regexp"
+
+	"github.com/aead/argon2"
 )
 
 // DBCredentials holds the key used to lock and unlock the database
@@ -15,10 +20,6 @@ type DBCredentials struct {
 	Passphrase []byte //Passphrase if using one, stored in sha256 hash
 	Key        []byte //Contents of the keyfile if using one, stored in sha256 hash
 	Windows    []byte //Whatever is returned from windows user account auth, stored in sha256 hash
-}
-
-func (c *DBCredentials) String() string {
-	return fmt.Sprintf("Hashed Passphrase: %x\nHashed Key: %x\nHashed Windows Auth: %x", c.Passphrase, c.Key, c.Windows)
 }
 
 func (c *DBCredentials) buildCompositeKey() ([]byte, error) {
@@ -44,19 +45,65 @@ func (c *DBCredentials) buildCompositeKey() ([]byte, error) {
 	return hash.Sum(nil), nil
 }
 
-func (c *DBCredentials) buildMasterKey(db *Database) ([]byte, error) {
-	masterKey, err := c.buildCompositeKey()
+func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
+	transformedKey, err := c.buildCompositeKey()
 	if err != nil {
 		return nil, err
 	}
 
-	block, err := aes.NewCipher(db.Headers.TransformSeed)
+	if db.Header.IsKdbx4() {
+		if reflect.DeepEqual(db.Header.FileHeaders.KdfParameters.UUID, KDF_ARGON2) {
+			// Argon 2
+			transformedKey = argon2.Key2d(
+				[]byte(transformedKey),                             // Master key
+				db.Header.FileHeaders.KdfParameters.S[:],           // Salt
+				uint32(db.Header.FileHeaders.KdfParameters.I),      // Time cost
+				uint32(db.Header.FileHeaders.KdfParameters.M)/1024, // Memory cost
+				uint8(db.Header.FileHeaders.KdfParameters.P),       // Parallelism
+				32, // Hash length
+			)
+		} else {
+			// AES
+			key, err := cryptAesKey(transformedKey, db.Header.FileHeaders.KdfParameters.S[:], db.Header.FileHeaders.KdfParameters.R)
+			if err != nil {
+				return nil, err
+			}
+			transformedKey = key[:]
+		}
+	} else {
+		// AES
+		key, err := cryptAesKey(transformedKey, db.Header.FileHeaders.TransformSeed, db.Header.FileHeaders.TransformRounds)
+		if err != nil {
+			return nil, err
+		}
+		transformedKey = key[:]
+	}
+	return transformedKey, nil
+}
+
+func buildMasterKey(db *Database, transformedKey []byte) []byte {
+	masterKey := sha256.New()
+	masterKey.Write(db.Header.FileHeaders.MasterSeed)
+	masterKey.Write(transformedKey)
+	return masterKey.Sum(nil)
+}
+
+func buildHmacKey(db *Database, transformedKey []byte) []byte {
+	masterKey := sha512.New()
+	masterKey.Write(db.Header.FileHeaders.MasterSeed)
+	masterKey.Write(transformedKey)
+	masterKey.Write([]byte{0x01})
+	return masterKey.Sum(nil)
+}
+
+func cryptAesKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
+	block, err := aes.NewCipher(seed)
 	if err != nil {
 		return nil, err
 	}
 
-	// http://crypto.stackexchange.com/questions/21048/can-i-simulate-iterated-aes-ecb-with-other-block-cipher-modes
-	for i := uint64(0); i < db.Headers.TransformRounds; i++ {
+	// http://crypto.stackexchange.com/questions/21048/
+	for i := uint64(0); i < rounds; i++ {
 		result := make([]byte, 16)
 		crypter := cipher.NewCBCEncrypter(block, result)
 		crypter.CryptBlocks(masterKey[:16], masterKey[:16])
@@ -64,25 +111,19 @@ func (c *DBCredentials) buildMasterKey(db *Database) ([]byte, error) {
 		crypter.CryptBlocks(masterKey[16:], masterKey[16:])
 	}
 
-	tmp := sha256.Sum256(masterKey)
-	masterKey = tmp[:]
-
-	masterKey = append(db.Headers.MasterSeed, masterKey...)
-	masterHash := sha256.Sum256(masterKey)
-	masterKey = masterHash[:]
-
-	return masterKey, nil
+	hash := sha256.Sum256(masterKey)
+	return hash[:], nil
 }
 
-//NewPasswordCredentials builds a new DBCredentials from a Password string
+// Build a new DBCredentials from a Password string
 func NewPasswordCredentials(password string) *DBCredentials {
-	hashed := sha256.Sum256([]byte(password))
-	return &DBCredentials{Passphrase: hashed[:]}
+	hashedpw := sha256.Sum256([]byte(password))
+	return &DBCredentials{Passphrase: hashedpw[:]}
 }
 
-//ParseKeyFile returns the hashed key from a key file at the path specified by location, parsing xml if needed
+// Return the hashed key from a key file at the path specified by location, parsing xml if needed
 func ParseKeyFile(location string) ([]byte, error) {
-	r, err := regexp.Compile("<data>(.+)<\\/data>")
+	r, err := regexp.Compile("<Data>(.+)<\\/Data>")
 	if err != nil {
 		return nil, err
 	}
@@ -95,30 +136,41 @@ func ParseKeyFile(location string) ([]byte, error) {
 		return nil, err
 	}
 	if r.Match(data) { //If keyfile is in xml form, extract key data
-		data = r.FindSubmatch(data)[1]
+		base := r.FindSubmatch(data)[1]
+		data = make([]byte, base64.StdEncoding.DecodedLen(len(base)))
+		if _, err := base64.StdEncoding.Decode(data, base); err != nil {
+			return nil, err
+		}
 	}
-	sum := sha256.Sum256(data)
-	return sum[:], nil
+	// Slice necessary due to padding at the end of the hash
+	return data[:32], nil
 }
 
-//NewKeyCredentials builds new DBCredentials from a key file at the path specified by location
+// Build a new DBCredentials from a key file at the path specified by location
 func NewKeyCredentials(location string) (*DBCredentials, error) {
 	key, err := ParseKeyFile(location)
 	if err != nil {
 		return nil, err
 	}
+
 	return &DBCredentials{Key: key}, nil
 }
 
-//NewPasswordAndKeyCredentials builds new DBCredentials from a password and the key file at the path specified by location
+// Build a new DBCredentials from a password and the key file at the path specified by location
 func NewPasswordAndKeyCredentials(password, location string) (*DBCredentials, error) {
-	credentials, err := NewKeyCredentials(location)
+	key, err := ParseKeyFile(location)
 	if err != nil {
 		return nil, err
 	}
 
-	hashed := sha256.Sum256([]byte(password))
-	credentials.Passphrase = hashed[:]
+	hashedpw := sha256.Sum256([]byte(password))
 
-	return credentials, nil
+	return &DBCredentials{
+		Passphrase: hashedpw[:],
+		Key:        key,
+	}, nil
+}
+
+func (c *DBCredentials) String() string {
+	return fmt.Sprintf("Hashed Passphrase: %x\nHashed Key: %x\nHashed Windows Auth: %x", c.Passphrase, c.Key, c.Windows)
 }

@@ -1,21 +1,9 @@
 package gokeepasslib
 
 import (
-	"fmt"
 	"testing"
 	"time"
 )
-
-func TestTimeWrapperNow(t *testing.T) {
-	now := time.Now().In(time.UTC)
-	timeWrapNow := Now()
-
-	fmt.Println(time.Time(timeWrapNow).Sub(now))
-
-	if time.Time(timeWrapNow).Sub(now) > time.Second {
-		t.Errorf("Now did not return the current time")
-	}
-}
 
 func TestTimeWrapperMarshalText(t *testing.T) {
 	cases := []struct {

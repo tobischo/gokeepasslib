@@ -8,6 +8,7 @@ var message string = "Hello World!"
 
 // Tests that binaries can set and get content correctly compressed or uncompressed
 func TestBinary(t *testing.T) {
+	db := NewDatabase()
 	binaries := Binaries{}
 
 	binary := binaries.Add([]byte("test"))
@@ -23,13 +24,16 @@ func TestBinary(t *testing.T) {
 		t.Fatalf("Binaries.find for id 2 should be nil, wasn't")
 	}
 
+	// Put binaries var into Meta>Binaries, Kdbx v3.1 by default
+	db.Content.Meta.Binaries = binaries
+
 	references := []BinaryReference{}
 	references = append(references, binary.CreateReference("example.txt"))
 	if references[0].Value.ID != 4 {
-		t.Fatalf("Binary Reference ID is inncorrect. Should be 4, was %d", references[0].Value.ID)
+		t.Fatalf("Binary Reference ID is incorrect. Should be 4, was %d", references[0].Value.ID)
 	}
-	if str, _ := references[0].Find(binaries).GetContent(); str != "test" {
-		t.Fatalf("Binary Reference GetContent is inncorrect. Should be `test`, was '%s'", str)
+	if str, _ := references[0].Find(db).GetContent(); str != "test" {
+		t.Fatalf("Binary Reference GetContent is incorrect. Should be `test`, was '%s'", str)
 	}
 
 	found := binaries.Find(binary2.ID)
