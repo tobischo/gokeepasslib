@@ -76,14 +76,20 @@ func (db *Database) Encrypter(transformedKey []byte) (cipher.BlockMode, error) {
 	return cipher.NewCBCEncrypter(block, db.Header.FileHeaders.EncryptionIV), nil
 }
 
-// GetCryptoStream returns a CryptoStream based on the db headers, or nil if the type is unsupported
+// GetCryptoStreamManager returns a CryptoStreamManager based on the db headers, or nil if the type is unsupported
 // Can be used to lock only certain entries instead of calling
 func (db *Database) GetCryptoStreamManager() (*CryptoStreamManager, error) {
 	if db.Header.FileHeaders != nil {
 		if db.Header.IsKdbx4() {
-			return NewCryptoStreamManager(db.Content.InnerHeader.InnerRandomStreamID, db.Content.InnerHeader.InnerRandomStreamKey)
+			return NewCryptoStreamManager(
+				db.Content.InnerHeader.InnerRandomStreamID,
+				db.Content.InnerHeader.InnerRandomStreamKey,
+			)
 		} else {
-			return NewCryptoStreamManager(db.Header.FileHeaders.InnerRandomStreamID, db.Header.FileHeaders.ProtectedStreamKey)
+			return NewCryptoStreamManager(
+				db.Header.FileHeaders.InnerRandomStreamID,
+				db.Header.FileHeaders.ProtectedStreamKey,
+			)
 		}
 	}
 	return nil, nil

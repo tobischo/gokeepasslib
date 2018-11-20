@@ -119,7 +119,13 @@ func NewBinaryReference(name string, id int) BinaryReference {
 }
 
 func (b Binary) String() string {
-	return fmt.Sprintf("ID: %d, MemoryProtection: %x, Compressed:%t, Content:%x", b.ID, b.MemoryProtection, b.Compressed, b.Content)
+	return fmt.Sprintf(
+		"ID: %d, MemoryProtection: %x, Compressed:%t, Content:%x",
+		b.ID,
+		b.MemoryProtection,
+		b.Compressed,
+		b.Content,
+	)
 }
 func (br BinaryReference) String() string {
 	return fmt.Sprintf("ID: %d, File Name: %s", br.Value.ID, br.Name)

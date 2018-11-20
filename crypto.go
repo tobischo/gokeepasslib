@@ -8,10 +8,10 @@ import (
 
 // Constant enumerator for the inner random stream ID
 const (
-	NoStreamID    uint32 = 0
-	ARC4StreamID         = 1
-	SalsaStreamID        = 2
-	ChaChaID             = 3
+	NoStreamID     uint32 = 0
+	ARC4StreamID          = 1
+	SalsaStreamID         = 2
+	ChaChaStreamID        = 3
 )
 
 // CryptoStreamManager is the manager to handle a CryptoStream
@@ -34,7 +34,7 @@ func NewCryptoStreamManager(id uint32, key []byte) (manager *CryptoStreamManager
 		stream = crypto.NewInsecureStream()
 	case SalsaStreamID:
 		stream, err = crypto.NewSalsaStream(key)
-	case ChaChaID:
+	case ChaChaStreamID:
 		stream, err = crypto.NewChaChaStream(key)
 	default:
 		return nil, ErrUnsupportedStreamType

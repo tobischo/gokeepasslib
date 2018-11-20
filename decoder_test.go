@@ -252,7 +252,10 @@ func TestDecodeFile31_Key(t *testing.T) {
 
 	// Decode database
 	db := NewDatabase()
-	db.Credentials, err = NewPasswordAndKeyCredentials("abcdefg12345678", "tests/kdbx3/example-key.key")
+	db.Credentials, err = NewPasswordAndKeyCredentials(
+		"abcdefg12345678",
+		"tests/kdbx3/example-key.key",
+	)
 	if err != nil {
 		t.Fatalf("Failed to make credentials: %s", err)
 	}
@@ -310,7 +313,10 @@ func TestDecodeFile4_Key(t *testing.T) {
 
 	// Decode database
 	db := NewDatabase()
-	db.Credentials, err = NewPasswordAndKeyCredentials("abcdefg12345678", "tests/kdbx4/example-key.key")
+	db.Credentials, err = NewPasswordAndKeyCredentials(
+		"abcdefg12345678",
+		"tests/kdbx4/example-key.key",
+	)
 	if err != nil {
 		t.Fatalf("Failed to make credentials: %s", err)
 	}
@@ -480,7 +486,10 @@ func TestCreateNewFile(t *testing.T) {
 	newdb := NewDatabase()
 
 	if newdb.Content.Root.Groups[0].Entries[0].GetTitle() != "Sample Entry" {
-		t.Fatalf("NewRootData() seemed to not work, title should be 'Sample Entry', was %s", newdb.Content.Root.Groups[0].Entries[0].GetTitle())
+		t.Fatalf(
+			"NewRootData() seemed to not work, title should be 'Sample Entry', was %s",
+			newdb.Content.Root.Groups[0].Entries[0].GetTitle(),
+		)
 	}
 
 	newdb.Credentials = NewPasswordCredentials("password")
@@ -524,6 +533,9 @@ func TestCreateNewFile(t *testing.T) {
 
 	// Test title matching
 	if newdb.Content.Root.Groups[0].Entries[0].GetTitle() != "Sample Entry" {
-		t.Fatalf("Decoding seemed to not work, title should be 'Sample Entry', was %s", newdb.Content.Root.Groups[0].Entries[0].GetTitle())
+		t.Fatalf(
+			"Decoding seemed to not work, title should be 'Sample Entry', was %s",
+			newdb.Content.Root.Groups[0].Entries[0].GetTitle(),
+		)
 	}
 }
