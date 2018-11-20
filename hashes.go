@@ -21,10 +21,7 @@ func NewHashes(header *DBHeader) *DBHashes {
 
 // readFrom reads the hashes from an io.Reader
 func (h *DBHashes) readFrom(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, h); err != nil {
-		return err
-	}
-	return nil
+	return binary.Read(r, binary.LittleEndian, h)
 }
 
 // writeTo writes the hashes to the given io.Writer
