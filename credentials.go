@@ -55,7 +55,7 @@ func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
 		if reflect.DeepEqual(db.Header.FileHeaders.KdfParameters.UUID, KdfArgon2) {
 			// Argon 2
 			transformedKey = argon2.Key2d(
-				[]byte(transformedKey),                                  // Master key
+				transformedKey, // Master key
 				db.Header.FileHeaders.KdfParameters.Salt[:],             // Salt
 				uint32(db.Header.FileHeaders.KdfParameters.Iterations),  // Time cost
 				uint32(db.Header.FileHeaders.KdfParameters.Memory)/1024, // Memory cost
@@ -126,15 +126,15 @@ func cryptAesKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
 	return hash[:], nil
 }
 
-// Build a new DBCredentials from a Password string
+// NewPasswordCredentials builds a new DBCredentials from a Password string
 func NewPasswordCredentials(password string) *DBCredentials {
 	hashedpw := sha256.Sum256([]byte(password))
 	return &DBCredentials{Passphrase: hashedpw[:]}
 }
 
-// Return the hashed key from a key file at the path specified by location, parsing xml if needed
+// ParseKeyFile returns the hashed key from a key file at the path specified by location, parsing xml if needed
 func ParseKeyFile(location string) ([]byte, error) {
-	r, err := regexp.Compile("<Data>(.+)<\\/Data>")
+	r, err := regexp.Compile(`<Data>(.+)</Data>`)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func ParseKeyFile(location string) ([]byte, error) {
 	return data[:32], nil
 }
 
-// Build a new DBCredentials from a key file at the path specified by location
+// NewKeyCredentials builds a new DBCredentials from a key file at the path specified by location
 func NewKeyCredentials(location string) (*DBCredentials, error) {
 	key, err := ParseKeyFile(location)
 	if err != nil {
@@ -167,7 +167,7 @@ func NewKeyCredentials(location string) (*DBCredentials, error) {
 	return &DBCredentials{Key: key}, nil
 }
 
-// Build a new DBCredentials from a password and the key file at the path specified by location
+// NewPasswordAndKeyCredentials builds a new DBCredentials from a password and the key file at the path specified by location
 func NewPasswordAndKeyCredentials(password, location string) (*DBCredentials, error) {
 	key, err := ParseKeyFile(location)
 	if err != nil {
