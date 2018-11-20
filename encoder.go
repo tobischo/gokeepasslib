@@ -23,15 +23,27 @@ func NewEncoder(w io.Writer) *Encoder {
 
 // Encode writes db to e's internal writer
 func (e *Encoder) Encode(db *Database) (err error) {
+	// Calculate transformed key to make HMAC and encrypt
+	transformedKey, err := db.getTransformedKey()
+	if err != nil {
+		return err
+	}
+
 	// Write header then hashes before decode content (necessary to update HeaderHash)
 	// db.Header writeTo will change its hash
-	// Update header hash into db.Hashes then write the data
 	if err = db.Header.WriteTo(e.w); err != nil {
 		return err
 	}
+
+	// Update header hash into db.Hashes then write the data
 	hash := db.Header.GetSha256()
 	if db.Header.IsKdbx4() {
 		db.Hashes.Sha256 = hash
+
+		hmacKey := buildHmacKey(db, transformedKey)
+		hmacHash := db.Header.GetHmacSha256(hmacKey)
+		db.Hashes.Hmac = hmacHash
+
 		if err = db.Hashes.WriteTo(e.w); err != nil {
 			return err
 		}
@@ -40,6 +52,7 @@ func (e *Encoder) Encode(db *Database) (err error) {
 	}
 
 	var rawContent []byte
+
 	// Encode xml and append header to the top
 	rawContent, err = xml.MarshalIndent(db.Content, "", "\t")
 	if err != nil {
@@ -59,7 +72,7 @@ func (e *Encoder) Encode(db *Database) (err error) {
 
 	// Encode raw content
 	var encodedContent []byte
-	encodedContent, err = encodeRawContent(db, rawContent)
+	encodedContent, err = encodeRawContent(db, rawContent, transformedKey)
 	if err != nil {
 		return err
 	}
@@ -71,7 +84,7 @@ func (e *Encoder) Encode(db *Database) (err error) {
 	return nil
 }
 
-func encodeRawContent(db *Database, content []byte) (encoded []byte, err error) {
+func encodeRawContent(db *Database, content []byte, transformedKey []byte) (encoded []byte, err error) {
 	// Compress if the header compression flag is 1 (gzip)
 	if db.Header.FileHeaders.CompressionFlags == GzipCompressionFlag {
 		b := new(bytes.Buffer)
@@ -89,12 +102,6 @@ func encodeRawContent(db *Database, content []byte) (encoded []byte, err error) 
 		}
 
 		content = b.Bytes()
-	}
-
-	// Calculate transformed key to make HMAC and encrypt
-	transformedKey, err := db.getTransformedKey()
-	if err != nil {
-		return encoded, err
 	}
 
 	// Compose blocks (Kdbx v3.1)

@@ -26,6 +26,12 @@ func (d *Decoder) Decode(db *Database) (err error) {
 		return err
 	}
 
+	// Calculate transformed key to decrypt and calculate HMAC
+	transformedKey, err := db.getTransformedKey()
+	if err != nil {
+		return err
+	}
+
 	// Read hashes and validate them (Kdbx v4)
 	if db.Header.IsKdbx4() {
 		db.Hashes = new(DBHashes)
@@ -37,13 +43,18 @@ func (d *Decoder) Decode(db *Database) (err error) {
 			if err := db.Header.ValidateSha256(db.Hashes.Sha256); err != nil {
 				return err
 			}
+
+			hmacKey := buildHmacKey(db, transformedKey)
+			if err := db.Header.ValidateHmacSha256(hmacKey, db.Hashes.Hmac); err != nil {
+				return errors.New("Wrong password? HMAC-SHA256 of header mismatching")
+			}
 		}
 	}
 
 	// Decode raw content
 	var rawContent []byte
 	rawContent, err = ioutil.ReadAll(d.r)
-	if err := decodeRawContent(db, rawContent); err != nil {
+	if err := decodeRawContent(db, rawContent, transformedKey); err != nil {
 		return err
 	}
 
@@ -63,7 +74,7 @@ func (d *Decoder) Decode(db *Database) (err error) {
 	return err
 }
 
-func decodeRawContent(db *Database, content []byte) (err error) {
+func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err error) {
 	// Initialize content
 	db.Content = new(DBContent)
 
@@ -84,12 +95,6 @@ func decodeRawContent(db *Database, content []byte) (err error) {
 		}
 	}
 
-	// Calculate transformed key to make decrypt
-	transformedKey, err := db.getTransformedKey()
-	if err != nil {
-		return err
-	}
-
 	// Decrypt content
 	mode, err := db.Decrypter(transformedKey)
 	if err != nil {
@@ -102,7 +107,7 @@ func decodeRawContent(db *Database, content []byte) (err error) {
 	if !db.Header.IsKdbx4() {
 		startBytes := db.Header.FileHeaders.StreamStartBytes
 		if !reflect.DeepEqual(decryptedContent[0:len(startBytes)], startBytes) {
-			return errors.New("Database integrity check failed")
+			return errors.New("Wrong password? Database integrity check failed")
 		}
 
 		decryptedContent = decryptedContent[len(startBytes):]

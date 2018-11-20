@@ -93,7 +93,10 @@ func buildHmacKey(db *Database, transformedKey []byte) []byte {
 	masterKey.Write(db.Header.FileHeaders.MasterSeed)
 	masterKey.Write(transformedKey)
 	masterKey.Write([]byte{0x01})
-	return masterKey.Sum(nil)
+	hmacKey := sha512.New()
+	hmacKey.Write([]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF})
+	hmacKey.Write(masterKey.Sum(nil))
+	return hmacKey.Sum(nil)
 }
 
 func cryptAesKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {

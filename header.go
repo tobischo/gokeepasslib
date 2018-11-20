@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"bytes"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
@@ -524,9 +525,26 @@ func (h *DBHeader) GetSha256() [32]byte {
 
 // Validate header SHA256 with the passed one
 func (h *DBHeader) ValidateSha256(hash [32]byte) error {
-	sha := sha256.Sum256(h.RawData)
+	sha := h.GetSha256()
 	if !reflect.DeepEqual(sha, hash) {
 		return errors.New("Sha256 of header mismatching")
+	}
+	return nil
+}
+
+// Calculate HMAC-SHA256 of header
+func (h *DBHeader) GetHmacSha256(hmacKey []byte) (ret [32]byte) {
+	hash := hmac.New(sha256.New, hmacKey)
+	hash.Write(h.RawData)
+	copy(ret[:32], hash.Sum(nil)[:32])
+	return
+}
+
+// Validate header HMAC-SHA256 with the passed one
+func (h *DBHeader) ValidateHmacSha256(hmacKey []byte, hash [32]byte) error {
+	hmacSha := h.GetHmacSha256(hmacKey)
+	if !reflect.DeepEqual(hmacSha, hash) {
+		return errors.New("HMAC-Sha256 of header mismatching")
 	}
 	return nil
 }
