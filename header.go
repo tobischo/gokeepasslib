@@ -602,7 +602,14 @@ func (vd VariantDictionary) String() string {
 	return buffer.String()
 }
 func (vdi VariantDictionaryItem) String() string {
-	return fmt.Sprintf("Type: %x, NameLength: %d, Name: %s, ValueLength: %d, Value: %x\n", vdi.Type, vdi.NameLength, string(vdi.Name), vdi.ValueLength, vdi.Value)
+	return fmt.Sprintf(
+		"Type: %x, NameLength: %d, Name: %s, ValueLength: %d, Value: %x\n",
+		vdi.Type,
+		vdi.NameLength,
+		string(vdi.Name),
+		vdi.ValueLength,
+		vdi.Value,
+	)
 }
 
 // ErrInvalidSignature is the error returned if the file signature is invalid
@@ -613,7 +620,12 @@ type ErrInvalidSignature struct {
 }
 
 func (e ErrInvalidSignature) Error() string {
-	return fmt.Sprintf("gokeepasslib: invalid signature. %s is %x. Should be %x", e.Name, e.Is, e.Shouldbe)
+	return fmt.Sprintf(
+		"gokeepasslib: invalid signature. %s is %x. Should be %x",
+		e.Name,
+		e.Is,
+		e.Shouldbe,
+	)
 }
 
 // Error for end of header

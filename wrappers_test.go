@@ -46,7 +46,11 @@ func TestTimeWrapperMarshalText(t *testing.T) {
 			}
 
 			if string(data) != c.expValue {
-				t.Errorf("Did not marshal into expected string '%s', received: '%s'", c.expValue, string(data))
+				t.Errorf(
+					"Did not marshal into expected string '%s', received: '%s'",
+					c.expValue,
+					string(data),
+				)
 			}
 		})
 	}

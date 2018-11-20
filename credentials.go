@@ -64,7 +64,11 @@ func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
 			)
 		} else {
 			// AES
-			key, err := cryptAesKey(transformedKey, db.Header.FileHeaders.KdfParameters.S[:], db.Header.FileHeaders.KdfParameters.R)
+			key, err := cryptAesKey(
+				transformedKey,
+				db.Header.FileHeaders.KdfParameters.S[:],
+				db.Header.FileHeaders.KdfParameters.R,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -72,7 +76,11 @@ func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
 		}
 	} else {
 		// AES
-		key, err := cryptAesKey(transformedKey, db.Header.FileHeaders.TransformSeed, db.Header.FileHeaders.TransformRounds)
+		key, err := cryptAesKey(
+			transformedKey,
+			db.Header.FileHeaders.TransformSeed,
+			db.Header.FileHeaders.TransformRounds,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -172,5 +180,10 @@ func NewPasswordAndKeyCredentials(password, location string) (*DBCredentials, er
 }
 
 func (c *DBCredentials) String() string {
-	return fmt.Sprintf("Hashed Passphrase: %x\nHashed Key: %x\nHashed Windows Auth: %x", c.Passphrase, c.Key, c.Windows)
+	return fmt.Sprintf(
+		"Hashed Passphrase: %x\nHashed Key: %x\nHashed Windows Auth: %x",
+		c.Passphrase,
+		c.Key,
+		c.Windows,
+	)
 }
