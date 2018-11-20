@@ -85,12 +85,12 @@ func (db *Database) GetCryptoStreamManager() (*CryptoStreamManager, error) {
 				db.Content.InnerHeader.InnerRandomStreamID,
 				db.Content.InnerHeader.InnerRandomStreamKey,
 			)
-		} else {
-			return NewCryptoStreamManager(
-				db.Header.FileHeaders.InnerRandomStreamID,
-				db.Header.FileHeaders.ProtectedStreamKey,
-			)
 		}
+
+		return NewCryptoStreamManager(
+			db.Header.FileHeaders.InnerRandomStreamID,
+			db.Header.FileHeaders.ProtectedStreamKey,
+		)
 	}
 	return nil, nil
 }
