@@ -1,17 +1,19 @@
 package crypto
 
-// InsecureManager is a fake cipher that implements CryptoStream interface
-type InsecureManager struct{}
+// InsecureStream is a fake cipher that implements CryptoStream interface
+type InsecureStream struct{}
 
-// NewInsecureManager initialize a new InsecureManager interfaced with CryptoStream
-func NewInsecureManager() *InsecureManager {
-	return new(InsecureManager)
+// NewInsecureStream initialize a new InsecureStream interfaced with CryptoStream
+func NewInsecureStream() *InsecureStream {
+	return new(InsecureStream)
 }
 
-func (c *InsecureManager) Unpack(payload string) []byte {
+// Unpack returns the payload as unencrypted byte array
+func (c *InsecureStream) Unpack(payload string) []byte {
 	return []byte(payload)
 }
 
-func (c *InsecureManager) Pack(payload []byte) string {
+// Pack returns the payload as encrypted string
+func (c *InsecureStream) Pack(payload []byte) string {
 	return string(payload)
 }

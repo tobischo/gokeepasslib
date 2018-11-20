@@ -1,6 +1,8 @@
 package gokeepasslib
 
 import (
+	"errors"
+
 	"github.com/tobischo/gokeepasslib/crypto"
 )
 
@@ -12,77 +14,109 @@ const (
 	ChaChaID             = 3
 )
 
+// CryptoStreamManager is the manager to handle a CryptoStream
+type CryptoStreamManager struct {
+	Stream CryptoStream
+}
+
 // CryptoStream is responsible for stream encrypting and decrypting of protected fields
 type CryptoStream interface {
 	Unpack(payload string) []byte
 	Pack(payload []byte) string
 }
 
-// NewCryptoStream initialize a new CryptoStream
-func NewCryptoStream(id uint32, key []byte) (CryptoStream, error) {
+// NewCryptoStreamManager initialize a new CryptoStreamManager
+func NewCryptoStreamManager(id uint32, key []byte) (manager *CryptoStreamManager, err error) {
+	var stream CryptoStream
+	manager = new(CryptoStreamManager)
 	switch id {
 	case NoStreamID:
-		return crypto.NewInsecureManager(), nil
+		stream = crypto.NewInsecureStream()
 	case SalsaStreamID:
-		return crypto.NewSalsaManager(key)
+		stream, err = crypto.NewSalsaStream(key)
 	case ChaChaID:
-		return crypto.NewChaChaManager(key)
+		stream, err = crypto.NewChaChaStream(key)
+	default:
+		return nil, ErrUnsupportedStreamType
 	}
-	return nil, nil
+	manager.Stream = stream
+	return
 }
 
-func unlockProtectedGroups(p CryptoStream, gs []Group) {
+// Unpack returns the payload as unencrypted byte array
+func (cs *CryptoStreamManager) Unpack(payload string) []byte {
+	return cs.Stream.Unpack(payload)
+}
+
+// Pack returns the payload as encrypted string
+func (cs *CryptoStreamManager) Pack(payload []byte) string {
+	return cs.Stream.Pack(payload)
+}
+
+// UnlockProtectedGroups unlocks an array of protected groups
+func (cs *CryptoStreamManager) UnlockProtectedGroups(gs []Group) {
 	for i := range gs { //For each top level group
-		unlockProtectedGroup(p, &gs[i])
+		cs.UnlockProtectedGroup(&gs[i])
 	}
 }
 
-func unlockProtectedGroup(p CryptoStream, g *Group) {
-	unlockProtectedEntries(p, g.Entries)
-	unlockProtectedGroups(p, g.Groups)
+// UnlockProtectedGroup unlocks a protected group
+func (cs *CryptoStreamManager) UnlockProtectedGroup(g *Group) {
+	cs.UnlockProtectedEntries(g.Entries)
+	cs.UnlockProtectedGroups(g.Groups)
 }
 
-func unlockProtectedEntries(p CryptoStream, e []Entry) {
+// UnlockProtectedEntries unlocks an array of protected entries
+func (cs *CryptoStreamManager) UnlockProtectedEntries(e []Entry) {
 	for i := range e {
-		unlockProtectedEntry(p, &e[i])
+		cs.UnlockProtectedEntry(&e[i])
 	}
 }
 
-func unlockProtectedEntry(p CryptoStream, e *Entry) {
+// UnlockProtectedEntry unlocks a protected entry
+func (cs *CryptoStreamManager) UnlockProtectedEntry(e *Entry) {
 	for i := range e.Values {
 		if bool(e.Values[i].Value.Protected) {
-			e.Values[i].Value.Content = string(p.Unpack(e.Values[i].Value.Content))
+			e.Values[i].Value.Content = string(cs.Unpack(e.Values[i].Value.Content))
 		}
 	}
 	for i := range e.Histories {
-		unlockProtectedEntries(p, e.Histories[i].Entries)
+		cs.UnlockProtectedEntries(e.Histories[i].Entries)
 	}
 }
 
-func lockProtectedGroups(p CryptoStream, gs []Group) {
+// LockProtectedGroups locks an array of unprotected groups
+func (cs *CryptoStreamManager) LockProtectedGroups(gs []Group) {
 	for i := range gs {
-		lockProtectedGroup(p, &gs[i])
+		cs.LockProtectedGroup(&gs[i])
 	}
 }
 
-func lockProtectedGroup(p CryptoStream, g *Group) {
-	lockProtectedEntries(p, g.Entries)
-	lockProtectedGroups(p, g.Groups)
+// LockProtectedGroup locks an unprotected group
+func (cs *CryptoStreamManager) LockProtectedGroup(g *Group) {
+	cs.LockProtectedEntries(g.Entries)
+	cs.LockProtectedGroups(g.Groups)
 }
 
-func lockProtectedEntries(p CryptoStream, es []Entry) {
+// LockProtectedEntries locks an array of unprotected entries
+func (cs *CryptoStreamManager) LockProtectedEntries(es []Entry) {
 	for i := range es {
-		lockProtectedEntry(p, &es[i])
+		cs.LockProtectedEntry(&es[i])
 	}
 }
 
-func lockProtectedEntry(p CryptoStream, e *Entry) {
+// LockProtectedEntry locks an unprotected entry
+func (cs *CryptoStreamManager) LockProtectedEntry(e *Entry) {
 	for i := range e.Values {
 		if bool(e.Values[i].Value.Protected) {
-			e.Values[i].Value.Content = p.Pack([]byte(e.Values[i].Value.Content))
+			e.Values[i].Value.Content = cs.Pack([]byte(e.Values[i].Value.Content))
 		}
 	}
 	for i := range e.Histories {
-		lockProtectedEntries(p, e.Histories[i].Entries)
+		cs.LockProtectedEntries(e.Histories[i].Entries)
 	}
 }
+
+// ErrUnsupportedStreamType is retured if no streamManager can be created
+// due to an unsupported InnerRandomStreamID value
+var ErrUnsupportedStreamType = errors.New("Type of stream manager unsupported")

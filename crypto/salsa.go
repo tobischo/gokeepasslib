@@ -13,8 +13,8 @@ var sigmaWords = []uint32{
 	0x6b206574,
 }
 
-// SalsaManager is a Salas20 cipher that implements CryptoStream interface
-type SalsaManager struct {
+// SalsaStream is a Salsa20 cipher that implements CryptoStream interface
+type SalsaStream struct {
 	State        []uint32
 	blockUsed    int
 	block        []byte
@@ -22,19 +22,8 @@ type SalsaManager struct {
 	currentBlock []byte
 }
 
-func u8to32little(k []byte, i int) uint32 {
-	return uint32(k[i]) |
-		(uint32(k[i+1]) << 8) |
-		(uint32(k[i+2]) << 16) |
-		(uint32(k[i+3]) << 24)
-}
-
-func rotl32(x uint32, b uint) uint32 {
-	return ((x << b) | (x >> (32 - b)))
-}
-
-// NewSalsaManager initialize a new SalsaManager interfaced with CryptoStream
-func NewSalsaManager(key []byte) (*SalsaManager, error) {
+// NewSalsaManager initialize a new SalsaStream interfaced with CryptoStream
+func NewSalsaStream(key []byte) (*SalsaStream, error) {
 	hash := sha256.Sum256(key)
 	state := make([]uint32, 16)
 
@@ -56,7 +45,7 @@ func NewSalsaManager(key []byte) (*SalsaManager, error) {
 	state[8] = uint32(0)
 	state[9] = uint32(0)
 
-	s := SalsaManager{
+	s := SalsaStream{
 		State:        state,
 		currentBlock: make([]byte, 0),
 	}
@@ -64,7 +53,8 @@ func NewSalsaManager(key []byte) (*SalsaManager, error) {
 	return &s, nil
 }
 
-func (s *SalsaManager) Unpack(payload string) []byte {
+// Unpack returns the payload as unencrypted byte array
+func (s *SalsaStream) Unpack(payload string) []byte {
 	var result []byte
 
 	data, _ := base64.StdEncoding.DecodeString(payload)
@@ -77,7 +67,8 @@ func (s *SalsaManager) Unpack(payload string) []byte {
 	return result
 }
 
-func (s *SalsaManager) Pack(payload []byte) string {
+// Pack returns the payload as encrypted string
+func (s *SalsaStream) Pack(payload []byte) string {
 	var data []byte
 
 	salsaBytes := s.fetchBytes(len(payload))
@@ -90,19 +81,30 @@ func (s *SalsaManager) Pack(payload []byte) string {
 	return lockedPassword
 }
 
-func (s *SalsaManager) reset() {
+func u8to32little(k []byte, i int) uint32 {
+	return uint32(k[i]) |
+		(uint32(k[i+1]) << 8) |
+		(uint32(k[i+2]) << 16) |
+		(uint32(k[i+3]) << 24)
+}
+
+func rotl32(x uint32, b uint) uint32 {
+	return ((x << b) | (x >> (32 - b)))
+}
+
+func (s *SalsaStream) reset() {
 	s.blockUsed = 64
 	s.counterWords = [2]uint32{0, 0}
 }
 
-func (s *SalsaManager) incrementCounter() {
+func (s *SalsaStream) incrementCounter() {
 	s.counterWords[0] = (s.counterWords[0] + 1) & 0xffffffff
 	if s.counterWords[0] == 0 {
 		s.counterWords[1] = (s.counterWords[1] + 1) & 0xffffffff
 	}
 }
 
-func (s *SalsaManager) fetchBytes(length int) []byte {
+func (s *SalsaStream) fetchBytes(length int) []byte {
 	for length > len(s.currentBlock) {
 		s.currentBlock = append(s.currentBlock, s.getBytes(64)...)
 	}
@@ -113,7 +115,7 @@ func (s *SalsaManager) fetchBytes(length int) []byte {
 	return data
 }
 
-func (s *SalsaManager) getBytes(length int) []byte {
+func (s *SalsaStream) getBytes(length int) []byte {
 	b := make([]byte, length)
 
 	for i := 0; i < length; i++ {
@@ -129,7 +131,7 @@ func (s *SalsaManager) getBytes(length int) []byte {
 	return b
 }
 
-func (s *SalsaManager) generateBlock() {
+func (s *SalsaStream) generateBlock() {
 	s.block = make([]byte, 64)
 
 	x := make([]uint32, 16)

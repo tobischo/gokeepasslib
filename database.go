@@ -3,10 +3,10 @@ package gokeepasslib
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"errors"
 	"fmt"
 )
 
+// Database stores all contents nessesary for a keepass database file
 type Database struct {
 	Options     *DBOptions
 	Credentials *DBCredentials
@@ -15,10 +15,12 @@ type Database struct {
 	Content     *DBContent
 }
 
+// DBOptions stores options for database decoding/encoding
 type DBOptions struct {
-	ValidateHashes bool
+	ValidateHashes bool // True to validate header hash
 }
 
+// NewDatabase creates a new database with some sensable default settings. To create a database with no settigns per-set, use gokeepasslib.Database{}
 func NewDatabase() *Database {
 	header := NewHeader()
 	return &Database{
@@ -30,13 +32,14 @@ func NewDatabase() *Database {
 	}
 }
 
+// NewOptions creates new options with default values
 func NewOptions() *DBOptions {
 	return &DBOptions{
 		ValidateHashes: true,
 	}
 }
 
-// Get transformed key from Credentials
+// getTransformedKey returns the transformed key Credentials
 func (db *Database) getTransformedKey() ([]byte, error) {
 	if db.Credentials == nil {
 		return nil, ErrRequiredAttributeMissing("Credentials")
@@ -72,14 +75,14 @@ func (db *Database) Encrypter(transformedKey []byte) (cipher.BlockMode, error) {
 	return cipher.NewCBCEncrypter(block, db.Header.FileHeaders.EncryptionIV), nil
 }
 
-// StreamManager returns a ProtectedStreamManager bassed on the db headers, or nil if the type is unsupported
+// GetCryptoStream returns a CryptoStream based on the db headers, or nil if the type is unsupported
 // Can be used to lock only certain entries instead of calling
-func (db *Database) CryptoStreamManager() (CryptoStream, error) {
+func (db *Database) GetCryptoStreamManager() (*CryptoStreamManager, error) {
 	if db.Header.FileHeaders != nil {
 		if db.Header.IsKdbx4() {
-			return NewCryptoStream(db.Content.InnerHeader.InnerRandomStreamID, db.Content.InnerHeader.InnerRandomStreamKey)
+			return NewCryptoStreamManager(db.Content.InnerHeader.InnerRandomStreamID, db.Content.InnerHeader.InnerRandomStreamKey)
 		} else {
-			return NewCryptoStream(db.Header.FileHeaders.InnerRandomStreamID, db.Header.FileHeaders.ProtectedStreamKey)
+			return NewCryptoStreamManager(db.Header.FileHeaders.InnerRandomStreamID, db.Header.FileHeaders.ProtectedStreamKey)
 		}
 	}
 	return nil, nil
@@ -90,14 +93,14 @@ func (db *Database) CryptoStreamManager() (CryptoStream, error) {
 // This should be called after decoding if you want to view plaintext password in an entry
 // Warning: If you call this when entry values are already unlocked, it will cause them to be unreadable
 func (db *Database) UnlockProtectedEntries() error {
-	manager, err := db.CryptoStreamManager()
+	manager, err := db.GetCryptoStreamManager()
 	if err != nil {
 		return err
 	}
 	if manager == nil {
 		return ErrUnsupportedStreamType
 	}
-	unlockProtectedGroups(manager, db.Content.Root.Groups)
+	manager.UnlockProtectedGroups(db.Content.Root.Groups)
 	return nil
 }
 
@@ -106,20 +109,13 @@ func (db *Database) UnlockProtectedEntries() error {
 // Warning: Do not call this if entries are already locked
 // Warning: Encoding a database calls LockProtectedEntries automatically
 func (db *Database) LockProtectedEntries() error {
-	manager, err := db.CryptoStreamManager()
+	manager, err := db.GetCryptoStreamManager()
 	if err != nil {
 		return err
 	}
-	if manager == nil {
-		return ErrUnsupportedStreamType
-	}
-	lockProtectedGroups(manager, db.Content.Root.Groups)
+	manager.LockProtectedGroups(db.Content.Root.Groups)
 	return nil
 }
-
-// ErrUnsupportedStreamType is retured if no streamManager can be created
-// due to an unsupported InnerRandomStreamID value
-var ErrUnsupportedStreamType = errors.New("Type of stream manager unsupported")
 
 // ErrRequiredAttributeMissing is returned if a required value is not given
 type ErrRequiredAttributeMissing string

@@ -8,13 +8,13 @@ import (
 	"github.com/aead/chacha20"
 )
 
-// ChaChaManager is a ChaCha20 cipher that implements CryptoStream interface
-type ChaChaManager struct {
+// ChaChaStream is a ChaCha20 cipher that implements CryptoStream interface
+type ChaChaStream struct {
 	cipher cipher.Stream
 }
 
-// NewChaChaManager initialize a new ChaChaManager interfaced with CryptoStream
-func NewChaChaManager(key []byte) (*ChaChaManager, error) {
+// NewChaChaStream initialize a new ChaChaStream interfaced with CryptoStream
+func NewChaChaStream(key []byte) (*ChaChaStream, error) {
 	hash := sha512.Sum512(key)
 
 	cipher, err := chacha20.NewCipher(hash[32:44], hash[:32])
@@ -22,13 +22,14 @@ func NewChaChaManager(key []byte) (*ChaChaManager, error) {
 		return nil, err
 	}
 
-	c := ChaChaManager{
+	c := ChaChaStream{
 		cipher: cipher,
 	}
 	return &c, nil
 }
 
-func (c *ChaChaManager) Unpack(payload string) []byte {
+// Unpack returns the payload as unencrypted byte array
+func (c *ChaChaStream) Unpack(payload string) []byte {
 	decoded, _ := base64.StdEncoding.DecodeString(payload)
 	var data []byte
 	data = make([]byte, len(decoded))
@@ -37,7 +38,8 @@ func (c *ChaChaManager) Unpack(payload string) []byte {
 	return data
 }
 
-func (c *ChaChaManager) Pack(payload []byte) string {
+// Pack returns the payload as encrypted string
+func (c *ChaChaStream) Pack(payload []byte) string {
 	var data []byte
 	data = make([]byte, len(payload))
 
