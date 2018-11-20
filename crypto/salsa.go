@@ -22,7 +22,7 @@ type SalsaStream struct {
 	currentBlock []byte
 }
 
-// NewSalsaManager initialize a new SalsaStream interfaced with CryptoStream
+// NewSalsaStream initialize a new SalsaStream interfaced with CryptoStream
 func NewSalsaStream(key []byte) (*SalsaStream, error) {
 	hash := sha256.Sum256(key)
 	state := make([]uint32, 16)
