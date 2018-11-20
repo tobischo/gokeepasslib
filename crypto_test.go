@@ -26,11 +26,11 @@ func TestChaCha(t *testing.T) {
 	payload := []byte("test message")
 
 	// Encrypt
-	c, _ := NewCryptoStreamManager(ChaChaID, key)
+	c, _ := NewCryptoStreamManager(ChaChaStreamID, key)
 	crypted := c.Pack(payload)
 
 	// Decrypt
-	c2, _ := NewCryptoStreamManager(ChaChaID, key)
+	c2, _ := NewCryptoStreamManager(ChaChaStreamID, key)
 	decrypted := c2.Unpack(crypted)
 
 	if string(decrypted) != "test message" {
@@ -43,11 +43,11 @@ func TestSalsa(t *testing.T) {
 	payload := []byte("test message")
 
 	// Encrypt
-	c, _ := NewCryptoStreamManager(ChaChaID, key)
+	c, _ := NewCryptoStreamManager(SalsaStreamID, key)
 	crypted := c.Pack(payload)
 
 	// Decrypt
-	c2, _ := NewCryptoStreamManager(ChaChaID, key)
+	c2, _ := NewCryptoStreamManager(SalsaStreamID, key)
 	decrypted := c2.Unpack(crypted)
 
 	if string(decrypted) != "test message" {
