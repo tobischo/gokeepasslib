@@ -22,7 +22,7 @@ func NewEncoder(w io.Writer) *Encoder {
 }
 
 // Encode writes db to e's internal writer
-func (e *Encoder) Encode(db *Database) (err error) {
+func (e *Encoder) Encode(db *Database) error {
 	// Calculate transformed key to make HMAC and encrypt
 	transformedKey, err := db.getTransformedKey()
 	if err != nil {
@@ -51,10 +51,8 @@ func (e *Encoder) Encode(db *Database) (err error) {
 		db.Content.Meta.HeaderHash = base64.StdEncoding.EncodeToString(hash[:])
 	}
 
-	var rawContent []byte
-
 	// Encode xml and append header to the top
-	rawContent, err = xml.MarshalIndent(db.Content, "", "\t")
+	rawContent, err := xml.MarshalIndent(db.Content, "", "\t")
 	if err != nil {
 		return err
 	}
@@ -71,17 +69,14 @@ func (e *Encoder) Encode(db *Database) (err error) {
 	}
 
 	// Encode raw content
-	var encodedContent []byte
-	encodedContent, err = encodeRawContent(db, rawContent, transformedKey)
+	encodedContent, err := encodeRawContent(db, rawContent, transformedKey)
 	if err != nil {
 		return err
 	}
 
 	// Writes the encrypted database content
-	if _, err = e.w.Write(encodedContent); err != nil {
-		return err
-	}
-	return nil
+	_, err = e.w.Write(encodedContent)
+	return err
 }
 
 func encodeRawContent(db *Database, content []byte, transformedKey []byte) (encoded []byte, err error) {
