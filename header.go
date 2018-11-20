@@ -253,18 +253,8 @@ func (fh *FileHeaders) readFileHeader(id uint8, data []byte) error {
 	case 10:
 		fh.InnerRandomStreamID = binary.LittleEndian.Uint32(data)
 	case 11:
-		dict := new(VariantDictionary)
-		if err := dict.readVariantDictionary(data); err != nil {
-			return err
-		}
-
 		fh.KdfParameters = new(KdfParameters)
-		fh.KdfParameters.RawData = dict
-		for _, item := range dict.Items {
-			if err := fh.KdfParameters.readKdfParameter(item); err != nil {
-				return err
-			}
-		}
+		return fh.KdfParameters.readKdfParameters(data)
 	case 12:
 		fh.PublicCustomData = new(VariantDictionary)
 		return fh.PublicCustomData.readVariantDictionary(data)
@@ -274,29 +264,37 @@ func (fh *FileHeaders) readFileHeader(id uint8, data []byte) error {
 	return nil
 }
 
-// readKdfParameter reads a kdf parameter value and puts it into the right variable
-func (k *KdfParameters) readKdfParameter(vdi *VariantDictionaryItem) error {
-	switch string(vdi.Name) {
-	case "$UUID":
-		k.UUID = vdi.Value
-	case "R":
-		k.Rounds = binary.LittleEndian.Uint64(vdi.Value)
-	case "S":
-		copy(k.Salt[:], vdi.Value[:32])
-	case "P":
-		k.Parallelism = binary.LittleEndian.Uint32(vdi.Value)
-	case "M":
-		k.Memory = binary.LittleEndian.Uint64(vdi.Value)
-	case "I":
-		k.Iterations = binary.LittleEndian.Uint64(vdi.Value)
-	case "V":
-		k.Version = binary.LittleEndian.Uint32(vdi.Value)
-	case "K":
-		k.SecretKey = vdi.Value
-	case "A":
-		k.AssocData = vdi.Value
-	default:
-		return ErrUnknownParameterID(string(vdi.Name))
+// readKdfParameters reads a variant dictionary and puts values into KdfParameters
+func (k *KdfParameters) readKdfParameters(data []byte) error {
+	dict := new(VariantDictionary)
+	if err := dict.readVariantDictionary(data); err != nil {
+		return err
+	}
+
+	k.RawData = dict
+	for _, item := range dict.Items {
+		switch string(item.Name) {
+		case "$UUID":
+			k.UUID = item.Value
+		case "R":
+			k.Rounds = binary.LittleEndian.Uint64(item.Value)
+		case "S":
+			copy(k.Salt[:], item.Value[:32])
+		case "P":
+			k.Parallelism = binary.LittleEndian.Uint32(item.Value)
+		case "M":
+			k.Memory = binary.LittleEndian.Uint64(item.Value)
+		case "I":
+			k.Iterations = binary.LittleEndian.Uint64(item.Value)
+		case "V":
+			k.Version = binary.LittleEndian.Uint32(item.Value)
+		case "K":
+			k.SecretKey = item.Value
+		case "A":
+			k.AssocData = item.Value
+		default:
+			return ErrUnknownParameterID(string(item.Name))
+		}
 	}
 	return nil
 }
