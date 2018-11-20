@@ -15,14 +15,16 @@ type Decoder struct {
 	r io.Reader
 }
 
+// NewDecoder creates a new decoder with reader r, identical to gokeepasslib.Decoder{r}
 func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{r: r}
 }
 
-func (d *Decoder) Decode(db *Database) (err error) {
+// Decode populates given database with the data of Decoder reader
+func (d *Decoder) Decode(db *Database) error {
 	// Read header
 	db.Header = new(DBHeader)
-	if err = db.Header.readFrom(d.r); err != nil {
+	if err := db.Header.readFrom(d.r); err != nil {
 		return err
 	}
 
@@ -35,7 +37,7 @@ func (d *Decoder) Decode(db *Database) (err error) {
 	// Read hashes and validate them (Kdbx v4)
 	if db.Header.IsKdbx4() {
 		db.Hashes = new(DBHashes)
-		if err = db.Hashes.readFrom(d.r); err != nil {
+		if err := db.Hashes.readFrom(d.r); err != nil {
 			return err
 		}
 
@@ -52,8 +54,7 @@ func (d *Decoder) Decode(db *Database) (err error) {
 	}
 
 	// Decode raw content
-	var rawContent []byte
-	rawContent, err = ioutil.ReadAll(d.r)
+	rawContent, _ := ioutil.ReadAll(d.r)
 	if err := decodeRawContent(db, rawContent, transformedKey); err != nil {
 		return err
 	}
@@ -63,15 +64,14 @@ func (d *Decoder) Decode(db *Database) (err error) {
 	// Read InnerHeader (Kdbx v4)
 	if db.Header.IsKdbx4() {
 		db.Content.InnerHeader = new(InnerHeader)
-		if err = db.Content.InnerHeader.readFrom(contentReader); err != nil {
+		if err := db.Content.InnerHeader.readFrom(contentReader); err != nil {
 			return err
 		}
 	}
 
 	// Decode xml
 	xmlDecoder := xml.NewDecoder(contentReader)
-	err = xmlDecoder.Decode(db.Content)
-	return err
+	return xmlDecoder.Decode(db.Content)
 }
 
 func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err error) {
@@ -125,8 +125,7 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err 
 
 	// Decompress if the header compression flag is 1 (gzip)
 	if db.Header.FileHeaders.CompressionFlags == GzipCompressionFlag {
-		var reader io.Reader
-		reader = bytes.NewReader(decryptedContent)
+		reader := bytes.NewReader(decryptedContent)
 		r, err := gzip.NewReader(reader)
 		if err != nil {
 			return err
