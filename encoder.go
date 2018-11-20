@@ -31,7 +31,7 @@ func (e *Encoder) Encode(db *Database) (err error) {
 
 	// Write header then hashes before decode content (necessary to update HeaderHash)
 	// db.Header writeTo will change its hash
-	if err = db.Header.WriteTo(e.w); err != nil {
+	if err = db.Header.writeTo(e.w); err != nil {
 		return err
 	}
 

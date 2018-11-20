@@ -55,19 +55,19 @@ func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
 		if reflect.DeepEqual(db.Header.FileHeaders.KdfParameters.UUID, KdfArgon2) {
 			// Argon 2
 			transformedKey = argon2.Key2d(
-				[]byte(transformedKey),                             // Master key
-				db.Header.FileHeaders.KdfParameters.S[:],           // Salt
-				uint32(db.Header.FileHeaders.KdfParameters.I),      // Time cost
-				uint32(db.Header.FileHeaders.KdfParameters.M)/1024, // Memory cost
-				uint8(db.Header.FileHeaders.KdfParameters.P),       // Parallelism
+				[]byte(transformedKey),                                  // Master key
+				db.Header.FileHeaders.KdfParameters.Salt[:],             // Salt
+				uint32(db.Header.FileHeaders.KdfParameters.Iterations),  // Time cost
+				uint32(db.Header.FileHeaders.KdfParameters.Memory)/1024, // Memory cost
+				uint8(db.Header.FileHeaders.KdfParameters.Parallelism),  // Parallelism
 				32, // Hash length
 			)
 		} else {
 			// AES
 			key, err := cryptAesKey(
 				transformedKey,
-				db.Header.FileHeaders.KdfParameters.S[:],
-				db.Header.FileHeaders.KdfParameters.R,
+				db.Header.FileHeaders.KdfParameters.Salt[:],
+				db.Header.FileHeaders.KdfParameters.Rounds,
 			)
 			if err != nil {
 				return nil, err

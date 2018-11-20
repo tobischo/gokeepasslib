@@ -18,34 +18,41 @@ var BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
 // SecondarySignature is the valid version signature for kdbx files
 var SecondarySignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
 
-// DefaultSig is the full valid default signature struct for new databases (KDBX v3.1)
+// DefaultSig is the full valid default signature struct for new databases (Kdbx v3.1)
 var DefaultSig = Signature{BaseSignature, SecondarySignature, 1, 3}
 
-// CompressionFlags enum
+// Compression flags
 const (
-	NoCompressionFlag   uint32 = 0
-	GzipCompressionFlag        = 1
+	NoCompressionFlag   uint32 = 0 // No compression flag
+	GzipCompressionFlag uint32 = 1 // Gzip compression flag
 )
 
-// Ciphers
+// CipherAES is the AES cipher ID
 var CipherAES = []byte{0x31, 0xC1, 0xF2, 0xE6, 0xBF, 0x71, 0x43, 0x50, 0xBE, 0x58, 0x05, 0x21, 0x6A, 0xFC, 0x5A, 0xFF}
+
+// CipherTwoFish is the TwoFish cipher ID
 var CipherTwoFish = []byte{0xAD, 0x68, 0xF2, 0x9F, 0x57, 0x6F, 0x4B, 0xB9, 0xA3, 0x6A, 0xD4, 0x7A, 0xF9, 0x65, 0x34, 0x6C}
+
+// CipherChaCha20 is the ChaCha20 cipher ID
 var CipherChaCha20 = []byte{0xD6, 0x03, 0x8A, 0x2B, 0x8B, 0x6F, 0x4C, 0xB5, 0xA5, 0x24, 0x33, 0x9A, 0x31, 0xDB, 0xB5, 0x9A}
 
-// Kdfs
+// KdfAES3 is the AES key derivation function ID for Kdbx v3.1
 var KdfAES3 = []byte{0xC9, 0xD9, 0xF3, 0x9A, 0x62, 0x8A, 0x44, 0x60, 0xBF, 0x74, 0x0D, 0x08, 0xC1, 0x8A, 0x4F, 0xEA}
+
+// KdfAES4 is the AES key derivation function ID for Kdbx v4
 var KdfAES4 = []byte{0x7C, 0x02, 0xBB, 0x82, 0x79, 0xA7, 0x4A, 0xC0, 0x92, 0x7D, 0x11, 0x4A, 0x00, 0x64, 0x82, 0x38}
+
+// KdfArgon2 is the Argon2 key derivation function ID
 var KdfArgon2 = []byte{0xEF, 0x63, 0x6D, 0xDF, 0x8C, 0x29, 0x44, 0x4B, 0x91, 0xF7, 0xA9, 0xA4, 0x03, 0xE3, 0x0A, 0x0C}
 
-// Header of a database
-// RawData is the byte array of the data
+// DBHeader is the header of a database
 type DBHeader struct {
 	RawData     []byte
 	Signature   *Signature
 	FileHeaders *FileHeaders
 }
 
-// FileSignature holds the Keepass File Signature.
+// Signature holds the Keepass File Signature.
 // The first 4 Bytes are the Base Signature,
 // followed by 4 Bytes for the Version of the Format
 // which is followed by 4 Bytes for the File Version
@@ -74,16 +81,16 @@ type FileHeaders struct {
 
 // KdfParameters contains every field of the KdfParameters header field
 type KdfParameters struct {
-	RawData *VariantDictionary // Raw data of KdfParameters
-	UUID    []byte             // $UUID for kdf
-	R       uint64             // Rounds
-	S       [32]byte           // Hash (Argon 2) / Seed (AES)
-	P       uint32             // Parallelism
-	M       uint64             // Memory
-	I       uint64             // Iterations
-	V       uint32             // Version
-	K       []byte             // Secret key
-	A       []byte             // AssocData
+	RawData     *VariantDictionary // Raw data of KdfParameters
+	UUID        []byte             // $UUID - KDF ID
+	Rounds      uint64             // R - Rounds
+	Salt        [32]byte           // S - Salt (Argon 2) / Seed (AES)
+	Parallelism uint32             // P - Parallelism
+	Memory      uint64             // M - Memory
+	Iterations  uint64             // I - Iterations
+	Version     uint32             // V - Version
+	SecretKey   []byte             // K - Secret key
+	AssocData   []byte             // A - AssocData
 }
 
 // VariantDictionary is a structure used into KdfParameters and PublicCustomData
@@ -92,7 +99,7 @@ type VariantDictionary struct {
 	Items   []*VariantDictionaryItem
 }
 
-// Item of a VariantDictionary
+// VariantDictionaryItem is an item of a VariantDictionary
 type VariantDictionaryItem struct {
 	Type        byte
 	NameLength  int32
@@ -101,7 +108,7 @@ type VariantDictionaryItem struct {
 	Value       []byte
 }
 
-// Create a new Header with good defaults
+// NewHeader creates a new Header with good defaults
 func NewHeader() *DBHeader {
 	return &DBHeader{
 		Signature:   &DefaultSig,
@@ -109,7 +116,7 @@ func NewHeader() *DBHeader {
 	}
 }
 
-// Create a new FileHeaders with good defaults
+// NewFileHeaders creates a new FileHeaders with good defaults
 func NewFileHeaders() *FileHeaders {
 	masterSeed := make([]byte, 32)
 	rand.Read(masterSeed)
@@ -127,7 +134,7 @@ func NewFileHeaders() *FileHeaders {
 	rand.Read(streamStartBytes)
 
 	return &FileHeaders{
-		CipherID:            []byte(CipherAES),
+		CipherID:            CipherAES,
 		CompressionFlags:    GzipCompressionFlag,
 		MasterSeed:          masterSeed,
 		TransformSeed:       transformSeed,
@@ -139,10 +146,10 @@ func NewFileHeaders() *FileHeaders {
 	}
 }
 
-// Read an header from a Reader
-func (h *DBHeader) ReadFrom(r io.Reader) error {
+// readFrom reads the header from an io.Reader
+func (h *DBHeader) readFrom(r io.Reader) error {
+	// Save read data into a buffer that will be the RawData
 	buffer := bytes.NewBuffer([]byte{})
-
 	tR := io.TeeReader(r, buffer)
 
 	// Read signature
@@ -174,7 +181,7 @@ func (h *DBHeader) ReadFrom(r io.Reader) error {
 	return nil
 }
 
-// Read header fields of KDBX v4
+// readHeader4 reads a header of a KDBX v4 database
 func (fh *FileHeaders) readHeader4(r io.Reader) error {
 	var id uint8
 	var length uint32
@@ -197,7 +204,7 @@ func (fh *FileHeaders) readHeader4(r io.Reader) error {
 	return nil
 }
 
-// Read header fields of KDBX v3.1
+// readHeader4 reads a header of a KDBX v3.1 database
 func (fh *FileHeaders) readHeader31(r io.Reader) error {
 	var id uint8
 	var length uint16
@@ -220,7 +227,7 @@ func (fh *FileHeaders) readHeader31(r io.Reader) error {
 	return nil
 }
 
-// Insert into FileHeaders every header found
+// readFileHeader reads a header value and puts it into the right variable
 func (fh *FileHeaders) readFileHeader(id uint8, data []byte) error {
 	switch id {
 	case 0:
@@ -267,34 +274,34 @@ func (fh *FileHeaders) readFileHeader(id uint8, data []byte) error {
 	return nil
 }
 
-// Insert into KdfParameters every parameter found
+// readKdfParameter reads a kdf parameter value and puts it into the right variable
 func (k *KdfParameters) readKdfParameter(vdi *VariantDictionaryItem) error {
 	switch string(vdi.Name) {
 	case "$UUID":
 		k.UUID = vdi.Value
 	case "R":
-		k.R = binary.LittleEndian.Uint64(vdi.Value)
+		k.Rounds = binary.LittleEndian.Uint64(vdi.Value)
 	case "S":
-		copy(k.S[:], vdi.Value[:32])
+		copy(k.Salt[:], vdi.Value[:32])
 	case "P":
-		k.P = binary.LittleEndian.Uint32(vdi.Value)
+		k.Parallelism = binary.LittleEndian.Uint32(vdi.Value)
 	case "M":
-		k.M = binary.LittleEndian.Uint64(vdi.Value)
+		k.Memory = binary.LittleEndian.Uint64(vdi.Value)
 	case "I":
-		k.I = binary.LittleEndian.Uint64(vdi.Value)
+		k.Iterations = binary.LittleEndian.Uint64(vdi.Value)
 	case "V":
-		k.V = binary.LittleEndian.Uint32(vdi.Value)
+		k.Version = binary.LittleEndian.Uint32(vdi.Value)
 	case "K":
-		k.K = vdi.Value
+		k.SecretKey = vdi.Value
 	case "A":
-		k.A = vdi.Value
+		k.AssocData = vdi.Value
 	default:
 		return ErrUnknownParameterID(string(vdi.Name))
 	}
 	return nil
 }
 
-// Read a VariantDictionary from a data
+// readVariantDictionary reads a variant dictionary
 func (vd *VariantDictionary) readVariantDictionary(data []byte) error {
 	r := bytes.NewReader(data)
 
@@ -333,17 +340,17 @@ func (vd *VariantDictionary) readVariantDictionary(data []byte) error {
 	return nil
 }
 
-// Write into the given io.Writer the FileHeaders structure
-func (h *DBHeader) WriteTo(w io.Writer) error {
+// writeTo writes the header to the given io.Writer
+func (h *DBHeader) writeTo(w io.Writer) error {
 	var buffer bytes.Buffer
 	mw := io.MultiWriter(w, &buffer)
 
 	binary.Write(mw, binary.LittleEndian, h.Signature)
 
 	if h.IsKdbx4() {
-		h.FileHeaders.WriteTo4(mw, &buffer)
+		h.FileHeaders.writeTo4(mw, &buffer)
 	} else {
-		h.FileHeaders.WriteTo31(mw)
+		h.FileHeaders.writeTo31(mw)
 	}
 
 	h.RawData = buffer.Bytes()
@@ -351,8 +358,8 @@ func (h *DBHeader) WriteTo(w io.Writer) error {
 	return nil
 }
 
-// Write Kdbx v4 header structure
-func (fh FileHeaders) WriteTo4(w io.Writer, buf *bytes.Buffer) error {
+// writeTo4 writes a Kdbx v4 structured file header to the given io.Writer
+func (fh FileHeaders) writeTo4(w io.Writer, buf *bytes.Buffer) error {
 	compressionFlags := make([]byte, 4)
 	binary.LittleEndian.PutUint32(compressionFlags, fh.CompressionFlags)
 
@@ -384,6 +391,7 @@ func (fh FileHeaders) WriteTo4(w io.Writer, buf *bytes.Buffer) error {
 	return nil
 }
 
+// writeTo4Header is an helper to write a file header with the correct Kdbx v4 structure to the given io.Writer
 func writeTo4Header(w io.Writer, id uint8, data []byte) error {
 	if len(data) > 0 {
 		if err := binary.Write(w, binary.LittleEndian, id); err != nil {
@@ -399,6 +407,7 @@ func writeTo4Header(w io.Writer, id uint8, data []byte) error {
 	return nil
 }
 
+// writeTo31Header is an helper to write a variant dictionary to the given io.Writer
 func writeTo4VariantDictionary(w io.Writer, id uint8, data *VariantDictionary) error {
 	if data != nil {
 		var buffer bytes.Buffer
@@ -440,8 +449,8 @@ func writeTo4VariantDictionary(w io.Writer, id uint8, data *VariantDictionary) e
 	return nil
 }
 
-// Write Kdbx v3.1 header structure
-func (fh FileHeaders) WriteTo31(w io.Writer) error {
+// writeTo31 writes a Kdbx v3.1 structured file header to the given io.Writer
+func (fh FileHeaders) writeTo31(w io.Writer) error {
 	compressionFlags := make([]byte, 4)
 	binary.LittleEndian.PutUint32(compressionFlags, fh.CompressionFlags)
 
@@ -488,6 +497,7 @@ func (fh FileHeaders) WriteTo31(w io.Writer) error {
 	return nil
 }
 
+// writeTo31Header is an helper to write a file header with the correct Kdbx v3.1 structure to the given io.Writer
 func writeTo31Header(w io.Writer, id uint8, data []byte) error {
 	if len(data) > 0 {
 		if err := binary.Write(w, binary.LittleEndian, id); err != nil {
@@ -503,9 +513,9 @@ func writeTo31Header(w io.Writer, id uint8, data []byte) error {
 	return nil
 }
 
-// Get a VariantDictionaryItem via the key
-func (h *VariantDictionary) Get(key string) *VariantDictionaryItem {
-	for _, item := range h.Items {
+// Get a VariantDictionaryItem via its key
+func (vd *VariantDictionary) Get(key string) *VariantDictionaryItem {
+	for _, item := range vd.Items {
 		if string(item.Name) == key {
 			return item
 		}
@@ -513,17 +523,17 @@ func (h *VariantDictionary) Get(key string) *VariantDictionaryItem {
 	return nil
 }
 
-// Equals the header version to 4?
+// IsKdbx4 returns true if the header version equals to 4
 func (h *DBHeader) IsKdbx4() bool {
 	return h.Signature.MajorVersion == 4
 }
 
-// Calculate SHA256 of header
+// GetSha256 returns the Sha256 hash of the header
 func (h *DBHeader) GetSha256() [32]byte {
 	return sha256.Sum256(h.RawData)
 }
 
-// Validate header SHA256 with the passed one
+// ValidateSha256 validates the given hash with the Sha256 of the header
 func (h *DBHeader) ValidateSha256(hash [32]byte) error {
 	sha := h.GetSha256()
 	if !reflect.DeepEqual(sha, hash) {
@@ -532,7 +542,7 @@ func (h *DBHeader) ValidateSha256(hash [32]byte) error {
 	return nil
 }
 
-// Calculate HMAC-SHA256 of header
+// GetHmacSha256 returns the HMAC-Sha256 hash of the header
 func (h *DBHeader) GetHmacSha256(hmacKey []byte) (ret [32]byte) {
 	hash := hmac.New(sha256.New, hmacKey)
 	hash.Write(h.RawData)
@@ -540,7 +550,7 @@ func (h *DBHeader) GetHmacSha256(hmacKey []byte) (ret [32]byte) {
 	return
 }
 
-// Validate header HMAC-SHA256 with the passed one
+// ValidateHmacSha256 validates the given hash with the HMAC-Sha256 of the header
 func (h *DBHeader) ValidateHmacSha256(hmacKey []byte, hash [32]byte) error {
 	hmacSha := h.GetHmacSha256(hmacKey)
 	if !reflect.DeepEqual(hmacSha, hash) {
@@ -555,6 +565,7 @@ func (h DBHeader) String() string {
 		h.FileHeaders,
 	)
 }
+
 func (s Signature) String() string {
 	return fmt.Sprintf("Base: %x, Secondary: %x, Format Version: %d.%d",
 		s.BaseSignature,
@@ -563,6 +574,7 @@ func (s Signature) String() string {
 		s.MinorVersion,
 	)
 }
+
 func (fh FileHeaders) String() string {
 	return fmt.Sprintf(
 		"(1) Comment: %x\n"+
@@ -591,24 +603,27 @@ func (fh FileHeaders) String() string {
 		fh.PublicCustomData,
 	)
 }
+
 func (k *KdfParameters) String() string {
 	return fmt.Sprintf(
-		"  (1) R: %d\n"+
-			"  (2) S: %x\n"+
-			"  (3) P: %d\n"+
-			"  (4) M: %d\n"+
-			"  (5) I: %d\n"+
-			"  (6) V: %d\n"+
-			"  (7) K: %x\n"+
-			"  (8) A: %x",
-		k.R,
-		k.S,
-		k.P,
-		k.M,
-		k.I,
-		k.V,
-		k.K,
-		k.A,
+		"  (1) UUID: %x\n"+
+			"  (2) Rounds: %x\n"+
+			"  (3) Salt: %x\n"+
+			"  (4) Parallelism: %d\n"+
+			"  (5) Memory: %d\n"+
+			"  (6) Iterations: %d\n"+
+			"  (7) Version: %d\n"+
+			"  (8) SecretKey: %x\n"+
+			"  (9) AssocData: %x",
+		k.UUID,
+		k.Rounds,
+		k.Salt,
+		k.Parallelism,
+		k.Memory,
+		k.Iterations,
+		k.Version,
+		k.SecretKey,
+		k.AssocData,
 	)
 }
 
@@ -619,6 +634,7 @@ func (vd VariantDictionary) String() string {
 	}
 	return buffer.String()
 }
+
 func (vdi VariantDictionaryItem) String() string {
 	return fmt.Sprintf(
 		"Type: %x, NameLength: %d, Name: %s, ValueLength: %d, Value: %x\n",
@@ -646,17 +662,17 @@ func (e ErrInvalidSignature) Error() string {
 	)
 }
 
-// Error for end of header
+// ErrEndOfHeaders is the error returned when end of headers is read
 var ErrEndOfHeaders = errors.New("gokeepasslib: header id was 0, end of headers")
 
-// Error for unknown header id
+// ErrUnknownHeaderID is the error returned if an unknown header is read
 type ErrUnknownHeaderID int
 
 func (i ErrUnknownHeaderID) Error() string {
 	return fmt.Sprintf("gokeepasslib: unknown header ID of %d", i)
 }
 
-// Error for unknown kdf parameter
+// ErrUnknownParameterID is the error returned if an unknown kdf parameter is read
 type ErrUnknownParameterID string
 
 func (i ErrUnknownParameterID) Error() string {

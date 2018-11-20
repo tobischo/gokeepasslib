@@ -22,7 +22,7 @@ func NewDecoder(r io.Reader) *Decoder {
 func (d *Decoder) Decode(db *Database) (err error) {
 	// Read header
 	db.Header = new(DBHeader)
-	if err = db.Header.ReadFrom(d.r); err != nil {
+	if err = db.Header.readFrom(d.r); err != nil {
 		return err
 	}
 
