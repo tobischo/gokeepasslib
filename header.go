@@ -198,10 +198,7 @@ func (fh *FileHeaders) readHeader4(r io.Reader) error {
 		return err
 	}
 
-	if err := fh.readFileHeader(id, data); err != nil {
-		return err
-	}
-	return nil
+	return fh.readFileHeader(id, data)
 }
 
 // readHeader4 reads a header of a KDBX v3.1 database
@@ -221,10 +218,7 @@ func (fh *FileHeaders) readHeader31(r io.Reader) error {
 		return err
 	}
 
-	if err := fh.readFileHeader(id, data); err != nil {
-		return err
-	}
-	return nil
+	return fh.readFileHeader(id, data)
 }
 
 // readFileHeader reads a header value and puts it into the right variable
@@ -383,10 +377,7 @@ func (fh FileHeaders) writeTo4(w io.Writer, buf *bytes.Buffer) error {
 		return err
 	}
 	// End of header
-	if err := writeTo4Header(w, 0, []byte{0x0D, 0x0A, 0x0D, 0x0A}); err != nil {
-		return err
-	}
-	return nil
+	return writeTo4Header(w, 0, []byte{0x0D, 0x0A, 0x0D, 0x0A})
 }
 
 // writeTo4Header is an helper to write a file header with the correct Kdbx v4 structure to the given io.Writer
@@ -489,10 +480,7 @@ func (fh FileHeaders) writeTo31(w io.Writer) error {
 		return err
 	}
 	// End of header
-	if err := writeTo31Header(w, 0, []byte{0x0D, 0x0A, 0x0D, 0x0A}); err != nil {
-		return err
-	}
-	return nil
+	return writeTo31Header(w, 0, []byte{0x0D, 0x0A, 0x0D, 0x0A})
 }
 
 // writeTo31Header is an helper to write a file header with the correct Kdbx v3.1 structure to the given io.Writer
