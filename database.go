@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-// Database stores all contents nessesary for a keepass database file
+// Database stores all contents necessary for a keepass database file
 type Database struct {
 	Options     *DBOptions
 	Credentials *DBCredentials
@@ -20,7 +20,8 @@ type DBOptions struct {
 	ValidateHashes bool // True to validate header hash
 }
 
-// NewDatabase creates a new database with some sensable default settings. To create a database with no settigns per-set, use gokeepasslib.Database{}
+// NewDatabase creates a new database with some sensable default settings.
+// To create a database with no settings pre-set, use gokeepasslib.Database{}
 func NewDatabase() *Database {
 	header := NewHeader()
 	return &Database{
