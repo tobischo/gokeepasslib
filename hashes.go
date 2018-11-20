@@ -6,33 +6,37 @@ import (
 	"io"
 )
 
+// DBHashes stores the hashes of a Kdbx v4 database
 type DBHashes struct {
 	Sha256 [32]byte
 	Hmac   [32]byte
 }
 
+// NewHashes creates a new DBHashes based on the given header
 func NewHashes(header *DBHeader) *DBHashes {
 	return &DBHashes{
 		Sha256: header.GetSha256(),
 	}
 }
 
-func (s *DBHashes) ReadFrom(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, s); err != nil {
+// readFrom reads the hashes from an io.Reader
+func (h *DBHashes) readFrom(r io.Reader) error {
+	if err := binary.Read(r, binary.LittleEndian, h); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (hh DBHashes) WriteTo(w io.Writer) error {
-	return binary.Write(w, binary.LittleEndian, hh)
+// writeTo writes the hashes to the given io.Writer
+func (h DBHashes) writeTo(w io.Writer) error {
+	return binary.Write(w, binary.LittleEndian, h)
 }
 
-func (hh DBHashes) String() string {
+func (h DBHashes) String() string {
 	return fmt.Sprintf(
 		"(1) Sha256: %x\n"+
 			"(2) Hmac: %x\n",
-		hh.Sha256,
-		hh.Hmac,
+		h.Sha256,
+		h.Hmac,
 	)
 }

@@ -44,7 +44,7 @@ func (e *Encoder) Encode(db *Database) (err error) {
 		hmacHash := db.Header.GetHmacSha256(hmacKey)
 		db.Hashes.Hmac = hmacHash
 
-		if err = db.Hashes.WriteTo(e.w); err != nil {
+		if err = db.Hashes.writeTo(e.w); err != nil {
 			return err
 		}
 	} else {

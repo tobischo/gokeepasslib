@@ -35,7 +35,7 @@ func (d *Decoder) Decode(db *Database) (err error) {
 	// Read hashes and validate them (Kdbx v4)
 	if db.Header.IsKdbx4() {
 		db.Hashes = new(DBHashes)
-		if err = db.Hashes.ReadFrom(d.r); err != nil {
+		if err = db.Hashes.readFrom(d.r); err != nil {
 			return err
 		}
 

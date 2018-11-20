@@ -92,7 +92,7 @@ func (ih *InnerHeader) readFrom(r io.Reader) error {
 	return nil
 }
 
-// readFrom writeTo the InnerHeader to the given io.Writer
+// writeTo the InnerHeader to the given io.Writer
 func (ih *InnerHeader) writeTo(w io.Writer) error {
 	// InnerRandomStreamID
 	if ih.InnerRandomStreamID != 0 {
