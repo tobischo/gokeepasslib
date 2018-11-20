@@ -31,17 +31,15 @@ func NewChaChaStream(key []byte) (*ChaChaStream, error) {
 // Unpack returns the payload as unencrypted byte array
 func (c *ChaChaStream) Unpack(payload string) []byte {
 	decoded, _ := base64.StdEncoding.DecodeString(payload)
-	var data []byte
-	data = make([]byte, len(decoded))
 
-	c.cipher.XORKeyStream(data, []byte(decoded))
+	data := make([]byte, len(decoded))
+	c.cipher.XORKeyStream(data, decoded)
 	return data
 }
 
 // Pack returns the payload as encrypted string
 func (c *ChaChaStream) Pack(payload []byte) string {
-	var data []byte
-	data = make([]byte, len(payload))
+	data := make([]byte, len(payload))
 
 	c.cipher.XORKeyStream(data, payload)
 	str := base64.StdEncoding.EncodeToString(data)
