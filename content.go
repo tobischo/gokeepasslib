@@ -2,8 +2,6 @@ package gokeepasslib
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha256"
 	"encoding/binary"
 	"encoding/xml"
 	"errors"
@@ -13,15 +11,13 @@ import (
 )
 
 const (
-	IH_TERMINATOR byte = 0x00
-	IH_IRS_ID          = 0x01
-	IH_IRS_KEY         = 0x02
-	IH_BINARY          = 0x03
+	InnerHeaderTerminator byte = 0x00 // InnerHeader terminator byte
+	InnerHeaderIRSID           = 0x01 // InnerHeader InnerRandomStreamID byte
+	InnerHeaderIRSKey          = 0x02 // InnerHeader InnerRandomStreamKey byte
+	InnerHeaderBinary          = 0x03 // InnerHeader binary byte
 )
 
-// Block size of 1MB - https://keepass.info/help/kb/kdbx_4.html#dataauth
-const blockSplitRate = 1048576
-
+// DBContent is a container for all elements of a keepass database
 type DBContent struct {
 	RawData     []byte       `xml:"-"` // Encrypted data
 	InnerHeader *InnerHeader `xml:"-"`
@@ -30,12 +26,14 @@ type DBContent struct {
 	Root        *RootData    `xml:"Root"`
 }
 
+// InnerHeader is the container of crypt options and binaries, only for Kdbx v4
 type InnerHeader struct {
 	InnerRandomStreamID  uint32
 	InnerRandomStreamKey []byte
 	Binaries             Binaries
 }
 
+// NewContent creates a new database content with some good defaults
 func NewContent() *DBContent {
 	// Not necessary create InnerHeader because this will be a KDBX v3.1
 	return &DBContent{
@@ -44,78 +42,8 @@ func NewContent() *DBContent {
 	}
 }
 
-func (c *DBContent) ReadFrom4(r io.Reader) error {
-	// Read the data block by block
-	content, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-
-	c.RawData = []byte{}
-	offset := uint32(0)
-	for {
-		var hash [32]byte
-		var length uint32
-		var data []byte
-
-		copy(hash[:], content[offset:offset+32])
-		offset = offset + 32
-
-		length = binary.LittleEndian.Uint32(content[offset : offset+4])
-		offset = offset + 4
-
-		if length > 0 {
-			data = make([]byte, length)
-			copy(data, content[offset:offset+length])
-			offset = offset + length
-
-			// Add to blocks
-			c.RawData = append(c.RawData, data...)
-		} else {
-			break
-		}
-	}
-	return nil
-}
-
-func (c *DBContent) ReadFrom31(r io.Reader) error {
-	// Read the data block by block
-	content, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-
-	c.RawData = []byte{}
-	offset := uint32(0)
-	for {
-		var hash [32]byte
-		var length uint32
-		var data []byte
-
-		// Skipping Index, uint32
-		offset = offset + 4
-
-		copy(hash[:], content[offset:offset+32])
-		offset = offset + 32
-
-		length = binary.LittleEndian.Uint32(content[offset : offset+4])
-		offset = offset + 4
-
-		if length > 0 {
-			data = make([]byte, length)
-			copy(data, content[offset:offset+length])
-			offset = offset + length
-
-			// Add to blocks
-			c.RawData = append(c.RawData, data...)
-		} else {
-			break
-		}
-	}
-	return nil
-}
-
-func (ih *InnerHeader) ReadFrom(r io.Reader) error {
+// readFrom reads the InnerHeader from an io.Reader
+func (ih *InnerHeader) readFrom(r io.Reader) error {
 	binaryCount := 0 // Var used to count and index every binary
 	for {
 		var typ byte
@@ -133,16 +61,16 @@ func (ih *InnerHeader) ReadFrom(r io.Reader) error {
 			return err
 		}
 
-		if typ == IH_TERMINATOR {
+		if typ == InnerHeaderTerminator {
 			// End of inner header
 			break
-		} else if typ == IH_IRS_ID {
+		} else if typ == InnerHeaderIRSID {
 			// Found InnerRandomStream ID
 			ih.InnerRandomStreamID = binary.LittleEndian.Uint32(data)
-		} else if typ == IH_IRS_KEY {
+		} else if typ == InnerHeaderIRSKey {
 			// Found InnerRandomStream Key
 			ih.InnerRandomStreamKey = data
-		} else if typ == IH_BINARY {
+		} else if typ == InnerHeaderBinary {
 			// Found a binary
 			var protection byte
 			reader := bytes.NewReader(data)
@@ -164,65 +92,11 @@ func (ih *InnerHeader) ReadFrom(r io.Reader) error {
 	return nil
 }
 
-func (ih *DBContent) ComposeBlocks4(w io.Writer, contentData []byte, transformedKey []byte) {
-	offset := 0
-	for offset < len(contentData) {
-		var hash []byte
-		var length uint32
-		var data []byte
-
-		if len(contentData[offset:]) >= blockSplitRate {
-			data = append(data, contentData[offset:]...)
-		} else {
-			data = append(data, contentData...)
-		}
-		length = uint32(len(data))
-		mac := hmac.New(sha256.New, transformedKey)
-		mac.Write(data)
-		hash = mac.Sum(nil)
-
-		binary.Write(w, binary.LittleEndian, hash)
-		binary.Write(w, binary.LittleEndian, length)
-		binary.Write(w, binary.LittleEndian, data)
-		offset = offset + blockSplitRate
-	}
-	binary.Write(w, binary.LittleEndian, [32]byte{})
-	binary.Write(w, binary.LittleEndian, uint32(0))
-}
-
-func (ih *DBContent) ComposeBlocks31(w io.Writer, contentData []byte) {
-	index := uint32(0)
-	offset := 0
-	for offset < len(contentData) {
-		var hash [32]byte
-		var length uint32
-		var data []byte
-
-		if len(contentData[offset:]) >= blockSplitRate {
-			data = append(data, contentData[offset:]...)
-		} else {
-			data = append(data, contentData...)
-		}
-
-		length = uint32(len(data))
-		hash = sha256.Sum256(data)
-
-		binary.Write(w, binary.LittleEndian, index)
-		binary.Write(w, binary.LittleEndian, hash)
-		binary.Write(w, binary.LittleEndian, length)
-		binary.Write(w, binary.LittleEndian, data)
-		index++
-		offset = offset + blockSplitRate
-	}
-	binary.Write(w, binary.LittleEndian, index)
-	binary.Write(w, binary.LittleEndian, [32]byte{})
-	binary.Write(w, binary.LittleEndian, uint32(0))
-}
-
-func (ih *InnerHeader) WriteTo(w io.Writer) error {
+// readFrom writeTo the InnerHeader to the given io.Writer
+func (ih *InnerHeader) writeTo(w io.Writer) error {
 	// InnerRandomStreamID
 	if ih.InnerRandomStreamID != 0 {
-		if err := binary.Write(w, binary.LittleEndian, uint8(IH_IRS_ID)); err != nil {
+		if err := binary.Write(w, binary.LittleEndian, uint8(InnerHeaderIRSID)); err != nil {
 			return err
 		}
 		if err := binary.Write(w, binary.LittleEndian, uint32(4)); err != nil {
@@ -234,7 +108,7 @@ func (ih *InnerHeader) WriteTo(w io.Writer) error {
 	}
 	// InnerRandomStreamKey
 	if len(ih.InnerRandomStreamKey) > 0 {
-		if err := binary.Write(w, binary.LittleEndian, uint8(IH_IRS_KEY)); err != nil {
+		if err := binary.Write(w, binary.LittleEndian, uint8(InnerHeaderIRSKey)); err != nil {
 			return err
 		}
 		if err := binary.Write(w, binary.LittleEndian, uint32(len(ih.InnerRandomStreamKey))); err != nil {
@@ -246,7 +120,7 @@ func (ih *InnerHeader) WriteTo(w io.Writer) error {
 	}
 	// Binaries
 	for _, item := range ih.Binaries {
-		if err := binary.Write(w, binary.LittleEndian, uint8(IH_BINARY)); err != nil {
+		if err := binary.Write(w, binary.LittleEndian, uint8(InnerHeaderBinary)); err != nil {
 			return err
 		}
 		// +1 byte for protection flag
@@ -261,7 +135,7 @@ func (ih *InnerHeader) WriteTo(w io.Writer) error {
 		}
 	}
 	// End inner header
-	if err := binary.Write(w, binary.LittleEndian, uint8(IH_TERMINATOR)); err != nil {
+	if err := binary.Write(w, binary.LittleEndian, uint8(InnerHeaderTerminator)); err != nil {
 		return err
 	}
 	if err := binary.Write(w, binary.LittleEndian, uint32(0)); err != nil {

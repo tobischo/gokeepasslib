@@ -20,6 +20,7 @@ func NewDecoder(r io.Reader) *Decoder {
 }
 
 func (d *Decoder) Decode(db *Database) (err error) {
+	// Read header
 	db.Header = new(DBHeader)
 	if err = db.Header.ReadFrom(d.r); err != nil {
 		return err
@@ -39,27 +40,50 @@ func (d *Decoder) Decode(db *Database) (err error) {
 		}
 	}
 
-	db.Content = new(DBContent)
+	// Decode raw content
+	var rawContent []byte
+	rawContent, err = ioutil.ReadAll(d.r)
+	if err := decodeRawContent(db, rawContent); err != nil {
+		return err
+	}
+
+	contentReader := bytes.NewReader(db.Content.RawData)
+
+	// Read InnerHeader (Kdbx v4)
 	if db.Header.IsKdbx4() {
-		// Read content block by block
-		// In Kdbx v4 you must parse blocks before decrypt
-		if err = db.Content.ReadFrom4(d.r); err != nil {
+		db.Content.InnerHeader = new(InnerHeader)
+		if err = db.Content.InnerHeader.readFrom(contentReader); err != nil {
 			return err
 		}
-	} else {
-		// Insert temporarely content into RawData (it will be read later, after decompression)
-		// In Kdbx v3.1 you must decrypt before parse blocks
-		data, err := ioutil.ReadAll(d.r)
+	}
+
+	// Decode xml
+	xmlDecoder := xml.NewDecoder(contentReader)
+	err = xmlDecoder.Decode(db.Content)
+	return err
+}
+
+func decodeRawContent(db *Database, content []byte) (err error) {
+	// Initialize content
+	db.Content = new(DBContent)
+
+	if db.Header.IsKdbx4() {
+		// Decompose content blocks
+		// In Kdbx v4 you must parse blocks before decrypt
+		reader := bytes.NewReader(content)
+		content, err = decomposeContentBlocks4(reader)
 		if err != nil {
 			return err
 		}
-		db.Content.RawData = data
+	} else {
+		// In Kdbx v3.1 you must decrypt before parse blocks
+		reader := bytes.NewReader(content)
+		content, err = ioutil.ReadAll(reader)
+		if err != nil {
+			return err
+		}
 	}
 
-	return d.decodeContent(db)
-}
-
-func (d *Decoder) decodeContent(db *Database) error {
 	// Calculate transformed key to make decrypt
 	transformedKey, err := db.getTransformedKey()
 	if err != nil {
@@ -71,58 +95,42 @@ func (d *Decoder) decodeContent(db *Database) error {
 	if err != nil {
 		return err
 	}
-	decrypted := make([]byte, len(db.Content.RawData))
-	mode.CryptBlocks(decrypted, db.Content.RawData)
+	decryptedContent := make([]byte, len(content))
+	mode.CryptBlocks(decryptedContent, content)
 
 	// Check for StreamStartBytes (Kdbx v3.1)
 	if !db.Header.IsKdbx4() {
 		startBytes := db.Header.FileHeaders.StreamStartBytes
-		if !reflect.DeepEqual(decrypted[0:len(startBytes)], startBytes) {
+		if !reflect.DeepEqual(decryptedContent[0:len(startBytes)], startBytes) {
 			return errors.New("Database integrity check failed")
 		}
 
-		decrypted = decrypted[len(startBytes):]
+		decryptedContent = decryptedContent[len(startBytes):]
 	}
 
-	var reader io.Reader
-	reader = bytes.NewReader(decrypted)
-
-	// Read and put the new decrypted content into RawData
+	// Decompose content blocks and update reader
 	// Kdbx v3.1 content must be read after decryption
 	if !db.Header.IsKdbx4() {
-		if err = db.Content.ReadFrom31(reader); err != nil {
+		reader := bytes.NewReader(decryptedContent)
+		decryptedContent, err = decomposeContentBlocks31(reader)
+		if err != nil {
 			return err
 		}
-		reader = bytes.NewReader(db.Content.RawData)
 	}
 
 	// Decompress if the header compression flag is 1 (gzip)
 	if db.Header.FileHeaders.CompressionFlags == GzipCompressionFlag {
+		var reader io.Reader
+		reader = bytes.NewReader(decryptedContent)
 		r, err := gzip.NewReader(reader)
 		if err != nil {
 			return err
 		}
 		defer r.Close()
-		reader = r
+
+		decryptedContent, _ = ioutil.ReadAll(r)
 	}
 
-	// Read InnerHeader (Kdbx v4)
-	if db.Header.IsKdbx4() {
-		a, _ := ioutil.ReadAll(reader)
-		reader = bytes.NewReader(a)
-
-		// Get InnerHeader
-		db.Content.InnerHeader = new(InnerHeader)
-		if err = db.Content.InnerHeader.ReadFrom(reader); err != nil {
-			return err
-		}
-	}
-
-	// Decode xml
-	xmlDecoder := xml.NewDecoder(reader)
-	err = xmlDecoder.Decode(db.Content)
-	if err != nil {
-		return err
-	}
+	db.Content.RawData = decryptedContent
 	return nil
 }
