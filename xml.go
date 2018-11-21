@@ -241,16 +241,6 @@ func (u UUID) Compare(c UUID) bool {
 	return true
 }
 
-// Returns true if the e's password has in-memory protection
-func (e *Entry) protected() bool {
-	for _, v := range e.Values {
-		if v.Key == "Password" && bool(v.Value.Protected) {
-			return true
-		}
-	}
-	return false
-}
-
 // Get returns the value in e corresponding with key k, or an empty string otherwise
 func (e *Entry) Get(key string) *ValueData {
 	for i := range e.Values {
