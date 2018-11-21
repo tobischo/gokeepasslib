@@ -8,7 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	. "github.com/tobischo/gokeepasslib/wrappers"
+	"github.com/tobischo/gokeepasslib/wrappers"
 )
 
 // Binaries Stores a slice of binaries in the metadata header of a database
@@ -18,10 +18,10 @@ type Binaries []Binary
 
 // Binary stores a binary found in the metadata header of a database
 type Binary struct {
-	ID               int         `xml:"ID,attr"`         // Index of binary (Manually counted on KDBX v4)
-	MemoryProtection byte        `xml:"-"`               // Only KDBX v4
-	Content          []byte      `xml:",innerxml"`       // Content
-	Compressed       BoolWrapper `xml:"Compressed,attr"` // Only KDBX v3.1
+	ID               int                  `xml:"ID,attr"`         // Index of binary (Manually counted on KDBX v4)
+	MemoryProtection byte                 `xml:"-"`               // Only KDBX v4
+	Content          []byte               `xml:",innerxml"`       // Content
+	Compressed       wrappers.BoolWrapper `xml:"Compressed,attr"` // Only KDBX v3.1
 }
 
 // BinaryReference stores a reference to a binary which appears in the xml of an entry
@@ -52,7 +52,9 @@ func (br *BinaryReference) Find(db *Database) *Binary {
 
 // Add appends binary data to the slice
 func (bs *Binaries) Add(c []byte) *Binary {
-	binary := Binary{Compressed: BoolWrapper(true)}
+	binary := Binary{
+		Compressed: wrappers.BoolWrapper(true),
+	}
 	if len(*bs) == 0 {
 		binary.ID = 0
 	} else {
@@ -65,9 +67,8 @@ func (bs *Binaries) Add(c []byte) *Binary {
 
 // GetContent returns a string which is the plaintext content of a binary
 func (b Binary) GetContent() (string, error) {
-	var decoded []byte
 	// Check for base64 content (KDBX 3.1), if it fail try with KDBX 4
-	decoded = make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
+	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
 	_, err := base64.StdEncoding.Decode(decoded, b.Content)
 	if err != nil {
 		// KDBX 4 doesn't encode it

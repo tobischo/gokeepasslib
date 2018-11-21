@@ -10,11 +10,12 @@ import (
 	"io/ioutil"
 )
 
+// Inner header bytes
 const (
-	InnerHeaderTerminator byte = 0x00 // InnerHeader terminator byte
-	InnerHeaderIRSID           = 0x01 // InnerHeader InnerRandomStreamID byte
-	InnerHeaderIRSKey          = 0x02 // InnerHeader InnerRandomStreamKey byte
-	InnerHeaderBinary          = 0x03 // InnerHeader binary byte
+	InnerHeaderTerminator byte = 0x00 // Inner header terminator byte
+	InnerHeaderIRSID      byte = 0x01 // Inner header InnerRandomStreamID byte
+	InnerHeaderIRSKey     byte = 0x02 // Inner header InnerRandomStreamKey byte
+	InnerHeaderBinary     byte = 0x03 // Inner header binary byte
 )
 
 // DBContent is a container for all elements of a keepass database
@@ -148,10 +149,10 @@ func (ih InnerHeader) String() string {
 	)
 }
 
-// Error for end of inner header
+// ErrEndOfInnerHeaders is the error returned when the end of inner header is read
 var ErrEndOfInnerHeaders = errors.New("gokeepasslib: inner header id was 0, end of inner headers")
 
-// Error for unknown inner header id
+// ErrUnknownInnerHeaderID is the error returned if an unknown inner header is read
 type ErrUnknownInnerHeaderID byte
 
 func (i ErrUnknownInnerHeaderID) Error() string {

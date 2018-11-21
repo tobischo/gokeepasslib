@@ -6,46 +6,46 @@ import (
 	"encoding/xml"
 	"errors"
 
-	. "github.com/tobischo/gokeepasslib/wrappers"
+	w "github.com/tobischo/gokeepasslib/wrappers"
 )
 
 // MetaData is the structure for the metadata headers at the top of kdbx files,
 // it contains things like the name of the database
 type MetaData struct {
-	Generator                  string        `xml:"Generator"`
-	HeaderHash                 string        `xml:"HeaderHash"`
-	DatabaseName               string        `xml:"DatabaseName"`
-	DatabaseNameChanged        *TimeWrapper  `xml:"DatabaseNameChanged"`
-	DatabaseDescription        string        `xml:"DatabaseDescription"`
-	DatabaseDescriptionChanged *TimeWrapper  `xml:"DatabaseDescriptionChanged"`
-	DefaultUserName            string        `xml:"DefaultUserName"`
-	DefaultUserNameChanged     *TimeWrapper  `xml:"DefaultUserNameChanged"`
-	MaintenanceHistoryDays     int64         `xml:"MaintenanceHistoryDays"`
-	Color                      string        `xml:"Color"`
-	MasterKeyChanged           *TimeWrapper  `xml:"MasterKeyChanged"`
-	MasterKeyChangeRec         int64         `xml:"MasterKeyChangeRec"`
-	MasterKeyChangeForce       int64         `xml:"MasterKeyChangeForce"`
-	MemoryProtection           MemProtection `xml:"MemoryProtection"`
-	RecycleBinEnabled          BoolWrapper   `xml:"RecycleBinEnabled"`
-	RecycleBinUUID             UUID          `xml:"RecycleBinUUID"`
-	RecycleBinChanged          *TimeWrapper  `xml:"RecycleBinChanged"`
-	EntryTemplatesGroup        string        `xml:"EntryTemplatesGroup"`
-	EntryTemplatesGroupChanged *TimeWrapper  `xml:"EntryTemplatesGroupChanged"`
-	HistoryMaxItems            int64         `xml:"HistoryMaxItems"`
-	HistoryMaxSize             int64         `xml:"HistoryMaxSize"`
-	LastSelectedGroup          string        `xml:"LastSelectedGroup"`
-	LastTopVisibleGroup        string        `xml:"LastTopVisibleGroup"`
-	Binaries                   Binaries      `xml:"Binaries>Binary"`
-	CustomData                 []CustomData  `xml:"CustomData>Item"`
+	Generator                  string         `xml:"Generator"`
+	HeaderHash                 string         `xml:"HeaderHash"`
+	DatabaseName               string         `xml:"DatabaseName"`
+	DatabaseNameChanged        *w.TimeWrapper `xml:"DatabaseNameChanged"`
+	DatabaseDescription        string         `xml:"DatabaseDescription"`
+	DatabaseDescriptionChanged *w.TimeWrapper `xml:"DatabaseDescriptionChanged"`
+	DefaultUserName            string         `xml:"DefaultUserName"`
+	DefaultUserNameChanged     *w.TimeWrapper `xml:"DefaultUserNameChanged"`
+	MaintenanceHistoryDays     int64          `xml:"MaintenanceHistoryDays"`
+	Color                      string         `xml:"Color"`
+	MasterKeyChanged           *w.TimeWrapper `xml:"MasterKeyChanged"`
+	MasterKeyChangeRec         int64          `xml:"MasterKeyChangeRec"`
+	MasterKeyChangeForce       int64          `xml:"MasterKeyChangeForce"`
+	MemoryProtection           MemProtection  `xml:"MemoryProtection"`
+	RecycleBinEnabled          w.BoolWrapper  `xml:"RecycleBinEnabled"`
+	RecycleBinUUID             UUID           `xml:"RecycleBinUUID"`
+	RecycleBinChanged          *w.TimeWrapper `xml:"RecycleBinChanged"`
+	EntryTemplatesGroup        string         `xml:"EntryTemplatesGroup"`
+	EntryTemplatesGroupChanged *w.TimeWrapper `xml:"EntryTemplatesGroupChanged"`
+	HistoryMaxItems            int64          `xml:"HistoryMaxItems"`
+	HistoryMaxSize             int64          `xml:"HistoryMaxSize"`
+	LastSelectedGroup          string         `xml:"LastSelectedGroup"`
+	LastTopVisibleGroup        string         `xml:"LastTopVisibleGroup"`
+	Binaries                   Binaries       `xml:"Binaries>Binary"`
+	CustomData                 []CustomData   `xml:"CustomData>Item"`
 }
 
 // MemProtection is a structure containing settings for MemoryProtection
 type MemProtection struct {
-	ProtectTitle    BoolWrapper `xml:"ProtectTitle"`
-	ProtectUserName BoolWrapper `xml:"ProtectUserName"`
-	ProtectPassword BoolWrapper `xml:"ProtectPassword"`
-	ProtectURL      BoolWrapper `xml:"ProtectURL"`
-	ProtectNotes    BoolWrapper `xml:"ProtectNotes"`
+	ProtectTitle    w.BoolWrapper `xml:"ProtectTitle"`
+	ProtectUserName w.BoolWrapper `xml:"ProtectUserName"`
+	ProtectPassword w.BoolWrapper `xml:"ProtectPassword"`
+	ProtectURL      w.BoolWrapper `xml:"ProtectURL"`
+	ProtectNotes    w.BoolWrapper `xml:"ProtectNotes"`
 }
 
 // RootData stores the actual content of a database (all enteries sorted into groups and the recycle bin)
@@ -56,18 +56,18 @@ type RootData struct {
 
 // Group is a structure to store entries in their named groups for organization
 type Group struct {
-	UUID                    UUID        `xml:"UUID"`
-	Name                    string      `xml:"Name"`
-	Notes                   string      `xml:"Notes"`
-	IconID                  int64       `xml:"IconID"`
-	Times                   TimeData    `xml:"Times"`
-	IsExpanded              BoolWrapper `xml:"IsExpanded"`
-	DefaultAutoTypeSequence string      `xml:"DefaultAutoTypeSequence"`
-	EnableAutoType          BoolWrapper `xml:"EnableAutoType"`
-	EnableSearching         BoolWrapper `xml:"EnableSearching"`
-	LastTopVisibleEntry     string      `xml:"LastTopVisibleEntry"`
-	Entries                 []Entry     `xml:"Entry,omitempty"`
-	Groups                  []Group     `xml:"Group,omitempty"`
+	UUID                    UUID          `xml:"UUID"`
+	Name                    string        `xml:"Name"`
+	Notes                   string        `xml:"Notes"`
+	IconID                  int64         `xml:"IconID"`
+	Times                   TimeData      `xml:"Times"`
+	IsExpanded              w.BoolWrapper `xml:"IsExpanded"`
+	DefaultAutoTypeSequence string        `xml:"DefaultAutoTypeSequence"`
+	EnableAutoType          w.BoolWrapper `xml:"EnableAutoType"`
+	EnableSearching         w.BoolWrapper `xml:"EnableSearching"`
+	LastTopVisibleEntry     string        `xml:"LastTopVisibleEntry"`
+	Entries                 []Entry       `xml:"Entry,omitempty"`
+	Groups                  []Group       `xml:"Group,omitempty"`
 }
 
 // UUID stores a universal identifier for each group+entry
@@ -76,13 +76,13 @@ type UUID [16]byte
 // TimeData contains all metadata related to times for groups and entries
 // e.g. the last modification time or the creation time
 type TimeData struct {
-	CreationTime         *TimeWrapper `xml:"CreationTime"`
-	LastModificationTime *TimeWrapper `xml:"LastModificationTime"`
-	LastAccessTime       *TimeWrapper `xml:"LastAccessTime"`
-	ExpiryTime           *TimeWrapper `xml:"ExpiryTime"`
-	Expires              BoolWrapper  `xml:"Expires"`
-	UsageCount           int64        `xml:"UsageCount"`
-	LocationChanged      *TimeWrapper `xml:"LocationChanged"`
+	CreationTime         *w.TimeWrapper `xml:"CreationTime"`
+	LastModificationTime *w.TimeWrapper `xml:"LastModificationTime"`
+	LastAccessTime       *w.TimeWrapper `xml:"LastAccessTime"`
+	ExpiryTime           *w.TimeWrapper `xml:"ExpiryTime"`
+	Expires              w.BoolWrapper  `xml:"Expires"`
+	UsageCount           int64          `xml:"UsageCount"`
+	LocationChanged      *w.TimeWrapper `xml:"LocationChanged"`
 }
 
 // Entry is the structure which holds information about a parsed entry in a keepass database
@@ -114,13 +114,13 @@ type ValueData struct {
 
 // V is a wrapper for the content of a value, so that it can store whether it is protected
 type V struct {
-	Content   string      `xml:",chardata"`
-	Protected BoolWrapper `xml:"Protected,attr,omitempty"`
+	Content   string        `xml:",chardata"`
+	Protected w.BoolWrapper `xml:"Protected,attr,omitempty"`
 }
 
 // AutoTypeData is a structure containing auto type settings of an entry
 type AutoTypeData struct {
-	Enabled                 BoolWrapper          `xml:"Enabled"`
+	Enabled                 w.BoolWrapper        `xml:"Enabled"`
 	DataTransferObfuscation int64                `xml:"DataTransferObfuscation"`
 	Association             *AutoTypeAssociation `xml:"Association,omitempty"`
 }
@@ -133,9 +133,9 @@ type AutoTypeAssociation struct {
 
 // DeletedObjectData is the structure for a deleted object
 type DeletedObjectData struct {
-	XMLName      xml.Name     `xml:"DeletedObject"`
-	UUID         UUID         `xml:"UUID"`
-	DeletionTime *TimeWrapper `xml:"DeletionTime"`
+	XMLName      xml.Name       `xml:"DeletedObject"`
+	UUID         UUID           `xml:"UUID"`
+	DeletionTime *w.TimeWrapper `xml:"DeletionTime"`
 }
 
 // CustomData is the structure for plugins custom data
@@ -147,7 +147,7 @@ type CustomData struct {
 
 // NewMetaData creates a MetaData struct with some defaults set
 func NewMetaData() *MetaData {
-	now := Now()
+	now := w.Now()
 
 	return &MetaData{
 		MasterKeyChanged:       &now,
@@ -181,8 +181,8 @@ func NewUUID() UUID {
 // NewGroup returns a new group with time data and uuid set
 func NewGroup() Group {
 	return Group{
-		EnableAutoType:  BoolWrapper(true),
-		EnableSearching: BoolWrapper(true),
+		EnableAutoType:  w.BoolWrapper(true),
+		EnableSearching: w.BoolWrapper(true),
 		Times:           NewTimeData(),
 		UUID:            NewUUID(),
 	}
@@ -190,7 +190,7 @@ func NewGroup() Group {
 
 // NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
 func NewTimeData() TimeData {
-	now := Now()
+	now := w.Now()
 	return TimeData{
 		CreationTime:         &now,
 		LastModificationTime: &now,

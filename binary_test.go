@@ -4,8 +4,6 @@ import (
 	"testing"
 )
 
-var message string = "Hello World!"
-
 // Tests that binaries can set and get content correctly compressed or uncompressed
 func TestBinary(t *testing.T) {
 	db := NewDatabase()

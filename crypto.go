@@ -9,9 +9,9 @@ import (
 // Constant enumerator for the inner random stream ID
 const (
 	NoStreamID     uint32 = 0
-	ARC4StreamID          = 1
-	SalsaStreamID         = 2
-	ChaChaStreamID        = 3
+	ARC4StreamID   uint32 = 1
+	SalsaStreamID  uint32 = 2
+	ChaChaStreamID uint32 = 3
 )
 
 // CryptoStreamManager is the manager to handle a CryptoStream
