@@ -94,43 +94,20 @@ func (ih *InnerHeader) readFrom(r io.Reader) error {
 
 // writeTo the InnerHeader to the given io.Writer
 func (ih *InnerHeader) writeTo(w io.Writer) error {
-	// InnerRandomStreamID
-	if ih.InnerRandomStreamID != 0 {
-		if err := binary.Write(w, binary.LittleEndian, uint8(InnerHeaderIRSID)); err != nil {
-			return err
-		}
-		if err := binary.Write(w, binary.LittleEndian, uint32(4)); err != nil {
-			return err
-		}
-		if err := binary.Write(w, binary.LittleEndian, ih.InnerRandomStreamID); err != nil {
-			return err
-		}
-	}
-	// InnerRandomStreamKey
-	if len(ih.InnerRandomStreamKey) > 0 {
-		if err := binary.Write(w, binary.LittleEndian, uint8(InnerHeaderIRSKey)); err != nil {
-			return err
-		}
-		if err := binary.Write(w, binary.LittleEndian, uint32(len(ih.InnerRandomStreamKey))); err != nil {
-			return err
-		}
-		if err := binary.Write(w, binary.LittleEndian, ih.InnerRandomStreamKey); err != nil {
-			return err
-		}
-	}
-	// Binaries
-	for _, item := range ih.Binaries {
-		if err := binary.Write(w, binary.LittleEndian, uint8(InnerHeaderBinary)); err != nil {
-			return err
-		}
-		// +1 byte for protection flag
-		if err := binary.Write(w, binary.LittleEndian, uint32(len(item.Content)+1)); err != nil {
-			return err
-		}
-		if err := binary.Write(w, binary.LittleEndian, item.MemoryProtection); err != nil {
+	irsID := make([]byte, 4)
+	binary.LittleEndian.PutUint32(irsID, ih.InnerRandomStreamID)
 
-		}
-		if err := binary.Write(w, binary.LittleEndian, item.Content); err != nil {
+	if err := writeToInnerHeader(w, InnerHeaderIRSID, irsID); err != nil {
+		return err
+	}
+	if err := writeToInnerHeader(w, InnerHeaderIRSKey, ih.InnerRandomStreamKey); err != nil {
+		return err
+	}
+
+	for _, item := range ih.Binaries {
+		buf := []byte{item.MemoryProtection}
+		buf = append(buf, item.Content...)
+		if err := writeToInnerHeader(w, InnerHeaderBinary, buf); err != nil {
 			return err
 		}
 	}
@@ -140,6 +117,22 @@ func (ih *InnerHeader) writeTo(w io.Writer) error {
 	}
 	if err := binary.Write(w, binary.LittleEndian, uint32(0)); err != nil {
 		return err
+	}
+	return nil
+}
+
+// writeToInnerHeader is an helper to write an inner header item to the given io.Writer
+func writeToInnerHeader(w io.Writer, id uint8, data []byte) error {
+	if len(data) > 0 {
+		if err := binary.Write(w, binary.LittleEndian, id); err != nil {
+			return err
+		}
+		if err := binary.Write(w, binary.LittleEndian, uint32(len(data))); err != nil {
+			return err
+		}
+		if err := binary.Write(w, binary.LittleEndian, data); err != nil {
+			return err
+		}
 	}
 	return nil
 }
