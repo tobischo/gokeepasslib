@@ -19,9 +19,9 @@ type Binaries []Binary
 // Binary stores a binary found in the metadata header of a database
 type Binary struct {
 	ID               int                  `xml:"ID,attr"`         // Index of binary (Manually counted on KDBX v4)
-	MemoryProtection byte                 `xml:"-"`               // Only KDBX v4
-	Content          []byte               `xml:",innerxml"`       // Content
-	Compressed       wrappers.BoolWrapper `xml:"Compressed,attr"` // Only KDBX v3.1
+	MemoryProtection byte                 `xml:"-"`               // Memory protection flag (Only KDBX v4)
+	Content          []byte               `xml:",innerxml"`       // Binary content
+	Compressed       wrappers.BoolWrapper `xml:"Compressed,attr"` // Compressed flag (Only KDBX v3.1)
 }
 
 // BinaryReference stores a reference to a binary which appears in the xml of an entry

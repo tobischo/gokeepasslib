@@ -20,7 +20,7 @@ const (
 
 // DBContent is a container for all elements of a keepass database
 type DBContent struct {
-	RawData     []byte       `xml:"-"` // Encrypted data
+	RawData     []byte       `xml:"-"` // XML encoded original data
 	InnerHeader *InnerHeader `xml:"-"`
 	XMLName     xml.Name     `xml:"KeePassFile"`
 	Meta        *MetaData    `xml:"Meta"`

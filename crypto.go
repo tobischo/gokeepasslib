@@ -8,10 +8,10 @@ import (
 
 // Constant enumerator for the inner random stream ID
 const (
-	NoStreamID     uint32 = 0
-	ARC4StreamID   uint32 = 1
-	SalsaStreamID  uint32 = 2
-	ChaChaStreamID uint32 = 3
+	NoStreamID     uint32 = 0 // ID for non-protection
+	ARC4StreamID   uint32 = 1 // ID for ARC4 protection, not implemented
+	SalsaStreamID  uint32 = 2 // ID for Salsa20 protection
+	ChaChaStreamID uint32 = 3 // ID for ChaCha20 protection
 )
 
 // CryptoStreamManager is the manager to handle a CryptoStream

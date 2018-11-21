@@ -17,26 +17,26 @@ import (
 
 // DBCredentials holds the key used to lock and unlock the database
 type DBCredentials struct {
-	Passphrase []byte //Passphrase if using one, stored in sha256 hash
-	Key        []byte //Contents of the keyfile if using one, stored in sha256 hash
-	Windows    []byte //Whatever is returned from windows user account auth, stored in sha256 hash
+	Passphrase []byte // Passphrase if using one, stored in sha256 hash
+	Key        []byte // Contents of the keyfile if using one, stored in sha256 hash
+	Windows    []byte // Whatever is returned from windows user account auth, stored in sha256 hash
 }
 
 func (c *DBCredentials) buildCompositeKey() ([]byte, error) {
 	hash := sha256.New()
-	if c.Passphrase != nil { //If the hashed password is provided
+	if c.Passphrase != nil { // If the hashed password is provided
 		_, err := hash.Write(c.Passphrase)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if c.Key != nil { //If the hashed keyfile is provided
+	if c.Key != nil { // If the hashed keyfile is provided
 		_, err := hash.Write(c.Key)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if c.Windows != nil { //If the hashed password is provided
+	if c.Windows != nil { // If the hashed password is provided
 		_, err := hash.Write(c.Windows)
 		if err != nil {
 			return nil, err
