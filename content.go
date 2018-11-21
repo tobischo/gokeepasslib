@@ -116,10 +116,7 @@ func (ih *InnerHeader) writeTo(w io.Writer) error {
 	if err := binary.Write(w, binary.LittleEndian, uint8(InnerHeaderTerminator)); err != nil {
 		return err
 	}
-	if err := binary.Write(w, binary.LittleEndian, uint32(0)); err != nil {
-		return err
-	}
-	return nil
+	return binary.Write(w, binary.LittleEndian, uint32(0))
 }
 
 // writeToInnerHeader is an helper to write an inner header item to the given io.Writer
