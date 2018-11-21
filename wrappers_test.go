@@ -92,7 +92,7 @@ func TestTimeWrapperUnmarshalText(t *testing.T) {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
 
-			if !time.Time(timeWrap.Time).Equal(c.expValue) {
+			if !timeWrap.Time.Equal(c.expValue) {
 				t.Errorf("Did not receive expected value '%+v', received: '%+v'", c.expValue, *timeWrap)
 			}
 		})

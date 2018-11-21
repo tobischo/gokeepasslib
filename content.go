@@ -113,7 +113,7 @@ func (ih *InnerHeader) writeTo(w io.Writer) error {
 		}
 	}
 	// End inner header
-	if err := binary.Write(w, binary.LittleEndian, uint8(InnerHeaderTerminator)); err != nil {
+	if err := binary.Write(w, binary.LittleEndian, InnerHeaderTerminator); err != nil {
 		return err
 	}
 	return binary.Write(w, binary.LittleEndian, uint32(0))
