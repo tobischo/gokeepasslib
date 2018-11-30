@@ -118,12 +118,12 @@ func encodeRawContent(db *Database, content []byte, transformedKey []byte) (enco
 	}
 
 	// Encrypt content
-	mode, err := db.Encrypter(transformedKey)
+	// Decrypt content
+	encrypter, err := db.GetEncrypterManager(transformedKey)
 	if err != nil {
 		return encoded, err
 	}
-	encrypted := make([]byte, len(content))
-	mode.CryptBlocks(encrypted, content)
+	encrypted := encrypter.Encrypt(content)
 
 	// Compose blocks (Kdbx v4)
 	if db.Header.IsKdbx4() {

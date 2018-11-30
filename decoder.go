@@ -96,12 +96,11 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err 
 	}
 
 	// Decrypt content
-	mode, err := db.Decrypter(transformedKey)
+	encrypter, err := db.GetEncrypterManager(transformedKey)
 	if err != nil {
 		return err
 	}
-	decryptedContent := make([]byte, len(content))
-	mode.CryptBlocks(decryptedContent, content)
+	decryptedContent := encrypter.Decrypt(content)
 
 	// Check for StreamStartBytes (Kdbx v3.1)
 	if !db.Header.IsKdbx4() {
