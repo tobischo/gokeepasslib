@@ -34,9 +34,9 @@ func (ae *AesEncrypter) Decrypt(data []byte) []byte {
 }
 
 // Encrypt returns the encrypted data
-func (ac *AesEncrypter) Encrypt(data []byte) []byte {
+func (ae *AesEncrypter) Encrypt(data []byte) []byte {
 	ret := make([]byte, len(data))
-	mode := cipher.NewCBCEncrypter(ac.block, ac.encryptionIV)
+	mode := cipher.NewCBCEncrypter(ae.block, ae.encryptionIV)
 	mode.CryptBlocks(ret, data)
 	return ret
 }
