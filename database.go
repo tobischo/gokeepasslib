@@ -1,8 +1,6 @@
 package gokeepasslib
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
 	"fmt"
 )
 
@@ -48,46 +46,26 @@ func (db *Database) getTransformedKey() ([]byte, error) {
 	return db.Credentials.buildTransformedKey(db)
 }
 
-// Decrypter initializes a CBC decrypter for the database
-func (db *Database) Decrypter(transformedKey []byte) (cipher.BlockMode, error) {
-	block, err := aes.NewCipher(buildMasterKey(db, transformedKey))
-	if err != nil {
-		return nil, err
-	}
-	return cipher.NewCBCDecrypter(block, db.Header.FileHeaders.EncryptionIV), nil
+// GetEncrypterManager returns an EncryptManager based on the master key and EncryptionIV, or nil if the type is unsupported
+func (db *Database) GetEncrypterManager(transformedKey []byte) (*EncrypterManager, error) {
+	return NewEncrypterManager(
+		buildMasterKey(db, transformedKey),
+		db.Header.FileHeaders.EncryptionIV,
+	)
 }
 
-// Encrypter initializes a CBC encrypter for the database
-func (db *Database) Encrypter(transformedKey []byte) (cipher.BlockMode, error) {
-	if db.Header == nil {
-		return nil, ErrRequiredAttributeMissing("Header")
-	}
-	if db.Header.FileHeaders == nil {
-		return nil, ErrRequiredAttributeMissing("Header.FileHeaders")
-	}
-	if db.Header.FileHeaders.EncryptionIV == nil {
-		return nil, ErrRequiredAttributeMissing("Header.FileHeaders.EncryptionIV")
-	}
-	block, err := aes.NewCipher(buildMasterKey(db, transformedKey))
-	if err != nil {
-		return nil, err
-	}
-	//Encrypts block data using AES block with initialization vector from header
-	return cipher.NewCBCEncrypter(block, db.Header.FileHeaders.EncryptionIV), nil
-}
-
-// GetCryptoStreamManager returns a CryptoStreamManager based on the db headers, or nil if the type is unsupported
+// GetStreamManager returns a StreamManager based on the db headers, or nil if the type is unsupported
 // Can be used to lock only certain entries instead of calling
-func (db *Database) GetCryptoStreamManager() (*CryptoStreamManager, error) {
+func (db *Database) GetStreamManager() (*StreamManager, error) {
 	if db.Header.FileHeaders != nil {
 		if db.Header.IsKdbx4() {
-			return NewCryptoStreamManager(
+			return NewStreamManager(
 				db.Content.InnerHeader.InnerRandomStreamID,
 				db.Content.InnerHeader.InnerRandomStreamKey,
 			)
 		}
 
-		return NewCryptoStreamManager(
+		return NewStreamManager(
 			db.Header.FileHeaders.InnerRandomStreamID,
 			db.Header.FileHeaders.ProtectedStreamKey,
 		)
@@ -100,7 +78,7 @@ func (db *Database) GetCryptoStreamManager() (*CryptoStreamManager, error) {
 // This should be called after decoding if you want to view plaintext password in an entry
 // Warning: If you call this when entry values are already unlocked, it will cause them to be unreadable
 func (db *Database) UnlockProtectedEntries() error {
-	manager, err := db.GetCryptoStreamManager()
+	manager, err := db.GetStreamManager()
 	if err != nil {
 		return err
 	}
@@ -116,7 +94,7 @@ func (db *Database) UnlockProtectedEntries() error {
 // Warning: Do not call this if entries are already locked
 // Warning: Encoding a database calls LockProtectedEntries automatically
 func (db *Database) LockProtectedEntries() error {
-	manager, err := db.GetCryptoStreamManager()
+	manager, err := db.GetStreamManager()
 	if err != nil {
 		return err
 	}
