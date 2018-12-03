@@ -88,7 +88,7 @@ func (ih *InnerHeader) readFrom(r io.Reader) error {
 
 			binaryCount = binaryCount + 1
 		default:
-			return ErrUnknownInnerHeaderID(typ)
+			return ErrUnknownInnerHeaderID(headerType)
 		}
 	}
 	return nil
