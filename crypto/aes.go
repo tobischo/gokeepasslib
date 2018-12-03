@@ -5,20 +5,20 @@ import (
 	"crypto/cipher"
 )
 
-// AesEncrypter is an AES cipher that implements Encrypter interface
-type AesEncrypter struct {
+// AESEncrypter is an AES cipher that implements Encrypter interface
+type AESEncrypter struct {
 	block        cipher.Block
 	encryptionIV []byte
 }
 
-// NewAesEncrypter initialize a new AesEncrypter interfaced with Encrypter
-func NewAesEncrypter(key []byte, iv []byte) (*AesEncrypter, error) {
+// NewAESEncrypter initialize a new AESEncrypter interfaced with Encrypter
+func NewAESEncrypter(key []byte, iv []byte) (*AESEncrypter, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
-	e := AesEncrypter{
+	e := AESEncrypter{
 		block:        block,
 		encryptionIV: iv,
 	}
@@ -26,7 +26,7 @@ func NewAesEncrypter(key []byte, iv []byte) (*AesEncrypter, error) {
 }
 
 // Decrypt returns the decrypted data
-func (ae *AesEncrypter) Decrypt(data []byte) []byte {
+func (ae *AESEncrypter) Decrypt(data []byte) []byte {
 	ret := make([]byte, len(data))
 	mode := cipher.NewCBCDecrypter(ae.block, ae.encryptionIV)
 	mode.CryptBlocks(ret, data)
@@ -34,7 +34,7 @@ func (ae *AesEncrypter) Decrypt(data []byte) []byte {
 }
 
 // Encrypt returns the encrypted data
-func (ae *AesEncrypter) Encrypt(data []byte) []byte {
+func (ae *AESEncrypter) Encrypt(data []byte) []byte {
 	ret := make([]byte, len(data))
 	mode := cipher.NewCBCEncrypter(ae.block, ae.encryptionIV)
 	mode.CryptBlocks(ret, data)

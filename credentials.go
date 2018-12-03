@@ -64,7 +64,7 @@ func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
 			)
 		} else {
 			// AES
-			key, err := cryptAesKey(
+			key, err := cryptAESKey(
 				transformedKey,
 				db.Header.FileHeaders.KdfParameters.Salt[:],
 				db.Header.FileHeaders.KdfParameters.Rounds,
@@ -76,7 +76,7 @@ func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
 		}
 	} else {
 		// AES
-		key, err := cryptAesKey(
+		key, err := cryptAESKey(
 			transformedKey,
 			db.Header.FileHeaders.TransformSeed,
 			db.Header.FileHeaders.TransformRounds,
@@ -107,7 +107,7 @@ func buildHmacKey(db *Database, transformedKey []byte) []byte {
 	return hmacKey.Sum(nil)
 }
 
-func cryptAesKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
+func cryptAESKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
 	block, err := aes.NewCipher(seed)
 	if err != nil {
 		return nil, err

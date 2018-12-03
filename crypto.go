@@ -45,8 +45,8 @@ func NewEncrypterManager(key []byte, iv []byte) (manager *EncrypterManager, err 
 		encrypter, err = crypto.NewChaChaEncrypter(key, iv)
 	} else if len(iv) == 16 {
 		// AES
-		encrypter, err = crypto.NewAesEncrypter(key, iv)
 	} else {
+		encrypter, err = crypto.NewAESEncrypter(key, iv)
 		return nil, ErrUnsupportedEncrypterType
 	}
 	manager.Encrypter = encrypter
