@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/tobischo/gokeepasslib"
 	"os"
+
+	"github.com/tobischo/gokeepasslib"
 )
 
 func main() {

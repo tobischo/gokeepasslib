@@ -1,69 +1,76 @@
 package gokeepasslib
 
 import (
-	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/sha256"
-	"encoding/base64"
-	"errors"
 	"fmt"
 )
 
-// ErrUnsupportedStreamType is retured if no streamManager can be created
-// due to an unsupported InnerRandomStreamID value
-var ErrUnsupportedStreamType = errors.New("Type of stream manager unsupported")
-
-// ErrRequiredAttributeMissing is returned if a required value is not given
-type ErrRequiredAttributeMissing string
-
-func (e ErrRequiredAttributeMissing) Error() string {
-	return fmt.Sprintf("gokeepasslib: operation can not be performed if database does not have %s", e)
-}
-
-// Database stores all contents nessesary for a keepass database file
+// Database stores all contents necessary for a keepass database file
 type Database struct {
-	Signature   *FileSignature
-	Headers     *FileHeaders
+	Options     *DBOptions
 	Credentials *DBCredentials
+	Header      *DBHeader
+	Hashes      *DBHashes
 	Content     *DBContent
 }
 
-// NewDatabase creates a new database with some sensable default settings. To create a database with no settigns per-set, use gokeepasslib.Database{}
+// DBOptions stores options for database decoding/encoding
+type DBOptions struct {
+	ValidateHashes bool // True to validate header hash
+}
+
+// NewDatabase creates a new database with some sensable default settings.
+// To create a database with no settings pre-set, use gokeepasslib.Database{}
 func NewDatabase() *Database {
+	header := NewHeader()
 	return &Database{
-		Signature:   &DefaultSig,
-		Headers:     NewFileHeaders(),
+		Options:     NewOptions(),
 		Credentials: new(DBCredentials),
-		Content:     NewDBContent(),
+		Header:      header,
+		Hashes:      NewHashes(header),
+		Content:     NewContent(),
 	}
 }
 
-func (db *Database) String() string {
-	return fmt.Sprintf("Database:\nSignature: %s\n"+
-		"Headers: %s\nCredentials: %s\nContent:\n%+v\n",
-		db.Signature,
-		db.Headers,
-		db.Credentials,
-		db.Content,
+// NewOptions creates new options with default values
+func NewOptions() *DBOptions {
+	return &DBOptions{
+		ValidateHashes: true,
+	}
+}
+
+// getTransformedKey returns the transformed key Credentials
+func (db *Database) getTransformedKey() ([]byte, error) {
+	if db.Credentials == nil {
+		return nil, ErrRequiredAttributeMissing("Credentials")
+	}
+	return db.Credentials.buildTransformedKey(db)
+}
+
+// GetEncrypterManager returns an EncryptManager based on the master key and EncryptionIV, or nil if the type is unsupported
+func (db *Database) GetEncrypterManager(transformedKey []byte) (*EncrypterManager, error) {
+	return NewEncrypterManager(
+		buildMasterKey(db, transformedKey),
+		db.Header.FileHeaders.EncryptionIV,
 	)
 }
 
-// StreamManager returns a ProtectedStreamManager bassed on the db headers, or nil if the type is unsupported
+// GetStreamManager returns a StreamManager based on the db headers, or nil if the type is unsupported
 // Can be used to lock only certain entries instead of calling
-func (db *Database) StreamManager() ProtectedStreamManager {
-	if db.Headers == nil {
-		return nil
+func (db *Database) GetStreamManager() (*StreamManager, error) {
+	if db.Header.FileHeaders != nil {
+		if db.Header.IsKdbx4() {
+			return NewStreamManager(
+				db.Content.InnerHeader.InnerRandomStreamID,
+				db.Content.InnerHeader.InnerRandomStreamKey,
+			)
+		}
+
+		return NewStreamManager(
+			db.Header.FileHeaders.InnerRandomStreamID,
+			db.Header.FileHeaders.ProtectedStreamKey,
+		)
 	}
-	switch db.Headers.InnerRandomStreamID {
-	case NoStreamID:
-		return new(InsecureStreamManager)
-	case SalsaStreamID:
-		key := sha256.Sum256(db.Headers.ProtectedStreamKey)
-		return NewSalsaManager(key)
-	default:
-		return nil
-	}
+	return nil, nil
 }
 
 // UnlockProtectedEntries goes through the entire database and encrypts
@@ -71,11 +78,14 @@ func (db *Database) StreamManager() ProtectedStreamManager {
 // This should be called after decoding if you want to view plaintext password in an entry
 // Warning: If you call this when entry values are already unlocked, it will cause them to be unreadable
 func (db *Database) UnlockProtectedEntries() error {
-	manager := db.StreamManager()
+	manager, err := db.GetStreamManager()
+	if err != nil {
+		return err
+	}
 	if manager == nil {
 		return ErrUnsupportedStreamType
 	}
-	UnlockProtectedGroups(manager, db.Content.Root.Groups)
+	manager.UnlockProtectedGroups(db.Content.Root.Groups)
 	return nil
 }
 
@@ -84,58 +94,17 @@ func (db *Database) UnlockProtectedEntries() error {
 // Warning: Do not call this if entries are already locked
 // Warning: Encoding a database calls LockProtectedEntries automatically
 func (db *Database) LockProtectedEntries() error {
-	manager := db.StreamManager()
-	if manager == nil {
-		return ErrUnsupportedStreamType
+	manager, err := db.GetStreamManager()
+	if err != nil {
+		return err
 	}
-	LockProtectedGroups(manager, db.Content.Root.Groups)
+	manager.LockProtectedGroups(db.Content.Root.Groups)
 	return nil
 }
 
-// Decrypter initializes a CBC decrypter for the database
-func (db *Database) Decrypter() (cipher.BlockMode, error) {
-	block, err := db.Cipher()
-	if err != nil {
-		return nil, err
-	}
-	return cipher.NewCBCDecrypter(block, db.Headers.EncryptionIV), nil
-}
+// ErrRequiredAttributeMissing is returned if a required value is not given
+type ErrRequiredAttributeMissing string
 
-// Encrypter initializes a CBC encrypter for the database
-func (db *Database) Encrypter() (cipher.BlockMode, error) {
-	if db.Headers == nil {
-		return nil, ErrRequiredAttributeMissing("Headers")
-	}
-	if db.Headers.EncryptionIV == nil {
-		return nil, ErrRequiredAttributeMissing("Headers.EncryptionIV")
-	}
-	block, err := db.Cipher()
-	if err != nil {
-		return nil, err
-	}
-	//Encrypts block data using AES block with initialization vector from header
-	return cipher.NewCBCEncrypter(block, db.Headers.EncryptionIV), nil
-}
-
-// Cipher returns a new aes cipher initialized with the master key
-func (db *Database) Cipher() (cipher.Block, error) {
-	if db.Credentials == nil {
-		return nil, ErrRequiredAttributeMissing("Credentials")
-	}
-	masterKey, err := db.Credentials.buildMasterKey(db)
-	if err != nil {
-		return nil, err
-	}
-	return aes.NewCipher(masterKey)
-}
-
-func (db *Database) buildHeaderHash() string {
-	//Calculate hash
-	buffer := bytes.NewBuffer(make([]byte, 0))
-
-	db.Signature.WriteTo(buffer)
-	buffer.Write(db.Headers.RawData)
-
-	hash := sha256.Sum256([]byte(buffer.Bytes()))
-	return base64.StdEncoding.EncodeToString(hash[:])
+func (e ErrRequiredAttributeMissing) Error() string {
+	return fmt.Sprintf("gokeepasslib: operation can not be performed if database does not have %s", e)
 }

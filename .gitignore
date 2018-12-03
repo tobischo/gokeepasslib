@@ -21,9 +21,10 @@ _testmain.go
 
 *.exe
 
-#ignore kdbx file created by test
-examples/tmp.kdbx
-examples/new.kdbx
+# Ignore kdbx file created by test
+tests/new.kdbx
+tests/kdbx3/tmp.kdbx
+tests/kdbx4/tmp.kdbx
 
-#ignore results of coverage test
+# Ignore results of coverage test
 *.out

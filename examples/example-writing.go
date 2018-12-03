@@ -26,7 +26,6 @@ func main() {
 	defer file.Close()
 
 	// create root group
-
 	rootGroup := gokeepasslib.NewGroup()
 	rootGroup.Name = "root group"
 
@@ -38,17 +37,14 @@ func main() {
 	rootGroup.Entries = append(rootGroup.Entries, entry)
 
 	// demonstrate creating sub group (we'll leave it empty because we're lazy)
-
 	subGroup := gokeepasslib.NewGroup()
 	subGroup.Name = "sub group"
 
 	rootGroup.Groups = append(rootGroup.Groups, subGroup)
 
 	// now create the database containing the root group
-
 	db := &gokeepasslib.Database{
-		Signature:   &gokeepasslib.DefaultSig,
-		Headers:     gokeepasslib.NewFileHeaders(),
+		Header:      gokeepasslib.NewHeader(),
 		Credentials: gokeepasslib.NewPasswordCredentials(masterPassword),
 		Content: &gokeepasslib.DBContent{
 			Meta: gokeepasslib.NewMetaData(),
@@ -62,7 +58,6 @@ func main() {
 	db.LockProtectedEntries()
 
 	// and encode it into the file
-
 	keepassEncoder := gokeepasslib.NewEncoder(file)
 	if err := keepassEncoder.Encode(db); err != nil {
 		panic(err)

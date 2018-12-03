@@ -1,21 +1,11 @@
 package gokeepasslib
 
 import (
-	"fmt"
 	"testing"
 	"time"
+
+	. "github.com/tobischo/gokeepasslib/wrappers"
 )
-
-func TestTimeWrapperNow(t *testing.T) {
-	now := time.Now().In(time.UTC)
-	timeWrapNow := Now()
-
-	fmt.Println(time.Time(timeWrapNow).Sub(now))
-
-	if time.Time(timeWrapNow).Sub(now) > time.Second {
-		t.Errorf("Now did not return the current time")
-	}
-}
 
 func TestTimeWrapperMarshalText(t *testing.T) {
 	cases := []struct {
@@ -29,14 +19,14 @@ func TestTimeWrapperMarshalText(t *testing.T) {
 			valueFn: func() time.Time {
 				return time.Date(-1, time.June, 10, 6, 34, 12, 123123, time.UTC)
 			},
-			expErr: errYearOutsideOfRange,
+			expErr: ErrYearOutsideOfRange,
 		},
 		{
 			title: "year above 10000",
 			valueFn: func() time.Time {
 				return time.Date(10001, time.June, 10, 6, 34, 12, 123123, time.UTC)
 			},
-			expErr: errYearOutsideOfRange,
+			expErr: ErrYearOutsideOfRange,
 		},
 		{
 			title: "realistic year (2018)",
@@ -52,13 +42,21 @@ func TestTimeWrapperMarshalText(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			value := c.valueFn()
 
-			data, err := TimeWrapper(value).MarshalText()
+			timeWrap := TimeWrapper{
+				Formatted: true,
+				Time:      value,
+			}
+			data, err := timeWrap.MarshalText()
 			if err != c.expErr {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
 
 			if string(data) != c.expValue {
-				t.Errorf("Did not marshal into expected string '%s', received: '%s'", c.expValue, string(data))
+				t.Errorf(
+					"Did not marshal into expected string '%s', received: '%s'",
+					c.expValue,
+					string(data),
+				)
 			}
 		})
 	}
@@ -86,13 +84,15 @@ func TestTimeWrapperUnmarshalText(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.title, func(t *testing.T) {
 
-			timeWrap := &TimeWrapper{}
+			timeWrap := &TimeWrapper{
+				Formatted: true,
+			}
 			err := timeWrap.UnmarshalText([]byte(c.value))
 			if err != c.expErr {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
 
-			if !time.Time(*timeWrap).Equal(c.expValue) {
+			if !timeWrap.Time.Equal(c.expValue) {
 				t.Errorf("Did not receive expected value '%+v', received: '%+v'", c.expValue, *timeWrap)
 			}
 		})

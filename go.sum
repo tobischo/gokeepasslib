@@ -1,0 +1,8 @@
+github.com/aead/argon2 v0.0.0-20180111183520-a87724528b07 h1:i9/M2RadeVsPBMNwXFiaYkXQi9lY9VuZeI4Onavd3pA=
+github.com/aead/argon2 v0.0.0-20180111183520-a87724528b07/go.mod h1:Tnm/osX+XXr9R+S71o5/F0E60sRkPVALdhWw25qPImQ=
+github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da h1:KjTM2ks9d14ZYCvmHS9iAKVt9AyzRSqNU1qabPih5BY=
+github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da/go.mod h1:eHEWzANqSiWQsof+nXEI9bUVUyV6F53Fp89EuCh2EAA=
+golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869 h1:kkXA53yGe04D0adEYJwEVQjeBppL01Exg+fnMjfUraU=
+golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
+golang.org/x/sys v0.0.0-20181119195503-ec83556a53fe h1:I5KvcSfxR/TkvFksuALBTCS44kh6MaPO1rHR9vT0iQQ=
+golang.org/x/sys v0.0.0-20181119195503-ec83556a53fe/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=

@@ -3,6 +3,7 @@ package gokeepasslib
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/base64"
 	"encoding/xml"
 	"io"
 )
@@ -15,89 +16,121 @@ type Encoder struct {
 	w io.Writer
 }
 
-// Encode writes db to e's internal writer
-func (e *Encoder) Encode(db *Database) (err error) {
-	//Writes file signature (tells program it's a kdbx file of x version)
-	if err = db.Signature.WriteTo(e.w); err != nil {
-		return err
-	}
-
-	//Writes headers of database
-	if err = db.Headers.WriteTo(e.w); err != nil {
-		return err
-	}
-
-	//Calculate hash
-	//Has to happen after headers are written because kept raw data is updated
-	db.Content.Meta.HeaderHash = db.buildHeaderHash()
-
-	//Write database content, encrypted
-	if err = e.writeData(db); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // NewEncoder creates a new encoder with writer w, identical to gokeepasslib.Encoder{w}
 func NewEncoder(w io.Writer) *Encoder {
 	return &Encoder{w: w}
 }
 
-// writeData is an internal function to write database to encoder's writer, called by Encode
-func (e *Encoder) writeData(db *Database) error {
-	// Creates XML data with from database content, and appends header to top
-	xmlData, err := xml.MarshalIndent(db.Content, "", "\t")
+// Encode writes db to e's internal writer
+func (e *Encoder) Encode(db *Database) error {
+	// Calculate transformed key to make HMAC and encrypt
+	transformedKey, err := db.getTransformedKey()
 	if err != nil {
 		return err
 	}
-	xmlData = append(xmlHeader, xmlData...)
 
-	if db.Headers.CompressionFlags == GzipCompressionFlag { //If database header says to compress with gzip, compress xml data and put into block form
+	// Write header then hashes before decode content (necessary to update HeaderHash)
+	// db.Header writeTo will change its hash
+	if err = db.Header.writeTo(e.w); err != nil {
+		return err
+	}
+
+	// Update header hash into db.Hashes then write the data
+	hash := db.Header.GetSha256()
+	if db.Header.IsKdbx4() {
+		db.Hashes.Sha256 = hash
+
+		hmacKey := buildHmacKey(db, transformedKey)
+		hmacHash := db.Header.GetHmacSha256(hmacKey)
+		db.Hashes.Hmac = hmacHash
+
+		if err = db.Hashes.writeTo(e.w); err != nil {
+			return err
+		}
+	} else {
+		db.Content.Meta.HeaderHash = base64.StdEncoding.EncodeToString(hash[:])
+	}
+
+	// Encode xml and append header to the top
+	rawContent, err := xml.MarshalIndent(db.Content, "", "\t")
+	if err != nil {
+		return err
+	}
+	rawContent = append(xmlHeader, rawContent...)
+
+	// Write InnerHeader (Kdbx v4)
+	if db.Header.IsKdbx4() {
+		var ih bytes.Buffer
+		if err = db.Content.InnerHeader.writeTo(&ih); err != nil {
+			return err
+		}
+
+		rawContent = append(ih.Bytes(), rawContent...)
+	}
+
+	// Encode raw content
+	encodedContent, err := encodeRawContent(db, rawContent, transformedKey)
+	if err != nil {
+		return err
+	}
+
+	// Writes the encrypted database content
+	_, err = e.w.Write(encodedContent)
+	return err
+}
+
+func encodeRawContent(db *Database, content []byte, transformedKey []byte) (encoded []byte, err error) {
+	// Compress if the header compression flag is 1 (gzip)
+	if db.Header.FileHeaders.CompressionFlags == GzipCompressionFlag {
 		b := new(bytes.Buffer)
 		w := gzip.NewWriter(b)
 
-		if _, err = w.Write(xmlData); err != nil {
-			return err
+		if _, err = w.Write(content); err != nil {
+			return encoded, err
 		}
 
 		// Close() needs to be explicitly called to write Gzip stream footer,
 		// Flush() is not enough. some gzip decoders treat missing footer as error
 		// while some don't). internally Close() also does flush.
 		if err = w.Close(); err != nil {
-			return err
+			return encoded, err
 		}
 
-		xmlData = b.Bytes()
-		if err != nil {
-			return err
-		}
+		content = b.Bytes()
 	}
-	hashData, err := EncodeBlocks(xmlData)
 
-	//Appends the StreamStartBytes from db header to the blocked data, used to verify that the key is correct when decrypting
-	hashData = append(db.Headers.StreamStartBytes, hashData...)
+	// Compose blocks (Kdbx v3.1)
+	if !db.Header.IsKdbx4() {
+		var blocks bytes.Buffer
+		composeContentBlocks31(&blocks, content)
 
-	//Adds padding to data as required to encrypt properly
-	if len(hashData)%16 != 0 {
-		padding := make([]byte, 16-(len(hashData)%16))
+		// Append blocks to StreamStartBytes
+		content = append(db.Header.FileHeaders.StreamStartBytes, blocks.Bytes()...)
+	}
+
+	// Adds padding to data as required to encrypt properly
+	if len(content)%16 != 0 {
+		padding := make([]byte, 16-(len(content)%16))
 		for i := 0; i < len(padding); i++ {
 			padding[i] = byte(len(padding))
 		}
-		hashData = append(hashData, padding...)
+		content = append(content, padding...)
 	}
 
-	mode, err := db.Encrypter()
+	// Encrypt content
+	// Decrypt content
+	encrypter, err := db.GetEncrypterManager(transformedKey)
 	if err != nil {
-		return err
+		return encoded, err
 	}
-	encrypted := make([]byte, len(hashData))
-	mode.CryptBlocks(encrypted, hashData)
+	encrypted := encrypter.Encrypt(content)
 
-	//Writes the encrypted database content
-	if _, err = e.w.Write(encrypted); err != nil {
-		return err
+	// Compose blocks (Kdbx v4)
+	if db.Header.IsKdbx4() {
+		var blocks bytes.Buffer
+		composeContentBlocks4(&blocks, encrypted, transformedKey)
+
+		encrypted = blocks.Bytes()
 	}
-
-	return nil
+	return encrypted, nil
 }
