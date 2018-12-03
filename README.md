@@ -60,6 +60,9 @@ See [examples/example-writing.go](examples/example-writing.go)
 * Improve code readability
 * Write more tests
 
+### Changelog
+[CHANGELOG](CHANGELOG.md)
+
 ### License
 [LICENSE](LICENSE.md)
 
