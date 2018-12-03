@@ -47,11 +47,11 @@ func NewContent() *DBContent {
 func (ih *InnerHeader) readFrom(r io.Reader) error {
 	binaryCount := 0 // Var used to count and index every binary
 	for {
-		var typ byte
+		var headerType byte
 		var length int32
 		var data []byte
 
-		if err := binary.Read(r, binary.LittleEndian, &typ); err != nil {
+		if err := binary.Read(r, binary.LittleEndian, &headerType); err != nil {
 			return err
 		}
 		if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
@@ -62,16 +62,17 @@ func (ih *InnerHeader) readFrom(r io.Reader) error {
 			return err
 		}
 
-		if typ == InnerHeaderTerminator {
+		switch headerType {
+		case InnerHeaderTerminator:
 			// End of inner header
 			break
-		} else if typ == InnerHeaderIRSID {
+		case InnerHeaderIRSID:
 			// Found InnerRandomStream ID
 			ih.InnerRandomStreamID = binary.LittleEndian.Uint32(data)
-		} else if typ == InnerHeaderIRSKey {
+		case InnerHeaderIRSKey:
 			// Found InnerRandomStream Key
 			ih.InnerRandomStreamKey = data
-		} else if typ == InnerHeaderBinary {
+		case InnerHeaderBinary:
 			// Found a binary
 			var protection byte
 			reader := bytes.NewReader(data)
@@ -86,7 +87,7 @@ func (ih *InnerHeader) readFrom(r io.Reader) error {
 			})
 
 			binaryCount = binaryCount + 1
-		} else {
+		default:
 			return ErrUnknownInnerHeaderID(typ)
 		}
 	}

@@ -40,13 +40,14 @@ type Stream interface {
 func NewEncrypterManager(key []byte, iv []byte) (manager *EncrypterManager, err error) {
 	var encrypter Encrypter
 	manager = new(EncrypterManager)
-	if len(iv) == 12 {
+	switch len(iv) {
+	case 12:
 		// ChaCha20
 		encrypter, err = crypto.NewChaChaEncrypter(key, iv)
-	} else if len(iv) == 16 {
+	case 16:
 		// AES
-	} else {
 		encrypter, err = crypto.NewAESEncrypter(key, iv)
+	default:
 		return nil, ErrUnsupportedEncrypterType
 	}
 	manager.Encrypter = encrypter
