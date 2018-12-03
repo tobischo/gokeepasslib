@@ -62,17 +62,16 @@ func (ih *InnerHeader) readFrom(r io.Reader) error {
 			return err
 		}
 
-		switch headerType {
-		case InnerHeaderTerminator:
+		if headerType == InnerHeaderTerminator {
 			// End of inner header
 			break
-		case InnerHeaderIRSID:
+		} else if headerType == InnerHeaderIRSID {
 			// Found InnerRandomStream ID
 			ih.InnerRandomStreamID = binary.LittleEndian.Uint32(data)
-		case InnerHeaderIRSKey:
+		} else if headerType == InnerHeaderIRSKey {
 			// Found InnerRandomStream Key
 			ih.InnerRandomStreamKey = data
-		case InnerHeaderBinary:
+		} else if headerType == InnerHeaderBinary {
 			// Found a binary
 			var protection byte
 			reader := bytes.NewReader(data)
@@ -87,7 +86,7 @@ func (ih *InnerHeader) readFrom(r io.Reader) error {
 			})
 
 			binaryCount = binaryCount + 1
-		default:
+		} else {
 			return ErrUnknownInnerHeaderID(headerType)
 		}
 	}
