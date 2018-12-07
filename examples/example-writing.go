@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/tobischo/gokeepasslib"
+	"github.com/tobischo/gokeepasslib/v2"
 )
 
 func mkValue(key string, value string) gokeepasslib.ValueData {

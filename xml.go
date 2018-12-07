@@ -6,7 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 
-	w "github.com/tobischo/gokeepasslib/wrappers"
+	w "github.com/tobischo/gokeepasslib/v2/wrappers"
 )
 
 // MetaData is the structure for the metadata headers at the top of kdbx files,

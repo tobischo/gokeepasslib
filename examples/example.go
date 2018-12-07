@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tobischo/gokeepasslib"
+	"github.com/tobischo/gokeepasslib/v2"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/tobischo/gokeepasslib/wrappers"
+	. "github.com/tobischo/gokeepasslib/v2/wrappers"
 )
 
 func TestTimeWrapperMarshalText(t *testing.T) {

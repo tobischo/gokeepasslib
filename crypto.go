@@ -3,7 +3,7 @@ package gokeepasslib
 import (
 	"errors"
 
-	"github.com/tobischo/gokeepasslib/crypto"
+	"github.com/tobischo/gokeepasslib/v2/crypto"
 )
 
 // Constant enumerator for the inner random stream ID

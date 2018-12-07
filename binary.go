@@ -8,7 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/tobischo/gokeepasslib/wrappers"
+	"github.com/tobischo/gokeepasslib/v2/wrappers"
 )
 
 // Binaries Stores a slice of binaries in the metadata header of a database
