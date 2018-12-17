@@ -15,11 +15,16 @@ Use `go get` to retrieve the latest version:
 go get -u github.com/tobischo/gokeepasslib
 ```
 
-Include it in an application:
+Include it in an application (modulized):
 ```
 import "github.com/tobischo/gokeepasslib/v2"
 ```
 
+For non-modulized applications use:
+```
+import "github.com/tobischo/gokeepasslib"
+```
+Note that this may cause breaking changes when updating from a previous version.
 
 ### Example: reading a file
 
