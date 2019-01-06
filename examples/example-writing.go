@@ -40,6 +40,13 @@ func main() {
 	subGroup := gokeepasslib.NewGroup()
 	subGroup.Name = "sub group"
 
+	subEntry := gokeepasslib.NewEntry()
+	subEntry.Values = append(subEntry.Values, mkValue("Title", "Another password"))
+	subEntry.Values = append(subEntry.Values, mkValue("UserName", "johndough"))
+	subEntry.Values = append(subEntry.Values, mkProtectedValue("Password", "123456"))
+
+	subGroup.Entries = append(subGroup.Entries, subEntry)
+
 	rootGroup.Groups = append(rootGroup.Groups, subGroup)
 
 	// now create the database containing the root group
