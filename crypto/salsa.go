@@ -18,7 +18,6 @@ type SalsaStream struct {
 	State        []uint32
 	blockUsed    int
 	block        []byte
-	counterWords [2]uint32
 	currentBlock []byte
 }
 
@@ -47,9 +46,9 @@ func NewSalsaStream(key []byte) (*SalsaStream, error) {
 
 	s := SalsaStream{
 		State:        state,
+		blockUsed:    64, // Ensure a fresh block is generated, the first time bytes are needed
 		currentBlock: make([]byte, 0),
 	}
-	s.reset()
 	return &s, nil
 }
 
@@ -92,18 +91,6 @@ func rotl32(x uint32, b uint) uint32 {
 	return ((x << b) | (x >> (32 - b)))
 }
 
-func (s *SalsaStream) reset() {
-	s.blockUsed = 64
-	s.counterWords = [2]uint32{0, 0}
-}
-
-func (s *SalsaStream) incrementCounter() {
-	s.counterWords[0] = (s.counterWords[0] + 1) & 0xffffffff
-	if s.counterWords[0] == 0 {
-		s.counterWords[1] = (s.counterWords[1] + 1) & 0xffffffff
-	}
-}
-
 func (s *SalsaStream) fetchBytes(length int) []byte {
 	for length > len(s.currentBlock) {
 		s.currentBlock = append(s.currentBlock, s.getBytes(64)...)
@@ -121,7 +108,6 @@ func (s *SalsaStream) getBytes(length int) []byte {
 	for i := 0; i < length; i++ {
 		if s.blockUsed == 64 {
 			s.generateBlock()
-			s.incrementCounter()
 			s.blockUsed = 0
 		}
 		b[i] = s.block[s.blockUsed]
