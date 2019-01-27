@@ -60,6 +60,10 @@ In kdbx files, which are encrypted using the file credentials, fields are protec
 
 See [examples/example-writing.go](examples/example-writing.go)
 
+### Example: deleting a file
+
+See [examples/example-deleting.go](examples/example-deleting.go)
+
 ### TODO
 
 * Improve code readability
