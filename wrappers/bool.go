@@ -1,6 +1,9 @@
 package wrappers
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"strings"
+)
 
 // BoolWrapper is a bool wrapper that provides xml marshaling and unmarshaling
 type BoolWrapper bool
@@ -21,7 +24,7 @@ func (b *BoolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 	d.DecodeElement(&val, &start)
 
 	*b = false
-	if val == "True" {
+	if strings.ToLower(val) == "true" {
 		*b = true
 	}
 
@@ -41,7 +44,7 @@ func (b *BoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 // UnmarshalXMLAttr decodes a single XML attribute
 func (b *BoolWrapper) UnmarshalXMLAttr(attr xml.Attr) error {
 	*b = false
-	if attr.Value == "True" {
+	if strings.ToLower(attr.Value) == "true" {
 		*b = true
 	}
 
