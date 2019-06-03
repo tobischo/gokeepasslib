@@ -128,7 +128,7 @@ func encodeRawContent(db *Database, content []byte, transformedKey []byte) (enco
 	// Compose blocks (Kdbx v4)
 	if db.Header.IsKdbx4() {
 		var blocks bytes.Buffer
-		composeContentBlocks4(&blocks, encrypted, transformedKey)
+		composeContentBlocks4(&blocks, encrypted, db.Header.FileHeaders.MasterSeed, transformedKey)
 
 		encrypted = blocks.Bytes()
 	}
