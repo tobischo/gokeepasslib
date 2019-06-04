@@ -1,10 +1,13 @@
 package gokeepasslib
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
+	"crypto/subtle"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"io/ioutil"
 )
@@ -43,7 +46,7 @@ func (b *BlockHMACBuilder) BuildHMAC(index uint64, length uint32, data []byte) [
 
 // decomposeContentBlocks4 decodes the content data block by block (Kdbx v4)
 // Used to extract data blocks from the entire content
-func decomposeContentBlocks4(r io.Reader) ([]byte, error) {
+func decomposeContentBlocks4(r io.Reader, masterSeed []byte, transformedKey []byte) ([]byte, error) {
 	var contentData []byte
 	// Get all the content
 	content, err := ioutil.ReadAll(r)
@@ -51,28 +54,41 @@ func decomposeContentBlocks4(r io.Reader) ([]byte, error) {
 		return nil, err
 	}
 
+	hmacBuilder := NewBlockHMACBuilder(masterSeed, transformedKey)
+
+	index := uint64(0)
 	offset := uint32(0)
 	for {
-		var hash [32]byte
+		var blockHMAC [32]byte
 		var length uint32
-		var data []byte
 
-		copy(hash[:], content[offset:offset+32])
+		copy(blockHMAC[:], content[offset:offset+32])
 		offset = offset + 32
 
-		length = binary.LittleEndian.Uint32(content[offset : offset+4])
+		buf := bytes.NewBuffer(content[offset : offset+4])
+		binary.Read(buf, binary.LittleEndian, &length)
+
 		offset = offset + 4
 
-		if length > 0 {
-			data = make([]byte, length)
-			copy(data, content[offset:offset+length])
-			offset = offset + length
+		data := make([]byte, length)
+		endOfData := offset + length
+		copy(data, content[offset:endOfData])
+		offset = endOfData
 
-			// Add to blocks
-			contentData = append(contentData, data...)
-		} else {
+		calculatedHMAC := hmacBuilder.BuildHMAC(index, length, data)
+
+		if subtle.ConstantTimeCompare(calculatedHMAC, blockHMAC[:]) == 0 {
+			return nil, fmt.Errorf("Failed to verify HMAC for block %d", index)
+		}
+
+		// Add to blocks
+		contentData = append(contentData, data...)
+
+		if length == 0 {
 			break
 		}
+
+		index += 1
 	}
 	return contentData, nil
 }
@@ -124,10 +140,6 @@ func composeContentBlocks4(w io.Writer, contentData []byte, masterSeed []byte, t
 	endOffset := 0
 	var index = uint64(0)
 	for {
-		var hash []byte
-		var length uint32
-		var data []byte
-
 		remainingLength := len(contentData[offset:])
 
 		if remainingLength >= blockSplitRate {
@@ -136,13 +148,15 @@ func composeContentBlocks4(w io.Writer, contentData []byte, masterSeed []byte, t
 			endOffset = offset + remainingLength
 		}
 
-		data = append(data, contentData[offset:endOffset]...) // copy data
-		length = uint32(len(data))
+		length := endOffset - offset
+		data := make([]byte, length)
+		copy(data, contentData[offset:endOffset])
+		uLength := uint32(length)
 
-		hash = hmacBuilder.BuildHMAC(index, length, data)
+		blockHMAC := hmacBuilder.BuildHMAC(index, uLength, data)
 
-		w.Write(hash)
-		binary.Write(w, binary.LittleEndian, length)
+		w.Write(blockHMAC)
+		binary.Write(w, binary.LittleEndian, uLength)
 		w.Write(data)
 
 		offset = endOffset

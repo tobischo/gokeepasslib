@@ -82,7 +82,7 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err 
 		// Decompose content blocks
 		// In Kdbx v4 you must parse blocks before decrypt
 		reader := bytes.NewReader(content)
-		content, err = decomposeContentBlocks4(reader)
+		content, err = decomposeContentBlocks4(reader, db.Header.FileHeaders.MasterSeed, transformedKey)
 		if err != nil {
 			return err
 		}
