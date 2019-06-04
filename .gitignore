@@ -28,3 +28,6 @@ tests/kdbx4/tmp.kdbx
 
 # Ignore results of coverage test
 *.out
+
+# Ignore example kdbx files unless added intentionally
+examples/*.kdbx
