@@ -18,12 +18,30 @@ type TimeWrapper struct {
 // Limit of int64 for time.Add
 const intLimit int64 = 9000000000
 
+type TimeOption func(*TimeWrapper)
+
+func WithKDBX4Formatting(t *TimeWrapper) {
+	WithFormatted(false)(t)
+}
+
+func WithFormatted(formatted bool) TimeOption {
+	return func(t *TimeWrapper) {
+		t.Formatted = formatted
+	}
+}
+
 // Now returns a TimeWrapper instance with the current time in UTC
-func Now() TimeWrapper {
-	return TimeWrapper{
+func Now(options ...TimeOption) TimeWrapper {
+	t := TimeWrapper{
 		Formatted: true,
 		Time:      time.Now().In(time.UTC),
 	}
+
+	for _, option := range options {
+		option(&t)
+	}
+
+	return t
 }
 
 // MarshalText marshals time into an RFC3339 compliant value in UTC (Kdbx v3.1)

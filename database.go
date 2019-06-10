@@ -18,17 +18,31 @@ type DBOptions struct {
 	ValidateHashes bool // True to validate header hash
 }
 
+type DatabaseOption func(*Database)
+
+func WithDatabaseFormattedTime(formatted bool) DatabaseOption {
+	return func(db *Database) {
+
+	}
+}
+
 // NewDatabase creates a new database with some sensable default settings.
 // To create a database with no settings pre-set, use gokeepasslib.Database{}
-func NewDatabase() *Database {
+func NewDatabase(options ...DatabaseOption) *Database {
 	header := NewHeader()
-	return &Database{
+	db := &Database{
 		Options:     NewOptions(),
 		Credentials: new(DBCredentials),
 		Header:      header,
 		Hashes:      NewHashes(header),
 		Content:     NewContent(),
 	}
+
+	for _, option := range options {
+		option(db)
+	}
+
+	return db
 }
 
 // NewOptions creates new options with default values

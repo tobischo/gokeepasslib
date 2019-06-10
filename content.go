@@ -34,13 +34,28 @@ type InnerHeader struct {
 	Binaries             Binaries
 }
 
+type DBContentOption func(*DBContent)
+
+func WithDBContentFormattedTime(formatted bool) DBContentOption {
+	return func(content *DBContent) {
+		WithMetaDataFormattedTime(formatted)(content.Meta)
+		WithRootDataFormattedTime(formatted)(content.Root)
+	}
+}
+
 // NewContent creates a new database content with some good defaults
-func NewContent() *DBContent {
+func NewContent(options ...DBContentOption) *DBContent {
 	// Not necessary create InnerHeader because this will be a KDBX v3.1
-	return &DBContent{
+	content := &DBContent{
 		Meta: NewMetaData(),
 		Root: NewRootData(),
 	}
+
+	for _, option := range options {
+		option(content)
+	}
+
+	return content
 }
 
 // readFrom reads the InnerHeader from an io.Reader
