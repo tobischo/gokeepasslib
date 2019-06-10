@@ -145,11 +145,19 @@ type CustomData struct {
 	Value   string   `xml:"Value"`
 }
 
+type MetaDataOption func(*MetaData)
+
+func WithMetaDataFormattedTime(formatted bool) MetaDataOption {
+	return func(md *MetaData) {
+		md.MasterKeyChanged.Formatted = formatted
+	}
+}
+
 // NewMetaData creates a MetaData struct with some defaults set
-func NewMetaData() *MetaData {
+func NewMetaData(options ...MetaDataOption) *MetaData {
 	now := w.Now()
 
-	return &MetaData{
+	md := &MetaData{
 		MasterKeyChanged:       &now,
 		MasterKeyChangeRec:     -1,
 		MasterKeyChangeForce:   -1,
@@ -157,10 +165,26 @@ func NewMetaData() *MetaData {
 		HistoryMaxSize:         6291456, // 6 MB
 		MaintenanceHistoryDays: 365,
 	}
+
+	for _, option := range options {
+		option(md)
+	}
+
+	return md
+}
+
+type RootDataOption func(*RootData)
+
+func WithRootDataFormattedTime(formatted bool) RootDataOption {
+	return func(rd *RootData) {
+		for _, group := range rd.Groups {
+			WithGroupFormattedTime(formatted)(&group)
+		}
+	}
 }
 
 // NewRootData returns a RootData struct with good defaults
-func NewRootData() *RootData {
+func NewRootData(options ...RootDataOption) *RootData {
 	root := new(RootData)
 	group := NewGroup()
 	group.Name = "NewDatabase"
@@ -168,6 +192,11 @@ func NewRootData() *RootData {
 	entry.Values = append(entry.Values, ValueData{Key: "Title", Value: V{Content: "Sample Entry"}})
 	group.Entries = append(group.Entries, entry)
 	root.Groups = append(root.Groups, group)
+
+	for _, option := range options {
+		option(root)
+	}
+
 	return root
 }
 
@@ -178,20 +207,53 @@ func NewUUID() UUID {
 	return id
 }
 
+type GroupOption func(*Group)
+
+func WithGroupFormattedTime(formatted bool) GroupOption {
+	return func(g *Group) {
+		WithTimeDataFormattedTime(formatted)(&g.Times)
+
+		for _, group := range g.Groups {
+			WithGroupFormattedTime(formatted)(&group)
+		}
+
+		for _, entry := range g.Entries {
+			WithEntryFormattedTime(formatted)(&entry)
+		}
+	}
+}
+
 // NewGroup returns a new group with time data and uuid set
-func NewGroup() Group {
-	return Group{
+func NewGroup(options ...GroupOption) Group {
+	group := Group{
 		EnableAutoType:  w.BoolWrapper(true),
 		EnableSearching: w.BoolWrapper(true),
 		Times:           NewTimeData(),
 		UUID:            NewUUID(),
 	}
+
+	for _, option := range options {
+		option(&group)
+	}
+
+	return group
+}
+
+type TimeDataOption func(*TimeData)
+
+func WithTimeDataFormattedTime(formatted bool) TimeDataOption {
+	return func(td *TimeData) {
+		td.CreationTime.Formatted = formatted
+		td.LastModificationTime.Formatted = formatted
+		td.LastAccessTime.Formatted = formatted
+		td.LocationChanged.Formatted = formatted
+	}
 }
 
 // NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
-func NewTimeData() TimeData {
+func NewTimeData(options ...TimeDataOption) TimeData {
 	now := w.Now()
-	return TimeData{
+	td := TimeData{
 		CreationTime:         &now,
 		LastModificationTime: &now,
 		LastAccessTime:       &now,
@@ -199,14 +261,33 @@ func NewTimeData() TimeData {
 		Expires:              false,
 		UsageCount:           0,
 	}
+
+	for _, option := range options {
+		option(&td)
+	}
+
+	return td
+}
+
+type EntryOption func(*Entry)
+
+func WithEntryFormattedTime(formatted bool) EntryOption {
+	return func(e *Entry) {
+		WithTimeDataFormattedTime(formatted)(&e.Times)
+	}
 }
 
 // NewEntry return a new entry with time data and uuid set
-func NewEntry() Entry {
-	e := Entry{}
-	e.Times = NewTimeData()
-	e.UUID = NewUUID()
-	return e
+func NewEntry(options ...EntryOption) Entry {
+	entry := Entry{}
+	entry.Times = NewTimeData()
+	entry.UUID = NewUUID()
+
+	for _, option := range options {
+		option(&entry)
+	}
+
+	return entry
 }
 
 // MarshalText is a marshaler method to encode uuid content as base 64 and return it
