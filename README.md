@@ -69,6 +69,9 @@ See [examples/example-deleting.go](examples/example-deleting.go)
 * Improve code readability
 * Write more tests
 
+### Contributing
+[CONTRIBUTING](CONTRIBUTING.md)
+
 ### Changelog
 [CHANGELOG](CHANGELOG.md)
 
