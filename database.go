@@ -22,7 +22,7 @@ type DatabaseOption func(*Database)
 
 func WithDatabaseFormattedTime(formatted bool) DatabaseOption {
 	return func(db *Database) {
-
+		WithDBContentFormattedTime(formatted)(db.Content)
 	}
 }
 
