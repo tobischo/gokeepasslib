@@ -146,8 +146,8 @@ type CustomData struct {
 }
 
 // NewMetaData creates a MetaData struct with some defaults set
-func NewMetaData() *MetaData {
-	now := w.Now()
+func NewMetaData(isKdbx4 bool) *MetaData {
+	now := w.Now(isKdbx4)
 
 	return &MetaData{
 		MasterKeyChanged:       &now,
@@ -160,13 +160,10 @@ func NewMetaData() *MetaData {
 }
 
 // NewRootData returns a RootData struct with good defaults
-func NewRootData() *RootData {
+func NewRootData(isKdbx4 bool) *RootData {
 	root := new(RootData)
-	group := NewGroup()
+	group := NewGroup(isKdbx4)
 	group.Name = "NewDatabase"
-	entry := NewEntry()
-	entry.Values = append(entry.Values, ValueData{Key: "Title", Value: V{Content: "Sample Entry"}})
-	group.Entries = append(group.Entries, entry)
 	root.Groups = append(root.Groups, group)
 	return root
 }
@@ -179,18 +176,19 @@ func NewUUID() UUID {
 }
 
 // NewGroup returns a new group with time data and uuid set
-func NewGroup() Group {
+func NewGroup(isKdbx4 bool) Group {
 	return Group{
 		EnableAutoType:  w.BoolWrapper(true),
 		EnableSearching: w.BoolWrapper(true),
-		Times:           NewTimeData(),
+		Times:           NewTimeData(isKdbx4),
 		UUID:            NewUUID(),
+		IconID:          48,
 	}
 }
 
 // NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
-func NewTimeData() TimeData {
-	now := w.Now()
+func NewTimeData(isKdbx4 bool) TimeData {
+	now := w.Now(isKdbx4)
 	return TimeData{
 		CreationTime:         &now,
 		LastModificationTime: &now,
@@ -202,9 +200,9 @@ func NewTimeData() TimeData {
 }
 
 // NewEntry return a new entry with time data and uuid set
-func NewEntry() Entry {
+func NewEntry(isKdbx4 bool) Entry {
 	e := Entry{}
-	e.Times = NewTimeData()
+	e.Times = NewTimeData(isKdbx4)
 	e.UUID = NewUUID()
 	return e
 }

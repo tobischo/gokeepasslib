@@ -20,14 +20,14 @@ type DBOptions struct {
 
 // NewDatabase creates a new database with some sensable default settings.
 // To create a database with no settings pre-set, use gokeepasslib.Database{}
-func NewDatabase() *Database {
+func NewDatabase(isKdbx4 bool) *Database {
 	header := NewHeader()
 	return &Database{
 		Options:     NewOptions(),
 		Credentials: new(DBCredentials),
 		Header:      header,
 		Hashes:      NewHashes(header),
-		Content:     NewContent(),
+		Content:     NewContent(isKdbx4),
 	}
 }
 

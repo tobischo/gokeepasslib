@@ -19,9 +19,9 @@ type TimeWrapper struct {
 const intLimit int64 = 9000000000
 
 // Now returns a TimeWrapper instance with the current time in UTC
-func Now() TimeWrapper {
+func Now(isKdbx4 bool) TimeWrapper {
 	return TimeWrapper{
-		Formatted: true,
+		Formatted: !isKdbx4,
 		Time:      time.Now().In(time.UTC),
 	}
 }

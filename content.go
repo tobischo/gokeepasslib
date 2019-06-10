@@ -35,11 +35,11 @@ type InnerHeader struct {
 }
 
 // NewContent creates a new database content with some good defaults
-func NewContent() *DBContent {
+func NewContent(isKdbx4 bool) *DBContent {
 	// Not necessary create InnerHeader because this will be a KDBX v3.1
 	return &DBContent{
-		Meta: NewMetaData(),
-		Root: NewRootData(),
+		Meta: NewMetaData(isKdbx4),
+		Root: NewRootData(isKdbx4),
 	}
 }
 
