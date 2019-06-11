@@ -5,6 +5,75 @@ import (
 	"time"
 )
 
+func TestNow(t *testing.T) {
+	cases := []struct {
+		title               string
+		options             []TimeOption
+		expectedTimeWrapper TimeWrapper
+	}{
+		{
+			title: "without options",
+			expectedTimeWrapper: TimeWrapper{
+				Formatted: true,
+				Time:      time.Now().In(time.UTC),
+			},
+		},
+		{
+			title:   "with formatting false",
+			options: []TimeOption{WithFormatted(false)},
+			expectedTimeWrapper: TimeWrapper{
+				Formatted: false,
+				Time:      time.Now().In(time.UTC),
+			},
+		},
+		{
+			title:   "with kdbx4 formatting",
+			options: []TimeOption{WithKDBX4Formatting},
+			expectedTimeWrapper: TimeWrapper{
+				Formatted: false,
+				Time:      time.Now().In(time.UTC),
+			},
+		},
+		{
+			title: "with time overwrite",
+			options: []TimeOption{
+				func(t *TimeWrapper) {
+					t.Time = time.Date(2015, 11, 12, 23, 34, 34, 0, time.UTC)
+				},
+			},
+			expectedTimeWrapper: TimeWrapper{
+				Formatted: true,
+				Time:      time.Date(2015, 11, 12, 23, 34, 34, 0, time.UTC),
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			timeWrapper := Now(c.options...)
+
+			if timeWrapper.Formatted != c.expectedTimeWrapper.Formatted {
+				t.Errorf(
+					"Received formatted %+v, expected %+v",
+					timeWrapper.Formatted,
+					c.expectedTimeWrapper.Formatted,
+				)
+			}
+
+			duration, _ := time.ParseDuration("100ms")
+
+			if timeWrapper.Time.Sub(c.expectedTimeWrapper.Time) > duration {
+				t.Errorf(
+					"Received time not within %+v: received %+v, expected %+v",
+					duration,
+					timeWrapper.Time,
+					c.expectedTimeWrapper.Time,
+				)
+			}
+		})
+	}
+}
+
 func TestTimeWrapperMarshalText(t *testing.T) {
 	cases := []struct {
 		title    string
