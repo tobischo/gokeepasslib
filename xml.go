@@ -9,6 +9,51 @@ import (
 	w "github.com/tobischo/gokeepasslib/v2/wrappers"
 )
 
+// ErrInvalidUUIDLength is an error which is returned during unmarshaling if the UUID does not have 16 bytes length
+var ErrInvalidUUIDLength = errors.New("gokeepasslib: length of decoded UUID was not 16")
+
+// UUID stores a universal identifier for each group+entry
+type UUID [16]byte
+
+// NewUUID returns a new randomly generated UUID
+func NewUUID() UUID {
+	var id UUID
+	rand.Read(id[:])
+	return id
+}
+
+// Compare allowes to check whether two instance of UUID are equal in value.
+// This is used for searching a uuid
+func (u UUID) Compare(c UUID) bool {
+	for i, v := range c {
+		if u[i] != v {
+			return false
+		}
+	}
+	return true
+}
+
+// MarshalText is a marshaler method to encode uuid content as base 64 and return it
+func (u UUID) MarshalText() ([]byte, error) {
+	text := make([]byte, 24)
+	base64.StdEncoding.Encode(text, u[:])
+	return text, nil
+}
+
+// UnmarshalText unmarshals a byte slice into a UUID by decoding the given data from base64
+func (u *UUID) UnmarshalText(text []byte) error {
+	id := make([]byte, base64.StdEncoding.DecodedLen(len(text)))
+	length, err := base64.StdEncoding.Decode(id, text)
+	if err != nil {
+		return err
+	}
+	if length != 16 {
+		return ErrInvalidUUIDLength
+	}
+	copy((*u)[:], id[:16])
+	return nil
+}
+
 // MetaData is the structure for the metadata headers at the top of kdbx files,
 // it contains things like the name of the database
 type MetaData struct {
@@ -48,41 +93,45 @@ type MemProtection struct {
 	ProtectNotes    w.BoolWrapper `xml:"ProtectNotes"`
 }
 
+type RootDataOption func(*RootData)
+
+func WithRootDataFormattedTime(formatted bool) RootDataOption {
+	return func(rd *RootData) {
+		for _, group := range rd.Groups {
+			WithGroupFormattedTime(formatted)(&group)
+		}
+	}
+}
+
 // RootData stores the actual content of a database (all enteries sorted into groups and the recycle bin)
 type RootData struct {
 	Groups         []Group             `xml:"Group"`
 	DeletedObjects []DeletedObjectData `xml:"DeletedObjects>DeletedObject"`
 }
 
-// Group is a structure to store entries in their named groups for organization
-type Group struct {
-	UUID                    UUID          `xml:"UUID"`
-	Name                    string        `xml:"Name"`
-	Notes                   string        `xml:"Notes"`
-	IconID                  int64         `xml:"IconID"`
-	Times                   TimeData      `xml:"Times"`
-	IsExpanded              w.BoolWrapper `xml:"IsExpanded"`
-	DefaultAutoTypeSequence string        `xml:"DefaultAutoTypeSequence"`
-	EnableAutoType          w.BoolWrapper `xml:"EnableAutoType"`
-	EnableSearching         w.BoolWrapper `xml:"EnableSearching"`
-	LastTopVisibleEntry     string        `xml:"LastTopVisibleEntry"`
-	Entries                 []Entry       `xml:"Entry,omitempty"`
-	Groups                  []Group       `xml:"Group,omitempty"`
+// NewRootData returns a RootData struct with good defaults
+func NewRootData(options ...RootDataOption) *RootData {
+	root := new(RootData)
+	group := NewGroup()
+	group.Name = "NewDatabase"
+	entry := NewEntry()
+	entry.Values = append(entry.Values, ValueData{Key: "Title", Value: V{Content: "Sample Entry"}})
+	group.Entries = append(group.Entries, entry)
+	root.Groups = append(root.Groups, group)
+
+	for _, option := range options {
+		option(root)
+	}
+
+	return root
 }
 
-// UUID stores a universal identifier for each group+entry
-type UUID [16]byte
+type EntryOption func(*Entry)
 
-// TimeData contains all metadata related to times for groups and entries
-// e.g. the last modification time or the creation time
-type TimeData struct {
-	CreationTime         *w.TimeWrapper `xml:"CreationTime"`
-	LastModificationTime *w.TimeWrapper `xml:"LastModificationTime"`
-	LastAccessTime       *w.TimeWrapper `xml:"LastAccessTime"`
-	ExpiryTime           *w.TimeWrapper `xml:"ExpiryTime"`
-	Expires              w.BoolWrapper  `xml:"Expires"`
-	UsageCount           int64          `xml:"UsageCount"`
-	LocationChanged      *w.TimeWrapper `xml:"LocationChanged"`
+func WithEntryFormattedTime(formatted bool) EntryOption {
+	return func(e *Entry) {
+		WithTimeDataFormattedTime(formatted)(&e.Times)
+	}
 }
 
 // Entry is the structure which holds information about a parsed entry in a keepass database
@@ -98,6 +147,63 @@ type Entry struct {
 	AutoType        AutoTypeData      `xml:"AutoType"`
 	Histories       []History         `xml:"History"`
 	Binaries        []BinaryReference `xml:"Binary,omitempty"`
+}
+
+// NewEntry return a new entry with time data and uuid set
+func NewEntry(options ...EntryOption) Entry {
+	entry := Entry{}
+	entry.Times = NewTimeData()
+	entry.UUID = NewUUID()
+
+	for _, option := range options {
+		option(&entry)
+	}
+
+	return entry
+}
+
+// Get returns the value in e corresponding with key k, or an empty string otherwise
+func (e *Entry) Get(key string) *ValueData {
+	for i := range e.Values {
+		if e.Values[i].Key == key {
+			return &e.Values[i]
+		}
+	}
+	return nil
+}
+
+// GetContent returns the content of the value belonging to the given key in string form
+func (e *Entry) GetContent(key string) string {
+	val := e.Get(key)
+	if val == nil {
+		return ""
+	}
+	return val.Value.Content
+}
+
+// GetIndex returns the index of the Value belonging to the given key, or -1 if none is found
+func (e *Entry) GetIndex(key string) int {
+	for i := range e.Values {
+		if e.Values[i].Key == key {
+			return i
+		}
+	}
+	return -1
+}
+
+// GetPassword returns the password of an entry
+func (e *Entry) GetPassword() string {
+	return e.GetContent("Password")
+}
+
+// GetPasswordIndex returns the index in the values slice belonging to the password
+func (e *Entry) GetPasswordIndex() int {
+	return e.GetIndex("Password")
+}
+
+// GetTitle returns the title of an entry
+func (e *Entry) GetTitle() string {
+	return e.GetContent("Title")
 }
 
 // History stores information about changes made to an entry,
@@ -173,40 +279,6 @@ func NewMetaData(options ...MetaDataOption) *MetaData {
 	return md
 }
 
-type RootDataOption func(*RootData)
-
-func WithRootDataFormattedTime(formatted bool) RootDataOption {
-	return func(rd *RootData) {
-		for _, group := range rd.Groups {
-			WithGroupFormattedTime(formatted)(&group)
-		}
-	}
-}
-
-// NewRootData returns a RootData struct with good defaults
-func NewRootData(options ...RootDataOption) *RootData {
-	root := new(RootData)
-	group := NewGroup()
-	group.Name = "NewDatabase"
-	entry := NewEntry()
-	entry.Values = append(entry.Values, ValueData{Key: "Title", Value: V{Content: "Sample Entry"}})
-	group.Entries = append(group.Entries, entry)
-	root.Groups = append(root.Groups, group)
-
-	for _, option := range options {
-		option(root)
-	}
-
-	return root
-}
-
-// NewUUID returns a new randomly generated UUID
-func NewUUID() UUID {
-	var id UUID
-	rand.Read(id[:])
-	return id
-}
-
 type GroupOption func(*Group)
 
 func WithGroupFormattedTime(formatted bool) GroupOption {
@@ -221,6 +293,22 @@ func WithGroupFormattedTime(formatted bool) GroupOption {
 			WithEntryFormattedTime(formatted)(&entry)
 		}
 	}
+}
+
+// Group is a structure to store entries in their named groups for organization
+type Group struct {
+	UUID                    UUID          `xml:"UUID"`
+	Name                    string        `xml:"Name"`
+	Notes                   string        `xml:"Notes"`
+	IconID                  int64         `xml:"IconID"`
+	Times                   TimeData      `xml:"Times"`
+	IsExpanded              w.BoolWrapper `xml:"IsExpanded"`
+	DefaultAutoTypeSequence string        `xml:"DefaultAutoTypeSequence"`
+	EnableAutoType          w.BoolWrapper `xml:"EnableAutoType"`
+	EnableSearching         w.BoolWrapper `xml:"EnableSearching"`
+	LastTopVisibleEntry     string        `xml:"LastTopVisibleEntry"`
+	Entries                 []Entry       `xml:"Entry,omitempty"`
+	Groups                  []Group       `xml:"Group,omitempty"`
 }
 
 // NewGroup returns a new group with time data and uuid set
@@ -250,6 +338,18 @@ func WithTimeDataFormattedTime(formatted bool) TimeDataOption {
 	}
 }
 
+// TimeData contains all metadata related to times for groups and entries
+// e.g. the last modification time or the creation time
+type TimeData struct {
+	CreationTime         *w.TimeWrapper `xml:"CreationTime"`
+	LastModificationTime *w.TimeWrapper `xml:"LastModificationTime"`
+	LastAccessTime       *w.TimeWrapper `xml:"LastAccessTime"`
+	ExpiryTime           *w.TimeWrapper `xml:"ExpiryTime"`
+	Expires              w.BoolWrapper  `xml:"Expires"`
+	UsageCount           int64          `xml:"UsageCount"`
+	LocationChanged      *w.TimeWrapper `xml:"LocationChanged"`
+}
+
 // NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)
 func NewTimeData(options ...TimeDataOption) TimeData {
 	now := w.Now()
@@ -268,103 +368,3 @@ func NewTimeData(options ...TimeDataOption) TimeData {
 
 	return td
 }
-
-type EntryOption func(*Entry)
-
-func WithEntryFormattedTime(formatted bool) EntryOption {
-	return func(e *Entry) {
-		WithTimeDataFormattedTime(formatted)(&e.Times)
-	}
-}
-
-// NewEntry return a new entry with time data and uuid set
-func NewEntry(options ...EntryOption) Entry {
-	entry := Entry{}
-	entry.Times = NewTimeData()
-	entry.UUID = NewUUID()
-
-	for _, option := range options {
-		option(&entry)
-	}
-
-	return entry
-}
-
-// MarshalText is a marshaler method to encode uuid content as base 64 and return it
-func (u UUID) MarshalText() ([]byte, error) {
-	text := make([]byte, 24)
-	base64.StdEncoding.Encode(text, u[:])
-	return text, nil
-}
-
-// UnmarshalText unmarshals a byte slice into a UUID by decoding the given data from base64
-func (u *UUID) UnmarshalText(text []byte) error {
-	id := make([]byte, base64.StdEncoding.DecodedLen(len(text)))
-	length, err := base64.StdEncoding.Decode(id, text)
-	if err != nil {
-		return err
-	}
-	if length != 16 {
-		return ErrInvalidUUIDLength
-	}
-	copy((*u)[:], id[:16])
-	return nil
-}
-
-// Compare allowes to check whether two instance of UUID are equal in value.
-// This is used for searching a uuid
-func (u UUID) Compare(c UUID) bool {
-	for i, v := range c {
-		if u[i] != v {
-			return false
-		}
-	}
-	return true
-}
-
-// Get returns the value in e corresponding with key k, or an empty string otherwise
-func (e *Entry) Get(key string) *ValueData {
-	for i := range e.Values {
-		if e.Values[i].Key == key {
-			return &e.Values[i]
-		}
-	}
-	return nil
-}
-
-// GetContent returns the content of the value belonging to the given key in string form
-func (e *Entry) GetContent(key string) string {
-	val := e.Get(key)
-	if val == nil {
-		return ""
-	}
-	return val.Value.Content
-}
-
-// GetIndex returns the index of the Value belonging to the given key, or -1 if none is found
-func (e *Entry) GetIndex(key string) int {
-	for i := range e.Values {
-		if e.Values[i].Key == key {
-			return i
-		}
-	}
-	return -1
-}
-
-// GetPassword returns the password of an entry
-func (e *Entry) GetPassword() string {
-	return e.GetContent("Password")
-}
-
-// GetPasswordIndex returns the index in the values slice belonging to the password
-func (e *Entry) GetPasswordIndex() int {
-	return e.GetIndex("Password")
-}
-
-// GetTitle returns the title of an entry
-func (e *Entry) GetTitle() string {
-	return e.GetContent("Title")
-}
-
-// ErrInvalidUUIDLength is an error which is returned during unmarshaling if the UUID does not have 16 bytes length
-var ErrInvalidUUIDLength = errors.New("gokeepasslib: length of decoded UUID was not 16")

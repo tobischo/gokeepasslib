@@ -1,54 +1,51 @@
 package gokeepasslib
 
 import (
+	"bytes"
 	"encoding/xml"
 	"reflect"
 	"testing"
-	"time"
 )
 
-func TestNewTimeData(t *testing.T) {
-	timeData := NewTimeData()
-	if time.Since(timeData.CreationTime.Time) > time.Second {
-		t.Error("CreationTime not properly initialized: should be time.Now()")
-	}
-	if time.Since(timeData.LastModificationTime.Time) > time.Second {
-		t.Error("LastModificationTime not properly initialized: should be time.Now()")
-	}
-	if time.Since(timeData.LastAccessTime.Time) > time.Second {
-		t.Error("LastAccessTime not properly initialized: should be time.Now()")
-	}
-	if timeData.ExpiryTime != nil {
-		t.Error("ExpiryTime not properly initialized: should be nil")
-	}
-	if time.Since(timeData.LocationChanged.Time) > time.Second {
-		t.Error("LocationChanged not properly initialized: should be time.Now()")
-	}
-}
-
-func TestUUID(t *testing.T) {
-	one := UUID{}
-	err := one.UnmarshalText([]byte("rGnBe1gIikK89aZD6n/plA=="))
-	if err != nil {
-		t.Fatalf("Error unmarshaling uuid: %s", err.Error())
-	}
-	mar, err := one.MarshalText()
-	if err != nil {
-		t.Fatalf("Error marshaling uuid")
-	}
-	if string(mar) != "rGnBe1gIikK89aZD6n/plA==" {
-		t.Fatalf("UUID marshaled incorrectly. Expececting %s, got %s", "rGnBe1gIikK89aZD6n/plA==", mar)
+func TestNewContent(t *testing.T) {
+	cases := []struct {
+		title             string
+		options           []DBContentOption
+		expectedDBContent *DBContent
+	}{
+		{
+			title: "without options",
+			expectedDBContent: &DBContent{
+				Meta: NewMetaData(),
+				Root: NewRootData(),
+			},
+		},
+		{
+			title: "with multiple options",
+			options: []DBContentOption{
+				WithDBContentFormattedTime(false),
+				func(c *DBContent) {
+					c.RawData = []byte("hello world")
+				},
+			},
+			expectedDBContent: &DBContent{
+				RawData: []byte("hello world"),
+			},
+		},
 	}
 
-	two := one
-	if !two.Compare(one) {
-		t.Fatalf("One and Two UUIDs should be equal, are not")
-	}
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			content := NewContent(c.options...)
 
-	three := UUID{}
-	err = three.UnmarshalText([]byte("rGnBe1gIikK89aZD6n/plABBBB=="))
-	if err != ErrInvalidUUIDLength {
-		t.Fatalf("Expected invalid uuid error, got: %s", err)
+			if !bytes.Equal(content.RawData, c.expectedDBContent.RawData) {
+				t.Errorf(
+					"Did not receive expected content %+v, received %+v",
+					content.RawData,
+					c.expectedDBContent.RawData,
+				)
+			}
+		})
 	}
 }
 
