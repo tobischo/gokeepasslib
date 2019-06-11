@@ -1,3 +1,7 @@
+### v2.1.0
+
+* Add functional option support for all kinds of initializers
+
 ### v2.0.3
 
 * Add KDBX4 HMAC verification on file decoding
