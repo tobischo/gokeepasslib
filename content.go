@@ -18,6 +18,13 @@ const (
 	InnerHeaderBinary     byte = 0x03 // Inner header binary byte
 )
 
+// InnerHeader is the container of crypt options and binaries, only for Kdbx v4
+type InnerHeader struct {
+	InnerRandomStreamID  uint32
+	InnerRandomStreamKey []byte
+	Binaries             Binaries
+}
+
 // DBContent is a container for all elements of a keepass database
 type DBContent struct {
 	RawData     []byte       `xml:"-"` // XML encoded original data
@@ -25,13 +32,6 @@ type DBContent struct {
 	XMLName     xml.Name     `xml:"KeePassFile"`
 	Meta        *MetaData    `xml:"Meta"`
 	Root        *RootData    `xml:"Root"`
-}
-
-// InnerHeader is the container of crypt options and binaries, only for Kdbx v4
-type InnerHeader struct {
-	InnerRandomStreamID  uint32
-	InnerRandomStreamKey []byte
-	Binaries             Binaries
 }
 
 type DBContentOption func(*DBContent)
