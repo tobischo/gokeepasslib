@@ -134,18 +134,26 @@ func NewPasswordCredentials(password string) *DBCredentials {
 
 // ParseKeyFile returns the hashed key from a key file at the path specified by location, parsing xml if needed
 func ParseKeyFile(location string) ([]byte, error) {
-	r, err := regexp.Compile(`<Data>(.+)</Data>`)
-	if err != nil {
-		return nil, err
-	}
 	file, err := os.Open(location)
 	if err != nil {
 		return nil, err
 	}
+
 	var data []byte
 	if data, err = ioutil.ReadAll(file); err != nil {
 		return nil, err
 	}
+
+	return ParseKeyData(data)
+}
+
+// ParseKeyData returns the hashed key from a key file in bytes, parsing xml if needed
+func ParseKeyData(data []byte) ([]byte, error) {
+	r, err := regexp.Compile(`<Data>(.+)</Data>`)
+	if err != nil {
+		return nil, err
+	}
+
 	if r.Match(data) { //If keyfile is in xml form, extract key data
 		base := r.FindSubmatch(data)[1]
 		data = make([]byte, base64.StdEncoding.DecodedLen(len(base)))
@@ -153,6 +161,11 @@ func ParseKeyFile(location string) ([]byte, error) {
 			return nil, err
 		}
 	}
+
+	if len(data) < 32 {
+		return data, nil
+	}
+
 	// Slice necessary due to padding at the end of the hash
 	return data[:32], nil
 }
@@ -167,9 +180,34 @@ func NewKeyCredentials(location string) (*DBCredentials, error) {
 	return &DBCredentials{Key: key}, nil
 }
 
+// NewKeyDataCredentials builds a new DBCredentials from a key file in bytes
+func NewKeyDataCredentials(data []byte) (*DBCredentials, error) {
+	key, err := ParseKeyData(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DBCredentials{Key: key}, nil
+}
+
 // NewPasswordAndKeyCredentials builds a new DBCredentials from a password and the key file at the path specified by location
 func NewPasswordAndKeyCredentials(password, location string) (*DBCredentials, error) {
 	key, err := ParseKeyFile(location)
+	if err != nil {
+		return nil, err
+	}
+
+	hashedpw := sha256.Sum256([]byte(password))
+
+	return &DBCredentials{
+		Passphrase: hashedpw[:],
+		Key:        key,
+	}, nil
+}
+
+// NewPasswordAndKeyDataCredentials builds a new DBCredentials from a password and the key file in bytes
+func NewPasswordAndKeyDataCredentials(password string, data []byte) (*DBCredentials, error) {
+	key, err := ParseKeyData(data)
 	if err != nil {
 		return nil, err
 	}
