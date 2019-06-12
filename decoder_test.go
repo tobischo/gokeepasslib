@@ -1,6 +1,7 @@
 package gokeepasslib
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -29,6 +30,22 @@ func TestDecodeFile(t *testing.T) {
 			},
 		},
 		{
+			title:      "Database Format v3.1, password+keydata credentials",
+			dbFilePath: "tests/kdbx3/example-key.kdbx",
+			newCredentials: func() (*DBCredentials, error) {
+				file, err := os.Open("tests/kdbx3/example-key.key")
+				var keyData []byte
+				if keyData, err = ioutil.ReadAll(file); err != nil {
+					return nil, nil
+				}
+
+				return NewPasswordAndKeyDataCredentials(
+					"abcdefg12345678",
+					keyData,
+				)
+			},
+		},
+		{
 			title:      "Database Format v4, password credentials",
 			dbFilePath: "tests/kdbx4/example.kdbx",
 			newCredentials: func() (*DBCredentials, error) {
@@ -42,6 +59,22 @@ func TestDecodeFile(t *testing.T) {
 				return NewPasswordAndKeyCredentials(
 					"abcdefg12345678",
 					"tests/kdbx4/example-key.key",
+				)
+			},
+		},
+		{
+			title:      "Database Format v4, password+keydata credentials",
+			dbFilePath: "tests/kdbx4/example-key.kdbx",
+			newCredentials: func() (*DBCredentials, error) {
+				file, err := os.Open("tests/kdbx4/example-key.key")
+				var keyData []byte
+				if keyData, err = ioutil.ReadAll(file); err != nil {
+					return nil, nil
+				}
+
+				return NewPasswordAndKeyDataCredentials(
+					"abcdefg12345678",
+					keyData,
 				)
 			},
 		},
