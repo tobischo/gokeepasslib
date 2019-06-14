@@ -1,3 +1,7 @@
+### v2.1.1
+
+* Add `ParseKeyData` to allow loading keys without file operation
+
 ### v2.1.0
 
 * Add functional option support for all kinds of initializers
