@@ -147,15 +147,12 @@ func ParseKeyFile(location string) ([]byte, error) {
 	return ParseKeyData(data)
 }
 
+var keyDataPattern = regexp.MustCompile(`<Data>(.+)</Data>`)
+
 // ParseKeyData returns the hashed key from a key file in bytes, parsing xml if needed
 func ParseKeyData(data []byte) ([]byte, error) {
-	r, err := regexp.Compile(`<Data>(.+)</Data>`)
-	if err != nil {
-		return nil, err
-	}
-
-	if r.Match(data) { //If keyfile is in xml form, extract key data
-		base := r.FindSubmatch(data)[1]
+	if keyDataPattern.Match(data) { //If keyfile is in xml form, extract key data
+		base := keyDataPattern.FindSubmatch(data)[1]
 		data = make([]byte, base64.StdEncoding.DecodedLen(len(base)))
 		if _, err := base64.StdEncoding.Decode(data, base); err != nil {
 			return nil, err
