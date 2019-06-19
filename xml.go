@@ -6,7 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 
-	w "github.com/tobischo/gokeepasslib/v2/wrappers"
+	w "github.com/tobischo/gokeepasslib/wrappers"
 )
 
 // ErrInvalidUUIDLength is an error which is returned during unmarshaling if the UUID does not have 16 bytes length
