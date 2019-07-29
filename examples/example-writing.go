@@ -4,7 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/tobischo/gokeepasslib/v2"
+	"github.com/tobischo/gokeepasslib/v3"
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 func mkValue(key string, value string) gokeepasslib.ValueData {
@@ -12,7 +13,10 @@ func mkValue(key string, value string) gokeepasslib.ValueData {
 }
 
 func mkProtectedValue(key string, value string) gokeepasslib.ValueData {
-	return gokeepasslib.ValueData{Key: key, Value: gokeepasslib.V{Content: value, Protected: true}}
+	return gokeepasslib.ValueData{
+		Key:   key,
+		Value: gokeepasslib.V{Content: value, Protected: w.NewBoolWrapper(true)},
+	}
 }
 
 func main() {

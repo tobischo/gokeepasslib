@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/tobischo/gokeepasslib/v2"
+	"github.com/tobischo/gokeepasslib/v3"
 )
 
 func main() {

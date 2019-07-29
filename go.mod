@@ -1,4 +1,4 @@
-module github.com/tobischo/gokeepasslib/v2
+module github.com/tobischo/gokeepasslib/v3
 
 require (
 	github.com/aead/argon2 v0.0.0-20180111183520-a87724528b07

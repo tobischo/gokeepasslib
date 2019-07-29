@@ -6,7 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 
-	w "github.com/tobischo/gokeepasslib/v2/wrappers"
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 // ErrInvalidUUIDLength is an error which is returned during unmarshaling if the UUID does not have 16 bytes length
@@ -314,8 +314,8 @@ type Group struct {
 // NewGroup returns a new group with time data and uuid set
 func NewGroup(options ...GroupOption) Group {
 	group := Group{
-		EnableAutoType:  w.BoolWrapper(true),
-		EnableSearching: w.BoolWrapper(true),
+		EnableAutoType:  w.NewBoolWrapper(true),
+		EnableSearching: w.NewBoolWrapper(true),
 		Times:           NewTimeData(),
 		UUID:            NewUUID(),
 	}
@@ -335,6 +335,7 @@ func WithTimeDataFormattedTime(formatted bool) TimeDataOption {
 		td.LastModificationTime.Formatted = formatted
 		td.LastAccessTime.Formatted = formatted
 		td.LocationChanged.Formatted = formatted
+		td.Expires = w.NewBoolWrapper(false)
 	}
 }
 
@@ -358,7 +359,7 @@ func NewTimeData(options ...TimeDataOption) TimeData {
 		LastModificationTime: &now,
 		LastAccessTime:       &now,
 		LocationChanged:      &now,
-		Expires:              false,
+		Expires:              w.NewBoolWrapper(false),
 		UsageCount:           0,
 	}
 
