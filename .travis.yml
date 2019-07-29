@@ -6,7 +6,7 @@ before_script: go get
 
 script: go test
 
-go_import_path: github.com/tobischo/gokeepasslib/v2
+go_import_path: github.com/tobischo/gokeepasslib/v3
 go:
   - 1.10.8
   - 1.11.10
