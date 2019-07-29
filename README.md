@@ -17,7 +17,7 @@ go get -u github.com/tobischo/gokeepasslib
 
 Include it in an application (modulized):
 ```
-import "github.com/tobischo/gokeepasslib/v2"
+import "github.com/tobischo/gokeepasslib/v3"
 ```
 
 For non-modulized applications use:
@@ -33,7 +33,7 @@ package main
 
 import (
     "fmt"
-    "github.com/tobischo/gokeepasslib/v2"
+    "github.com/tobischo/gokeepasslib/v3"
     "os"
 )
 

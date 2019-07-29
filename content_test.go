@@ -5,6 +5,8 @@ import (
 	"encoding/xml"
 	"reflect"
 	"testing"
+
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 func TestNewContent(t *testing.T) {
@@ -58,7 +60,7 @@ func TestVUnmarshal(t *testing.T) {
 	expectedV := &V{
 		Content: `<some content & to be decoded " >
 	`,
-		Protected: true,
+		Protected: w.NewBoolWrapper(true),
 	}
 
 	err := xml.Unmarshal(data, v)
@@ -79,7 +81,7 @@ func TestVMarshal(t *testing.T) {
 	v := &V{
 		Content: `<some content & to be encoded " >
 	`,
-		Protected: true,
+		Protected: w.NewBoolWrapper(true),
 	}
 
 	expectedData := []byte(`<V Protected="True">` +

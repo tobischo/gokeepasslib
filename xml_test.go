@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tobischo/gokeepasslib/v2/wrappers"
+	"github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 func TestUUID(t *testing.T) {
@@ -241,6 +241,10 @@ func TestNewTimeData(t *testing.T) {
 				LocationChanged: &wrappers.TimeWrapper{
 					Formatted: true,
 				},
+				Expires: wrappers.BoolWrapper{
+					Bool:  false,
+					Valid: true,
+				},
 			},
 		},
 		{
@@ -263,6 +267,10 @@ func TestNewTimeData(t *testing.T) {
 				},
 				LocationChanged: &wrappers.TimeWrapper{
 					Formatted: false,
+				},
+				Expires: wrappers.BoolWrapper{
+					Bool:  false,
+					Valid: true,
 				},
 				UsageCount: 10,
 			},

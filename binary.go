@@ -8,7 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/tobischo/gokeepasslib/v2/wrappers"
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 // Binaries Stores a slice of binaries in the metadata header of a database
@@ -18,10 +18,10 @@ type Binaries []Binary
 
 // Binary stores a binary found in the metadata header of a database
 type Binary struct {
-	ID               int                  `xml:"ID,attr"`         // Index of binary (Manually counted on KDBX v4)
-	MemoryProtection byte                 `xml:"-"`               // Memory protection flag (Only KDBX v4)
-	Content          []byte               `xml:",innerxml"`       // Binary content
-	Compressed       wrappers.BoolWrapper `xml:"Compressed,attr"` // Compressed flag (Only KDBX v3.1)
+	ID               int           `xml:"ID,attr"`         // Index of binary (Manually counted on KDBX v4)
+	MemoryProtection byte          `xml:"-"`               // Memory protection flag (Only KDBX v4)
+	Content          []byte        `xml:",innerxml"`       // Binary content
+	Compressed       w.BoolWrapper `xml:"Compressed,attr"` // Compressed flag (Only KDBX v3.1)
 }
 
 // BinaryReference stores a reference to a binary which appears in the xml of an entry
@@ -53,7 +53,7 @@ func (br *BinaryReference) Find(db *Database) *Binary {
 // Add appends binary data to the slice
 func (bs *Binaries) Add(c []byte) *Binary {
 	binary := Binary{
-		Compressed: wrappers.BoolWrapper(true),
+		Compressed: w.NewBoolWrapper(true),
 	}
 	if len(*bs) == 0 {
 		binary.ID = 0
@@ -75,7 +75,7 @@ func (b Binary) GetContent() (string, error) {
 		decoded = b.Content[:]
 	}
 
-	if b.Compressed {
+	if b.Compressed.Bool {
 		reader, err := gzip.NewReader(bytes.NewReader(decoded))
 		if err != nil {
 			return "", err
@@ -94,7 +94,7 @@ func (b Binary) GetContent() (string, error) {
 func (b *Binary) SetContent(c []byte) error {
 	buff := &bytes.Buffer{}
 	writer := base64.NewEncoder(base64.StdEncoding, buff)
-	if b.Compressed {
+	if b.Compressed.Bool {
 		writer = gzip.NewWriter(writer)
 	}
 	_, err := writer.Write(c)
@@ -123,7 +123,7 @@ func NewBinaryReference(name string, id int) BinaryReference {
 
 func (b Binary) String() string {
 	return fmt.Sprintf(
-		"ID: %d, MemoryProtection: %x, Compressed:%t, Content:%x",
+		"ID: %d, MemoryProtection: %x, Compressed:%#v, Content:%x",
 		b.ID,
 		b.MemoryProtection,
 		b.Compressed,
