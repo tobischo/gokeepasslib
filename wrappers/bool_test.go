@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestBoolWrapperUnmarshal(t *testing.T) {
+func TestBoolWrapperUnmarshalXML(t *testing.T) {
 	cases := []struct {
 		title    string
 		value    string
@@ -42,10 +42,10 @@ func TestBoolWrapperUnmarshal(t *testing.T) {
 			expErr:   nil,
 		},
 		{
-			title:    "neither true nor false defaults to false",
-			value:    `<Wrap><Val>neither</Val></Wrap>`,
+			title:    "null value",
+			value:    `<Wrap><Val>null</Val></Wrap>`,
 			expValue: false,
-			expValid: true,
+			expValid: false,
 			expErr:   nil,
 		},
 		{
@@ -78,7 +78,7 @@ func TestBoolWrapperUnmarshal(t *testing.T) {
 	}
 }
 
-func TestBoolWrapperUnmarshalAttr(t *testing.T) {
+func TestBoolWrapperUnmarshalXMLAttr(t *testing.T) {
 	cases := []struct {
 		title    string
 		value    string
@@ -115,10 +115,10 @@ func TestBoolWrapperUnmarshalAttr(t *testing.T) {
 			expErr:   nil,
 		},
 		{
-			title:    "neither true nor false defaults to false",
-			value:    `<Wrap><Val v="neither"></Val></Wrap>`,
+			title:    "null value",
+			value:    `<Wrap><Val v="null"></Val></Wrap>`,
 			expValue: false,
-			expValid: true,
+			expValid: false,
 			expErr:   nil,
 		},
 		{
