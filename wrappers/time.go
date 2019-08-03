@@ -58,9 +58,9 @@ func (tw TimeWrapper) MarshalText() ([]byte, error) {
 		b := make([]byte, 0, len(time.RFC3339))
 		ret = t.AppendFormat(b, time.RFC3339)
 	} else {
-		// Kdbx v4 - Count since year 0
-		total := uint64(0)
-		zero := time.Date(0, 1, 0, 0, 0, 0, 0, time.UTC)
+		// Kdbx v4 - Count since year 1
+		total := uint64(t.Second()) // ensure that the seconds are not removed
+		zero := time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
 		temp := t
 		for {
 			diff := temp.Sub(zero)
@@ -100,7 +100,7 @@ func (tw *TimeWrapper) UnmarshalText(data []byte) error {
 		}
 
 		// Count since year 0
-		t = time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC)
+		t = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
 		for {
 			if buf < intLimit {
 				t = t.Add(time.Duration(buf) * time.Second)
