@@ -123,7 +123,16 @@ func TestTimeWrapperMarshalText(t *testing.T) {
 				return ref
 			},
 			formatted: false,
-			expValue:  "DiLX1A4AAAA=",
+			expValue:  "FCLX1A4AAAA=",
+		},
+		{
+			title: "kdbx4 timestamp 3",
+			valueFn: func() time.Time {
+				ref, _ := time.Parse(time.RFC3339, "2019-08-03T06:34:25Z")
+				return ref
+			},
+			formatted: false,
+			expValue:  "8SHX1A4AAAA=",
 		},
 	}
 
@@ -169,9 +178,19 @@ func TestTimeWrapperUnmarshalText(t *testing.T) {
 			expValue: time.Date(2018, time.June, 10, 4, 20, 23, 0, time.UTC),
 		},
 		{
-			title:    "kdbx4 timestamp",
+			title:    "kdbx4 timestamp 1",
 			value:    "GiLX1A4AAAA=",
 			expValue: time.Date(2019, time.August, 3, 6, 35, 6, 0, time.UTC),
+		},
+		{
+			title:    "kdbx4 timestamp 2",
+			value:    "FCLX1A4AAAA=",
+			expValue: time.Date(2019, time.August, 3, 6, 35, 0, 0, time.UTC),
+		},
+		{
+			title:    "kdbx4 timestamp 3",
+			value:    "8SHX1A4AAAA=",
+			expValue: time.Date(2019, time.August, 3, 6, 34, 25, 0, time.UTC),
 		},
 	}
 
