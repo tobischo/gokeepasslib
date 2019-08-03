@@ -1,3 +1,16 @@
+### v3.0.0
+
+* Fix `BoolWrapper` to support null values
+    - This introduced a breaking change
+
+### v2.1.3
+
+* Fix `TimeWrapper` marshalling and unmarshalling
+
+### v2.1.2
+
+* Attempt to fix `TimeWrapper`
+
 ### v2.1.1
 
 * Add `ParseKeyData` to allow loading keys without file operation
