@@ -76,24 +76,27 @@ func TestNow(t *testing.T) {
 
 func TestTimeWrapperMarshalText(t *testing.T) {
 	cases := []struct {
-		title    string
-		valueFn  func() time.Time
-		expValue string
-		expErr   error
+		title     string
+		valueFn   func() time.Time
+		formatted bool
+		expValue  string
+		expErr    error
 	}{
 		{
 			title: "negative year",
 			valueFn: func() time.Time {
 				return time.Date(-1, time.June, 10, 6, 34, 12, 123123, time.UTC)
 			},
-			expErr: ErrYearOutsideOfRange,
+			formatted: true,
+			expErr:    ErrYearOutsideOfRange,
 		},
 		{
 			title: "year above 10000",
 			valueFn: func() time.Time {
 				return time.Date(10001, time.June, 10, 6, 34, 12, 123123, time.UTC)
 			},
-			expErr: ErrYearOutsideOfRange,
+			formatted: true,
+			expErr:    ErrYearOutsideOfRange,
 		},
 		{
 			title: "realistic year (2018)",
@@ -101,7 +104,26 @@ func TestTimeWrapperMarshalText(t *testing.T) {
 				ref, _ := time.Parse(time.RFC3339, "2018-06-10T06:20:23+02:00")
 				return ref
 			},
-			expValue: "2018-06-10T04:20:23Z",
+			formatted: true,
+			expValue:  "2018-06-10T04:20:23Z",
+		},
+		{
+			title: "kdbx4 timestamp 1",
+			valueFn: func() time.Time {
+				ref, _ := time.Parse(time.RFC3339, "2019-08-03T08:35:06+02:00")
+				return ref
+			},
+			formatted: false,
+			expValue:  "GiLX1A4AAAA=",
+		},
+		{
+			title: "kdbx4 timestamp 2",
+			valueFn: func() time.Time {
+				ref, _ := time.Parse(time.RFC3339, "2019-08-03T08:35:00+02:00")
+				return ref
+			},
+			formatted: false,
+			expValue:  "DiLX1A4AAAA=",
 		},
 	}
 
@@ -110,7 +132,7 @@ func TestTimeWrapperMarshalText(t *testing.T) {
 			value := c.valueFn()
 
 			timeWrap := TimeWrapper{
-				Formatted: true,
+				Formatted: c.formatted,
 				Time:      value,
 			}
 			data, err := timeWrap.MarshalText()
@@ -145,6 +167,11 @@ func TestTimeWrapperUnmarshalText(t *testing.T) {
 			title:    "UTC RFC3339 compatible value",
 			value:    "2018-06-10T04:20:23Z",
 			expValue: time.Date(2018, time.June, 10, 4, 20, 23, 0, time.UTC),
+		},
+		{
+			title:    "kdbx4 timestamp",
+			value:    "GiLX1A4AAAA=",
+			expValue: time.Date(2019, time.August, 3, 6, 35, 6, 0, time.UTC),
 		},
 	}
 
