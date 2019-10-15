@@ -2,7 +2,6 @@ package gokeepasslib
 
 import (
 	"crypto/aes"
-	"crypto/cipher"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
@@ -113,16 +112,17 @@ func cryptAESKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
 		return nil, err
 	}
 
-	// http://crypto.stackexchange.com/questions/21048/
+	newKey := make([]byte, len(masterKey))
+	destKey := make([]byte, len(masterKey))
+	copy(newKey, masterKey)
+
 	for i := uint64(0); i < rounds; i++ {
-		result := make([]byte, 16)
-		crypter := cipher.NewCBCEncrypter(block, result)
-		crypter.CryptBlocks(masterKey[:16], masterKey[:16])
-		crypter = cipher.NewCBCEncrypter(block, result)
-		crypter.CryptBlocks(masterKey[16:], masterKey[16:])
+		block.Encrypt(destKey, newKey)
+		block.Encrypt(destKey[16:], newKey[16:])
+		copy(newKey, destKey)
 	}
 
-	hash := sha256.Sum256(masterKey)
+	hash := sha256.Sum256(newKey)
 	return hash[:], nil
 }
 
