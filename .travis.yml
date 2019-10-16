@@ -8,7 +8,7 @@ script: go test
 
 go_import_path: github.com/tobischo/gokeepasslib/v3
 go:
-  - 1.10.8
-  - 1.11.10
-  - 1.12.5
+  - 1.11.13
+  - 1.12.10
+  - 1.13.1
   - tip
