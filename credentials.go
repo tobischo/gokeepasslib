@@ -113,13 +113,11 @@ func cryptAESKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
 	}
 
 	newKey := make([]byte, len(masterKey))
-	destKey := make([]byte, len(masterKey))
 	copy(newKey, masterKey)
 
 	for i := uint64(0); i < rounds; i++ {
-		block.Encrypt(destKey, newKey)
-		block.Encrypt(destKey[16:], newKey[16:])
-		copy(newKey, destKey)
+		block.Encrypt(newKey, newKey)
+		block.Encrypt(newKey[16:], newKey[16:])
 	}
 
 	hash := sha256.Sum256(newKey)
