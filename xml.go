@@ -54,6 +54,33 @@ func (u *UUID) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// IconData stores custom icon content
+type IconData []byte
+
+// MarshalText is a marshaler method to encode icon data as base 64 and return it
+func (icon IconData) MarshalText() ([]byte, error) {
+	if len(icon) == 0 {
+		return make([]byte, 0), nil
+	}
+
+	text := make([]byte, base64.StdEncoding.EncodedLen(len(icon)))
+	base64.StdEncoding.Encode(text, icon[:])
+	return text, nil
+}
+
+// UnmarshalText unmarshals a byte slice into a icon data by decoding the given from base64
+func (icon *IconData) UnmarshalText(text []byte) error {
+	data := make([]byte, base64.StdEncoding.DecodedLen(len(text)))
+	_, err := base64.StdEncoding.Decode(data, text)
+
+	if err != nil {
+		return err
+	}
+
+	*icon = append(data[:0:0], data...)
+	return nil
+}
+
 // MetaData is the structure for the metadata headers at the top of kdbx files,
 // it contains things like the name of the database
 type MetaData struct {
@@ -71,6 +98,7 @@ type MetaData struct {
 	MasterKeyChangeRec         int64          `xml:"MasterKeyChangeRec"`
 	MasterKeyChangeForce       int64          `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection  `xml:"MemoryProtection"`
+	CustomIcons                []CustomIcon   `xml:"CustomIcons>Icon"`
 	RecycleBinEnabled          w.BoolWrapper  `xml:"RecycleBinEnabled"`
 	RecycleBinUUID             UUID           `xml:"RecycleBinUUID"`
 	RecycleBinChanged          *w.TimeWrapper `xml:"RecycleBinChanged"`
@@ -138,6 +166,7 @@ func WithEntryFormattedTime(formatted bool) EntryOption {
 type Entry struct {
 	UUID            UUID              `xml:"UUID"`
 	IconID          int64             `xml:"IconID"`
+	CustomIconUUID  UUID              `xml:"CustomIconUUID"`
 	ForegroundColor string            `xml:"ForegroundColor"`
 	BackgroundColor string            `xml:"BackgroundColor"`
 	OverrideURL     string            `xml:"OverrideURL"`
@@ -251,6 +280,13 @@ type CustomData struct {
 	Value   string   `xml:"Value"`
 }
 
+// CustomIcon is the structure for custom user icons
+type CustomIcon struct {
+	XMLName xml.Name `xml:"Icon"`
+	UUID    UUID     `xml:"UUID"`
+	Data    IconData `xml:"Data"`
+}
+
 type MetaDataOption func(*MetaData)
 
 func WithMetaDataFormattedTime(formatted bool) MetaDataOption {
@@ -301,6 +337,7 @@ type Group struct {
 	Name                    string        `xml:"Name"`
 	Notes                   string        `xml:"Notes"`
 	IconID                  int64         `xml:"IconID"`
+	CustomIconUUID          UUID          `xml:"CustomIconUUID"`
 	Times                   TimeData      `xml:"Times"`
 	IsExpanded              w.BoolWrapper `xml:"IsExpanded"`
 	DefaultAutoTypeSequence string        `xml:"DefaultAutoTypeSequence"`
