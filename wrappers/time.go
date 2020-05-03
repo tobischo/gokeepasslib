@@ -16,6 +16,10 @@ type TimeWrapper struct {
 }
 
 // Limit of int64 for time.Add
+// time.Duration allows for a maximum of ~290 years to be covered with 1 duration.
+// https://golang.org/pkg/time/#Duration
+// In order to cover the distance in seconds from 01.01.0001 to the timestamp, we have
+// to go stetp by step.
 const intLimit int64 = 9000000000
 
 type TimeOption func(*TimeWrapper)
@@ -60,6 +64,8 @@ func (tw TimeWrapper) MarshalText() ([]byte, error) {
 	} else {
 		// Kdbx v4 - Count since year 1
 		total := float64(0)
+		// Uses a zero value instead of `intLimit` here because we need a `time.Duration` value
+		// and therefore are using `(*time).Sub`
 		zero := time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
 
 		temp := t
