@@ -195,6 +195,10 @@ func NewEntry(options ...EntryOption) Entry {
 
 func (e *Entry) setKdbxFormatVersion(version formatVersion) {
 	(&e.Times).setKdbxFormatVersion(version)
+
+	for i := range e.Histories {
+		(&e.Histories[i]).setKdbxFormatVersion(version)
+	}
 }
 
 // Get returns the value in e corresponding with key k, or an empty string otherwise
@@ -245,6 +249,12 @@ func (e *Entry) GetTitle() string {
 // in the form of a list of previous versions of that entry
 type History struct {
 	Entries []Entry `xml:"Entry"`
+}
+
+func (h *History) setKdbxFormatVersion(version formatVersion) {
+	for i := range h.Entries {
+		(&h.Entries[i]).setKdbxFormatVersion(version)
+	}
 }
 
 // ValueData is a structure containing key value pairs of information stored in an entry
