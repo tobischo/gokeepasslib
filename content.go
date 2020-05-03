@@ -34,6 +34,11 @@ type DBContent struct {
 	Root        *RootData    `xml:"Root"`
 }
 
+func (c *DBContent) setKdbxFormatVersion(version formatVersion) {
+	c.Meta.setKdbxFormatVersion(version)
+	c.Root.setKdbxFormatVersion(version)
+}
+
 type DBContentOption func(*DBContent)
 
 func WithDBContentFormattedTime(formatted bool) DBContentOption {

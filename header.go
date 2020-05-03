@@ -509,9 +509,19 @@ func (vd *VariantDictionary) Get(key string) *VariantDictionaryItem {
 	return nil
 }
 
+type formatVersion int
+
+func isKdbx4(v formatVersion) bool {
+	return v == 4
+}
+
 // IsKdbx4 returns true if the header version equals to 4
 func (h *DBHeader) IsKdbx4() bool {
-	return h.Signature.MajorVersion == 4
+	return isKdbx4(formatVersion(h.Signature.MajorVersion))
+}
+
+func (h *DBHeader) formatVersion() formatVersion {
+	return formatVersion(h.Signature.MajorVersion)
 }
 
 // GetSha256 returns the Sha256 hash of the header

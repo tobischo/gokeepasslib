@@ -52,6 +52,12 @@ func NewOptions() *DBOptions {
 	}
 }
 
+func (db *Database) ensureKdbxFormatVersion() {
+	db.Content.setKdbxFormatVersion(
+		db.Header.formatVersion(),
+	)
+}
+
 // getTransformedKey returns the transformed key Credentials
 func (db *Database) getTransformedKey() ([]byte, error) {
 	if db.Credentials == nil {

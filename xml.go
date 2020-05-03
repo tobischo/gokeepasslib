@@ -84,6 +84,27 @@ type MetaData struct {
 	CustomData                 []CustomData   `xml:"CustomData>Item"`
 }
 
+func (md *MetaData) setKdbxFormatVersion(version formatVersion) {
+	if md.DatabaseNameChanged != nil {
+		md.DatabaseNameChanged.Formatted = !isKdbx4(version)
+	}
+	if md.DatabaseDescriptionChanged != nil {
+		md.DatabaseDescriptionChanged.Formatted = !isKdbx4(version)
+	}
+	if md.DefaultUserNameChanged != nil {
+		md.DefaultUserNameChanged.Formatted = !isKdbx4(version)
+	}
+	if md.MasterKeyChanged != nil {
+		md.MasterKeyChanged.Formatted = !isKdbx4(version)
+	}
+	if md.RecycleBinChanged != nil {
+		md.RecycleBinChanged.Formatted = !isKdbx4(version)
+	}
+	if md.EntryTemplatesGroupChanged != nil {
+		md.EntryTemplatesGroupChanged.Formatted = !isKdbx4(version)
+	}
+}
+
 // MemProtection is a structure containing settings for MemoryProtection
 type MemProtection struct {
 	ProtectTitle    w.BoolWrapper `xml:"ProtectTitle"`
@@ -126,6 +147,16 @@ func NewRootData(options ...RootDataOption) *RootData {
 	return root
 }
 
+func (rd *RootData) setKdbxFormatVersion(version formatVersion) {
+	for i := range rd.Groups {
+		(&rd.Groups[i]).setKdbxFormatVersion(version)
+	}
+
+	for i := range rd.DeletedObjects {
+		(&rd.DeletedObjects[i]).setKdbxFormatVersion(version)
+	}
+}
+
 type EntryOption func(*Entry)
 
 func WithEntryFormattedTime(formatted bool) EntryOption {
@@ -160,6 +191,10 @@ func NewEntry(options ...EntryOption) Entry {
 	}
 
 	return entry
+}
+
+func (e *Entry) setKdbxFormatVersion(version formatVersion) {
+	(&e.Times).setKdbxFormatVersion(version)
 }
 
 // Get returns the value in e corresponding with key k, or an empty string otherwise
@@ -242,6 +277,10 @@ type DeletedObjectData struct {
 	XMLName      xml.Name       `xml:"DeletedObject"`
 	UUID         UUID           `xml:"UUID"`
 	DeletionTime *w.TimeWrapper `xml:"DeletionTime"`
+}
+
+func (d *DeletedObjectData) setKdbxFormatVersion(version formatVersion) {
+	d.DeletionTime.Formatted = !isKdbx4(version)
 }
 
 // CustomData is the structure for plugins custom data
@@ -327,6 +366,18 @@ func NewGroup(options ...GroupOption) Group {
 	return group
 }
 
+func (g *Group) setKdbxFormatVersion(version formatVersion) {
+	(&g.Times).setKdbxFormatVersion(version)
+
+	for i := range g.Groups {
+		(&g.Groups[i]).setKdbxFormatVersion(version)
+	}
+
+	for i := range g.Entries {
+		(&g.Entries[i]).setKdbxFormatVersion(version)
+	}
+}
+
 type TimeDataOption func(*TimeData)
 
 func WithTimeDataFormattedTime(formatted bool) TimeDataOption {
@@ -349,6 +400,24 @@ type TimeData struct {
 	Expires              w.BoolWrapper  `xml:"Expires"`
 	UsageCount           int64          `xml:"UsageCount"`
 	LocationChanged      *w.TimeWrapper `xml:"LocationChanged"`
+}
+
+func (td *TimeData) setKdbxFormatVersion(version formatVersion) {
+	if td.CreationTime != nil {
+		td.CreationTime.Formatted = !isKdbx4(version)
+	}
+	if td.LastModificationTime != nil {
+		td.LastModificationTime.Formatted = !isKdbx4(version)
+	}
+	if td.LastAccessTime != nil {
+		td.LastAccessTime.Formatted = !isKdbx4(version)
+	}
+	if td.ExpiryTime != nil {
+		td.ExpiryTime.Formatted = !isKdbx4(version)
+	}
+	if td.LocationChanged != nil {
+		td.LocationChanged.Formatted = !isKdbx4(version)
+	}
 }
 
 // NewTimeData returns a TimeData struct with good defaults (no expire time, all times set to now)

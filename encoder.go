@@ -23,6 +23,9 @@ func NewEncoder(w io.Writer) *Encoder {
 
 // Encode writes db to e's internal writer
 func (e *Encoder) Encode(db *Database) error {
+	// ensure timestamps will be formatted correctly
+	db.ensureKdbxFormatVersion()
+
 	// Calculate transformed key to make HMAC and encrypt
 	transformedKey, err := db.getTransformedKey()
 	if err != nil {
