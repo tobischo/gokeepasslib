@@ -2,6 +2,9 @@ package gokeepasslib
 
 import (
 	"testing"
+	"time"
+
+	"github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 func TestNewRootData(t *testing.T) {
@@ -51,4 +54,74 @@ func TestNewRootData(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRootDataSetKdbxFormatVersion(t *testing.T) {
+	cases := []struct {
+		title                  string
+		formattedInitValue     bool
+		version                formatVersion
+		expectedFormattedValue bool
+	}{
+		{
+			title:                  "initialized as v3, changed to v4",
+			formattedInitValue:     true,
+			version:                4,
+			expectedFormattedValue: false,
+		},
+		{
+			title:                  "initialized as v4, changed to v3",
+			formattedInitValue:     false,
+			version:                3,
+			expectedFormattedValue: true,
+		},
+		{
+			title:                  "initialized as v3, not changed",
+			formattedInitValue:     true,
+			version:                3,
+			expectedFormattedValue: true,
+		},
+		{
+			title:                  "initialized as v4, not changed",
+			formattedInitValue:     false,
+			version:                4,
+			expectedFormattedValue: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			rootData := NewRootData(
+				WithRootDataFormattedTime(c.formattedInitValue),
+			)
+			rootData.DeletedObjects = append(
+				rootData.DeletedObjects,
+				DeletedObjectData{
+					DeletionTime: &wrappers.TimeWrapper{
+						Time:      time.Now(),
+						Formatted: c.formattedInitValue,
+					},
+				},
+			)
+
+			rootData.setKdbxFormatVersion(c.version)
+
+			// Takes a single time value as an example, as TimeData is independently tested.
+			if rootData.Groups[0].Times.CreationTime.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set group CreationTime formatted value accordingly")
+			}
+
+			if rootData.Groups[0].Entries[0].Times.CreationTime.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set entry CreationTime formatted value accordingly")
+			}
+
+			if rootData.DeletedObjects[0].DeletionTime.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set deleted object DeletionTime formatted value accordingly")
+			}
+		})
+	}
+
 }
