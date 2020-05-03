@@ -54,57 +54,6 @@ func (u *UUID) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// MetaData is the structure for the metadata headers at the top of kdbx files,
-// it contains things like the name of the database
-type MetaData struct {
-	Generator                  string         `xml:"Generator"`
-	HeaderHash                 string         `xml:"HeaderHash"`
-	DatabaseName               string         `xml:"DatabaseName"`
-	DatabaseNameChanged        *w.TimeWrapper `xml:"DatabaseNameChanged"`
-	DatabaseDescription        string         `xml:"DatabaseDescription"`
-	DatabaseDescriptionChanged *w.TimeWrapper `xml:"DatabaseDescriptionChanged"`
-	DefaultUserName            string         `xml:"DefaultUserName"`
-	DefaultUserNameChanged     *w.TimeWrapper `xml:"DefaultUserNameChanged"`
-	MaintenanceHistoryDays     int64          `xml:"MaintenanceHistoryDays"`
-	Color                      string         `xml:"Color"`
-	MasterKeyChanged           *w.TimeWrapper `xml:"MasterKeyChanged"`
-	MasterKeyChangeRec         int64          `xml:"MasterKeyChangeRec"`
-	MasterKeyChangeForce       int64          `xml:"MasterKeyChangeForce"`
-	MemoryProtection           MemProtection  `xml:"MemoryProtection"`
-	RecycleBinEnabled          w.BoolWrapper  `xml:"RecycleBinEnabled"`
-	RecycleBinUUID             UUID           `xml:"RecycleBinUUID"`
-	RecycleBinChanged          *w.TimeWrapper `xml:"RecycleBinChanged"`
-	EntryTemplatesGroup        string         `xml:"EntryTemplatesGroup"`
-	EntryTemplatesGroupChanged *w.TimeWrapper `xml:"EntryTemplatesGroupChanged"`
-	HistoryMaxItems            int64          `xml:"HistoryMaxItems"`
-	HistoryMaxSize             int64          `xml:"HistoryMaxSize"`
-	LastSelectedGroup          string         `xml:"LastSelectedGroup"`
-	LastTopVisibleGroup        string         `xml:"LastTopVisibleGroup"`
-	Binaries                   Binaries       `xml:"Binaries>Binary"`
-	CustomData                 []CustomData   `xml:"CustomData>Item"`
-}
-
-func (md *MetaData) setKdbxFormatVersion(version formatVersion) {
-	if md.DatabaseNameChanged != nil {
-		md.DatabaseNameChanged.Formatted = !isKdbx4(version)
-	}
-	if md.DatabaseDescriptionChanged != nil {
-		md.DatabaseDescriptionChanged.Formatted = !isKdbx4(version)
-	}
-	if md.DefaultUserNameChanged != nil {
-		md.DefaultUserNameChanged.Formatted = !isKdbx4(version)
-	}
-	if md.MasterKeyChanged != nil {
-		md.MasterKeyChanged.Formatted = !isKdbx4(version)
-	}
-	if md.RecycleBinChanged != nil {
-		md.RecycleBinChanged.Formatted = !isKdbx4(version)
-	}
-	if md.EntryTemplatesGroupChanged != nil {
-		md.EntryTemplatesGroupChanged.Formatted = !isKdbx4(version)
-	}
-}
-
 // MemProtection is a structure containing settings for MemoryProtection
 type MemProtection struct {
 	ProtectTitle    w.BoolWrapper `xml:"ProtectTitle"`
@@ -287,32 +236,4 @@ type CustomData struct {
 	XMLName xml.Name `xml:"Item"`
 	Key     string   `xml:"Key"`
 	Value   string   `xml:"Value"`
-}
-
-type MetaDataOption func(*MetaData)
-
-func WithMetaDataFormattedTime(formatted bool) MetaDataOption {
-	return func(md *MetaData) {
-		md.MasterKeyChanged.Formatted = formatted
-	}
-}
-
-// NewMetaData creates a MetaData struct with some defaults set
-func NewMetaData(options ...MetaDataOption) *MetaData {
-	now := w.Now()
-
-	md := &MetaData{
-		MasterKeyChanged:       &now,
-		MasterKeyChangeRec:     -1,
-		MasterKeyChangeForce:   -1,
-		HistoryMaxItems:        10,
-		HistoryMaxSize:         6291456, // 6 MB
-		MaintenanceHistoryDays: 365,
-	}
-
-	for _, option := range options {
-		option(md)
-	}
-
-	return md
 }
