@@ -242,8 +242,7 @@ func TestNewTimeData(t *testing.T) {
 					Formatted: true,
 				},
 				Expires: wrappers.BoolWrapper{
-					Bool:  false,
-					Valid: true,
+					Bool: false,
 				},
 			},
 		},
@@ -269,8 +268,7 @@ func TestNewTimeData(t *testing.T) {
 					Formatted: false,
 				},
 				Expires: wrappers.BoolWrapper{
-					Bool:  false,
-					Valid: true,
+					Bool: false,
 				},
 				UsageCount: 10,
 			},
