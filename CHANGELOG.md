@@ -1,3 +1,7 @@
+### v3.0.4
+
+* Ensure time values are formatted according to the version when encoding the DB to file
+
 ### v3.0.3
 
 * Split up `BoolWrapper` and `NullableBoolWrapper`
