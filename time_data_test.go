@@ -101,3 +101,73 @@ func TestNewTimeData(t *testing.T) {
 		})
 	}
 }
+
+func TestTimeDataSetKdbxFormatVersion(t *testing.T) {
+	cases := []struct {
+		title                  string
+		formattedInitValue     bool
+		version                formatVersion
+		expectedFormattedValue bool
+	}{
+		{
+			title:                  "initialized as v3, changed to v4",
+			formattedInitValue:     true,
+			version:                4,
+			expectedFormattedValue: false,
+		},
+		{
+			title:                  "initialized as v4, changed to v3",
+			formattedInitValue:     false,
+			version:                3,
+			expectedFormattedValue: true,
+		},
+		{
+			title:                  "initialized as v3, not changed",
+			formattedInitValue:     true,
+			version:                3,
+			expectedFormattedValue: true,
+		},
+		{
+			title:                  "initialized as v4, not changed",
+			formattedInitValue:     false,
+			version:                4,
+			expectedFormattedValue: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			td := NewTimeData(
+				WithTimeDataFormattedTime(c.formattedInitValue),
+			)
+
+			(&td).setKdbxFormatVersion(c.version)
+
+			if td.CreationTime != nil &&
+				td.CreationTime.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set CreationTime formatted value accordingly")
+			}
+			if td.LastModificationTime != nil &&
+				td.LastModificationTime.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set LastModificationTime formatted value accordingly")
+			}
+			if td.LastAccessTime != nil &&
+				td.LastAccessTime.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set LastAccessTime formatted value accordingly")
+			}
+			if td.ExpiryTime != nil &&
+				td.ExpiryTime.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set ExpiryTime formatted value accordingly")
+			}
+			if td.LocationChanged != nil &&
+				td.LocationChanged.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set LocationChanged formatted value accordingly")
+			}
+		})
+	}
+}
