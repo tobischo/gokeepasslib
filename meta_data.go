@@ -4,6 +4,15 @@ import (
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
+// MemProtection is a structure containing settings for MemoryProtection
+type MemProtection struct {
+	ProtectTitle    w.BoolWrapper `xml:"ProtectTitle"`
+	ProtectUserName w.BoolWrapper `xml:"ProtectUserName"`
+	ProtectPassword w.BoolWrapper `xml:"ProtectPassword"`
+	ProtectURL      w.BoolWrapper `xml:"ProtectURL"`
+	ProtectNotes    w.BoolWrapper `xml:"ProtectNotes"`
+}
+
 type MetaDataOption func(*MetaData)
 
 func WithMetaDataFormattedTime(formatted bool) MetaDataOption {
