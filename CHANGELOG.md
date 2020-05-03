@@ -1,3 +1,15 @@
+### v3.0.3
+
+* Split up `BoolWrapper` and `NullableBoolWrapper`
+
+### v3.0.2
+
+* Improve AES decrypt performance (cont.)
+
+### v3.0.1
+
+* Improve AES decrypt performance
+
 ### v3.0.0
 
 * Fix `BoolWrapper` to support null values
