@@ -297,25 +297,25 @@ func WithGroupFormattedTime(formatted bool) GroupOption {
 
 // Group is a structure to store entries in their named groups for organization
 type Group struct {
-	UUID                    UUID          `xml:"UUID"`
-	Name                    string        `xml:"Name"`
-	Notes                   string        `xml:"Notes"`
-	IconID                  int64         `xml:"IconID"`
-	Times                   TimeData      `xml:"Times"`
-	IsExpanded              w.BoolWrapper `xml:"IsExpanded"`
-	DefaultAutoTypeSequence string        `xml:"DefaultAutoTypeSequence"`
-	EnableAutoType          w.BoolWrapper `xml:"EnableAutoType"`
-	EnableSearching         w.BoolWrapper `xml:"EnableSearching"`
-	LastTopVisibleEntry     string        `xml:"LastTopVisibleEntry"`
-	Entries                 []Entry       `xml:"Entry,omitempty"`
-	Groups                  []Group       `xml:"Group,omitempty"`
+	UUID                    UUID                  `xml:"UUID"`
+	Name                    string                `xml:"Name"`
+	Notes                   string                `xml:"Notes"`
+	IconID                  int64                 `xml:"IconID"`
+	Times                   TimeData              `xml:"Times"`
+	IsExpanded              w.BoolWrapper         `xml:"IsExpanded"`
+	DefaultAutoTypeSequence string                `xml:"DefaultAutoTypeSequence"`
+	EnableAutoType          w.NullableBoolWrapper `xml:"EnableAutoType"`
+	EnableSearching         w.NullableBoolWrapper `xml:"EnableSearching"`
+	LastTopVisibleEntry     string                `xml:"LastTopVisibleEntry"`
+	Entries                 []Entry               `xml:"Entry,omitempty"`
+	Groups                  []Group               `xml:"Group,omitempty"`
 }
 
 // NewGroup returns a new group with time data and uuid set
 func NewGroup(options ...GroupOption) Group {
 	group := Group{
-		EnableAutoType:  w.NewBoolWrapper(true),
-		EnableSearching: w.NewBoolWrapper(true),
+		EnableAutoType:  w.NewNullableBoolWrapper(true),
+		EnableSearching: w.NewNullableBoolWrapper(true),
 		Times:           NewTimeData(),
 		UUID:            NewUUID(),
 	}
