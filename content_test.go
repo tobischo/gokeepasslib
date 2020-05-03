@@ -51,6 +51,62 @@ func TestNewContent(t *testing.T) {
 	}
 }
 
+func TestDBContentSetKdbxFormatVersion(t *testing.T) {
+	cases := []struct {
+		title                  string
+		formattedInitValue     bool
+		version                formatVersion
+		expectedFormattedValue bool
+	}{
+		{
+			title:                  "initialized as v3, changed to v4",
+			formattedInitValue:     true,
+			version:                4,
+			expectedFormattedValue: false,
+		},
+		{
+			title:                  "initialized as v4, changed to v3",
+			formattedInitValue:     false,
+			version:                3,
+			expectedFormattedValue: true,
+		},
+		{
+			title:                  "initialized as v3, not changed",
+			formattedInitValue:     true,
+			version:                3,
+			expectedFormattedValue: true,
+		},
+		{
+			title:                  "initialized as v4, not changed",
+			formattedInitValue:     false,
+			version:                4,
+			expectedFormattedValue: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			content := NewContent(
+				WithDBContentFormattedTime(c.formattedInitValue),
+			)
+
+			content.setKdbxFormatVersion(c.version)
+
+			// Takes a single time value as an example, as TimeData is independently tested.
+			if content.Root.Groups[0].Times.CreationTime.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set group CreationTime formatted value accordingly")
+			}
+
+			if content.Meta.MasterKeyChanged.Formatted != c.expectedFormattedValue {
+
+				t.Errorf("Failed to set meta MasterKeyChanged formatted value accordingly")
+			}
+		})
+	}
+
+}
+
 func TestVUnmarshal(t *testing.T) {
 	v := &V{}
 
