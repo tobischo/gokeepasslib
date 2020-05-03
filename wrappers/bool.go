@@ -2,7 +2,6 @@ package wrappers
 
 import (
 	"encoding/xml"
-	"fmt"
 	"strings"
 )
 
@@ -21,13 +20,10 @@ func NewBoolWrapper(value bool) BoolWrapper {
 
 // MarshalXML marshals the boolean into e
 func (b *BoolWrapper) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	val := "null"
+	val := "False"
 
-	if b.Valid {
-		val = "False"
-		if b.Bool {
-			val = "True"
-		}
+	if b.Valid && b.Bool {
+		val = "True"
 	}
 
 	e.EncodeElement(val, start)
@@ -41,9 +37,6 @@ func (b *BoolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 	d.DecodeElement(&val, &start)
 
 	switch strings.ToLower(val) {
-	case "null":
-		b.Valid = false
-		b.Bool = false
 	case "true":
 		b.Valid = true
 		b.Bool = true
@@ -51,7 +44,8 @@ func (b *BoolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 		b.Valid = true
 		b.Bool = false
 	default:
-		return fmt.Errorf("invalid BoolWrapper value '%s'", val)
+		b.Valid = false
+		b.Bool = false
 	}
 
 	return nil
@@ -59,13 +53,10 @@ func (b *BoolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 
 // MarshalXMLAttr returns the encoded XML attribute
 func (b *BoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
-	val := "null"
+	val := "False"
 
-	if b.Valid {
-		val = "False"
-		if b.Bool {
-			val = "True"
-		}
+	if b.Valid && b.Bool {
+		val = "True"
 	}
 
 	return xml.Attr{Name: name, Value: val}, nil
@@ -74,9 +65,6 @@ func (b *BoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 // UnmarshalXMLAttr decodes a single XML attribute
 func (b *BoolWrapper) UnmarshalXMLAttr(attr xml.Attr) error {
 	switch strings.ToLower(attr.Value) {
-	case "null":
-		b.Valid = false
-		b.Bool = false
 	case "true":
 		b.Valid = true
 		b.Bool = true
@@ -84,7 +72,8 @@ func (b *BoolWrapper) UnmarshalXMLAttr(attr xml.Attr) error {
 		b.Valid = true
 		b.Bool = false
 	default:
-		return fmt.Errorf("invalid BoolWrapper value '%s'", attr.Value)
+		b.Valid = false
+		b.Bool = false
 	}
 
 	return nil
