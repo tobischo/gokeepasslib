@@ -15,13 +15,6 @@ type TimeWrapper struct {
 	Time      time.Time // Time value
 }
 
-// Limit of int64 for time.Add
-// time.Duration allows for a maximum of ~290 years to be covered with 1 duration.
-// https://golang.org/pkg/time/#Duration
-// In order to cover the distance in seconds from 01.01.0001 to the timestamp, we have
-// to go stetp by step.
-const intLimit int64 = 9000000000
-
 type TimeOption func(*TimeWrapper)
 
 func WithKDBX4Formatting(t *TimeWrapper) {
@@ -63,21 +56,8 @@ func (tw TimeWrapper) MarshalText() ([]byte, error) {
 		ret = t.AppendFormat(b, time.RFC3339)
 	} else {
 		// Kdbx v4 - Count since year 1
-		total := float64(0)
-		// Uses a zero value instead of `intLimit` here because we need a `time.Duration` value
-		// and therefore are using `(*time).Sub`
 		zero := time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
-
-		temp := t
-		for {
-			diff := temp.Sub(zero)
-			if diff.Seconds() == 0 {
-				break
-			}
-
-			total = total + diff.Seconds()
-			temp = temp.Add(-diff)
-		}
+		total := t.Unix() - zero.Unix()
 
 		buf := make([]byte, 8)
 		binary.LittleEndian.PutUint64(buf, uint64(total))
@@ -108,16 +88,8 @@ func (tw *TimeWrapper) UnmarshalText(data []byte) error {
 		}
 
 		// Count since year 1
-		t = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
-		for {
-			if buf < intLimit {
-				t = t.Add(time.Duration(buf) * time.Second)
-				break
-			} else {
-				t = t.Add(time.Duration(intLimit) * time.Second)
-				buf -= intLimit
-			}
-		}
+		zero := time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
+		t = time.Unix(zero.Unix()+buf, 0)
 		formatted = false
 	} else {
 		formatted = true
