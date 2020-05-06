@@ -126,5 +126,8 @@ func (db *Database) LockProtectedEntries() error {
 type ErrRequiredAttributeMissing string
 
 func (e ErrRequiredAttributeMissing) Error() string {
-	return fmt.Sprintf("gokeepasslib: operation can not be performed if database does not have %s", e)
+	return fmt.Sprintf(
+		"gokeepasslib: operation can not be performed if database does not have %s",
+		string(e),
+	)
 }

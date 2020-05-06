@@ -671,6 +671,6 @@ func (i ErrUnknownHeaderID) Error() string {
 // ErrUnknownParameterID is the error returned if an unknown kdf parameter is read
 type ErrUnknownParameterID string
 
-func (i ErrUnknownParameterID) Error() string {
-	return fmt.Sprintf("gokeepasslib: unknown kdf parameter '%s'", i)
+func (s ErrUnknownParameterID) Error() string {
+	return fmt.Sprintf("gokeepasslib: unknown kdf parameter '%s'", string(s))
 }

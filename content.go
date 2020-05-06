@@ -172,6 +172,6 @@ var ErrEndOfInnerHeaders = errors.New("gokeepasslib: inner header id was 0, end 
 // ErrUnknownInnerHeaderID is the error returned if an unknown inner header is read
 type ErrUnknownInnerHeaderID byte
 
-func (i ErrUnknownInnerHeaderID) Error() string {
-	return fmt.Sprintf("gokeepasslib: unknown inner header ID of %x", i)
+func (e ErrUnknownInnerHeaderID) Error() string {
+	return fmt.Sprintf("gokeepasslib: unknown inner header ID of %d", int(e))
 }
