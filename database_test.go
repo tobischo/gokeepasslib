@@ -1,6 +1,8 @@
 package gokeepasslib
 
 import (
+	"bytes"
+	"log"
 	"testing"
 )
 
@@ -47,4 +49,48 @@ func TestNewDatabase(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ExampleNewDatabase_kdbxv3() {
+	buf := bytes.NewBuffer([]byte{})
+
+	// create the new database
+	db := gokeepasslib.NewDatabase(
+		gokeepasslib.WithDatabaseKDBXVersion3(),
+	)
+	db.Content.Meta.DatabaseName = "KDBX4"
+	db.Credentials = gokeepasslib.NewPasswordCredentials(masterPassword)
+
+	// Lock entries using stream cipher
+	db.LockProtectedEntries()
+
+	// and encode it into the file
+	keepassEncoder := gokeepasslib.NewEncoder(buf)
+	if err := keepassEncoder.Encode(db); err != nil {
+		panic(err)
+	}
+
+	log.Printf("Wrote kdbx file to buffer")
+}
+
+func ExampleNewDatabase_kdbxv4() {
+	buf := bytes.NewBuffer([]byte{})
+
+	// create the new database
+	db := gokeepasslib.NewDatabase(
+		gokeepasslib.WithDatabaseKDBXVersion4(),
+	)
+	db.Content.Meta.DatabaseName = "KDBX4"
+	db.Credentials = gokeepasslib.NewPasswordCredentials(masterPassword)
+
+	// Lock entries using stream cipher
+	db.LockProtectedEntries()
+
+	// and encode it into the file
+	keepassEncoder := gokeepasslib.NewEncoder(buf)
+	if err := keepassEncoder.Encode(db); err != nil {
+		panic(err)
+	}
+
+	log.Printf("Wrote kdbx file to buffer")
 }
