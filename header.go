@@ -719,7 +719,7 @@ func (fh FileHeaders) String() string {
 func (k *KdfParameters) String() string {
 	return fmt.Sprintf(
 		"  (1) UUID: %x\n"+
-			"  (2) Rounds: %x\n"+
+			"  (2) Rounds: %d\n"+
 			"  (3) Salt: %x\n"+
 			"  (4) Parallelism: %d\n"+
 			"  (5) Memory: %d\n"+
