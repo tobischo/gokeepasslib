@@ -46,6 +46,7 @@ func TestNewMetaData(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			metaData := NewMetaData(c.options...)
 
+			c.expectedMetaData.SettingsChanged = metaData.SettingsChanged
 			c.expectedMetaData.MasterKeyChanged = metaData.MasterKeyChanged
 
 			if !reflect.DeepEqual(metaData, c.expectedMetaData) {
