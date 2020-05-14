@@ -18,8 +18,14 @@ var BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
 // SecondarySignature is the valid version signature for kdbx files
 var SecondarySignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
 
+// DefaultKDBX3Sig is the full valid default signature struct for new databases (Kdbx v3.1)
+var DefaultKDBX3Sig = Signature{BaseSignature, SecondarySignature, 1, 3}
+
+// DefaultKDBX4Sig is the full valid default signature struct for new databases (Kdbx v4.0)
+var DefaultKDBX4Sig = Signature{BaseSignature, SecondarySignature, 0, 4}
+
 // DefaultSig is the full valid default signature struct for new databases (Kdbx v3.1)
-var DefaultSig = Signature{BaseSignature, SecondarySignature, 1, 3}
+var DefaultSig = DefaultKDBX3Sig
 
 // Compression flags
 const (
@@ -110,14 +116,32 @@ type VariantDictionaryItem struct {
 
 // NewHeader creates a new Header with good defaults
 func NewHeader() *DBHeader {
+	return NewKDBX3Header()
+}
+
+// NewKDBX3Header creates a new Header with good defaults for KDBX3
+func NewKDBX3Header() *DBHeader {
 	return &DBHeader{
-		Signature:   &DefaultSig,
-		FileHeaders: NewFileHeaders(),
+		Signature:   &DefaultKDBX3Sig,
+		FileHeaders: NewKDBX3FileHeaders(),
+	}
+}
+
+// NewKDBX4Header creates a new Header with good defaults for KDBX4
+func NewKDBX4Header() *DBHeader {
+	return &DBHeader{
+		Signature:   &DefaultKDBX4Sig,
+		FileHeaders: NewKDBX4FileHeaders(),
 	}
 }
 
 // NewFileHeaders creates a new FileHeaders with good defaults
 func NewFileHeaders() *FileHeaders {
+	return NewKDBX3FileHeaders()
+}
+
+// NewKDBX3FileHeaders creates a new FileHeaders with good defaults for KDBX3
+func NewKDBX3FileHeaders() *FileHeaders {
 	masterSeed := make([]byte, 32)
 	rand.Read(masterSeed)
 
@@ -143,6 +167,34 @@ func NewFileHeaders() *FileHeaders {
 		ProtectedStreamKey:  protectedStreamKey,
 		StreamStartBytes:    streamStartBytes,
 		InnerRandomStreamID: SalsaStreamID,
+	}
+}
+
+// NewKDBX4FileHeaders creates a new FileHeaders with good defaults for KDBX4
+func NewKDBX4FileHeaders() *FileHeaders {
+	masterSeed := make([]byte, 32)
+	rand.Read(masterSeed)
+
+	encryptionIV := make([]byte, 12)
+	rand.Read(encryptionIV)
+
+	var salt [32]byte
+	rand.Read(salt[:])
+
+	return &FileHeaders{
+		CipherID:         CipherChaCha20,
+		CompressionFlags: GzipCompressionFlag,
+		MasterSeed:       masterSeed,
+		EncryptionIV:     encryptionIV,
+		KdfParameters: &KdfParameters{
+			UUID:        KdfArgon2,
+			Rounds:      0,
+			Salt:        salt,
+			Parallelism: 2,
+			Memory:      1048576,
+			Iterations:  2,
+			Version:     19,
+		},
 	}
 }
 
