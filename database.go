@@ -39,7 +39,7 @@ func WithDatabaseKDBXVersion4() DatabaseOption {
 	}
 }
 
-// NewDatabase creates a new database with some sensable default settings.
+// NewDatabase creates a new database with some sensable default settings in KDBX version 3.1.
 // To create a database with no settings pre-set, use gokeepasslib.Database{}
 func NewDatabase(options ...DatabaseOption) *Database {
 	db := &Database{
