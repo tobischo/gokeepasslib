@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/binary"
 	"encoding/xml"
 	"errors"
@@ -45,6 +46,16 @@ func WithDBContentFormattedTime(formatted bool) DBContentOption {
 	return func(content *DBContent) {
 		WithMetaDataFormattedTime(formatted)(content.Meta)
 		WithRootDataFormattedTime(formatted)(content.Root)
+	}
+}
+
+func withDBContentKDBX4InnerHeader(content *DBContent) {
+	innerRandomStreamKey := make([]byte, 64)
+	rand.Read(innerRandomStreamKey)
+
+	content.InnerHeader = &InnerHeader{
+		InnerRandomStreamID:  ChaChaStreamID,
+		InnerRandomStreamKey: innerRandomStreamKey,
 	}
 }
 
