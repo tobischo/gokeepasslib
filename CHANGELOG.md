@@ -1,6 +1,11 @@
+### v3.0.5
+
+* Improve time marshalling/unmarshalling performance
+
 ### v3.0.4
 
 * Ensure time values are formatted according to the version when encoding the DB to file
+* Split up code into several smaller files
 
 ### v3.0.3
 
