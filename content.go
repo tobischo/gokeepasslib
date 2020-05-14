@@ -66,6 +66,7 @@ func NewContent(options ...DBContentOption) *DBContent {
 // readFrom reads the InnerHeader from an io.Reader
 func (ih *InnerHeader) readFrom(r io.Reader) error {
 	binaryCount := 0 // Var used to count and index every binary
+ForLoop:
 	for {
 		var headerType byte
 		var length int32
@@ -82,16 +83,17 @@ func (ih *InnerHeader) readFrom(r io.Reader) error {
 			return err
 		}
 
-		if headerType == InnerHeaderTerminator {
+		switch headerType {
+		case InnerHeaderTerminator:
 			// End of inner header
-			break
-		} else if headerType == InnerHeaderIRSID {
+			break ForLoop
+		case InnerHeaderIRSID:
 			// Found InnerRandomStream ID
 			ih.InnerRandomStreamID = binary.LittleEndian.Uint32(data)
-		} else if headerType == InnerHeaderIRSKey {
+		case InnerHeaderIRSKey:
 			// Found InnerRandomStream Key
 			ih.InnerRandomStreamKey = data
-		} else if headerType == InnerHeaderBinary {
+		case InnerHeaderBinary:
 			// Found a binary
 			var protection byte
 			reader := bytes.NewReader(data)
@@ -106,7 +108,7 @@ func (ih *InnerHeader) readFrom(r io.Reader) error {
 			})
 
 			binaryCount = binaryCount + 1
-		} else {
+		default:
 			return ErrUnknownInnerHeaderID(headerType)
 		}
 	}
