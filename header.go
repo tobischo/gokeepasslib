@@ -293,6 +293,120 @@ func (k *KdfParameters) readKdfParameters(data []byte) error {
 	return nil
 }
 
+const variantDictionaryTypeBinary = 0x42
+const variantDictionaryTypeUInt32 = 0x4
+const variantDictionaryTypeUInt64 = 0x5
+
+// updateRawData converts the kdf parameters into rawdata again
+func (k *KdfParameters) updateRawData() error {
+	dict := new(VariantDictionary)
+	dict.Version = 256
+	dict.Items = make([]*VariantDictionaryItem, 0, 9)
+
+	if len(k.UUID) > 0 {
+		uuidItem := &VariantDictionaryItem{
+			Type:  variantDictionaryTypeBinary,
+			Name:  []byte("$UUID"),
+			Value: k.UUID,
+		}
+		dict.Items = append(dict.Items, uuidItem)
+	}
+
+	if k.Rounds > 0 {
+		roundsItem := &VariantDictionaryItem{
+			Type:  variantDictionaryTypeUInt64,
+			Name:  []byte("R"),
+			Value: make([]byte, 8),
+		}
+		binary.LittleEndian.PutUint64(roundsItem.Value, k.Rounds)
+		dict.Items = append(dict.Items, roundsItem)
+	}
+
+	if k.Version > 0 {
+		versionItem := &VariantDictionaryItem{
+			Type:  variantDictionaryTypeUInt32,
+			Name:  []byte("V"),
+			Value: make([]byte, 4),
+		}
+		binary.LittleEndian.PutUint32(versionItem.Value, k.Version)
+		dict.Items = append(dict.Items, versionItem)
+	}
+
+	if k.Iterations > 0 {
+		iterationsItem := &VariantDictionaryItem{
+			Type:  variantDictionaryTypeUInt64,
+			Name:  []byte("I"),
+			Value: make([]byte, 8),
+		}
+		binary.LittleEndian.PutUint64(iterationsItem.Value, k.Iterations)
+		dict.Items = append(dict.Items, iterationsItem)
+	}
+
+	if k.Memory > 0 {
+		memoryItem := &VariantDictionaryItem{
+			Type:  variantDictionaryTypeUInt64,
+			Name:  []byte("M"),
+			Value: make([]byte, 8),
+		}
+		binary.LittleEndian.PutUint64(memoryItem.Value, k.Memory)
+		dict.Items = append(dict.Items, memoryItem)
+	}
+
+	if k.Parallelism > 0 {
+		parallelismItem := &VariantDictionaryItem{
+			Type:  variantDictionaryTypeUInt32,
+			Name:  []byte("P"),
+			Value: make([]byte, 4),
+		}
+		binary.LittleEndian.PutUint32(parallelismItem.Value, k.Parallelism)
+		dict.Items = append(dict.Items, parallelismItem)
+	}
+
+	if len(k.Salt) > 0 {
+		saltItem := &VariantDictionaryItem{
+			Type:  variantDictionaryTypeBinary,
+			Name:  []byte("S"),
+			Value: make([]byte, 32),
+		}
+		copy(saltItem.Value[:32], k.Salt[:])
+		dict.Items = append(dict.Items, saltItem)
+	}
+
+	if len(k.SecretKey) > 0 {
+		secretKeyItem := &VariantDictionaryItem{
+			Type:  variantDictionaryTypeBinary,
+			Name:  []byte("K"),
+			Value: k.SecretKey,
+		}
+		dict.Items = append(dict.Items, secretKeyItem)
+	}
+
+	if len(k.AssocData) > 0 {
+		assocDataItem := &VariantDictionaryItem{
+			Type:  variantDictionaryTypeBinary,
+			Name:  []byte("K"),
+			Value: k.AssocData,
+		}
+		dict.Items = append(dict.Items, assocDataItem)
+	}
+
+	// Set NameLength, ValueLength and writes data to the result
+	i := 0
+	for _, item := range dict.Items {
+		item.NameLength = int32(len(item.Name))
+		item.ValueLength = int32(len(item.Value))
+
+		if item.ValueLength > 0 {
+			dict.Items[i] = item
+			i++
+		}
+	}
+
+	k.RawData = dict
+
+	return nil
+}
+
 // readVariantDictionary reads a variant dictionary
 func (vd *VariantDictionary) readVariantDictionary(data []byte) error {
 	r := bytes.NewReader(data)
@@ -370,6 +484,7 @@ func (fh FileHeaders) writeTo4(w io.Writer, buf *bytes.Buffer) error {
 	if err := writeTo4Header(w, 7, fh.EncryptionIV); err != nil {
 		return err
 	}
+	fh.KdfParameters.updateRawData()
 	if err := writeTo4VariantDictionary(w, 11, fh.KdfParameters.RawData); err != nil {
 		return err
 	}
@@ -403,6 +518,7 @@ func writeTo4VariantDictionary(w io.Writer, id uint8, data *VariantDictionary) e
 		if err := binary.Write(&buffer, binary.LittleEndian, data.Version); err != nil {
 			return err
 		}
+
 		for _, item := range data.Items {
 			if err := binary.Write(&buffer, binary.LittleEndian, item.Type); err != nil {
 				return err
