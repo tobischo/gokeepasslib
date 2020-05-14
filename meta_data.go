@@ -26,6 +26,7 @@ func NewMetaData(options ...MetaDataOption) *MetaData {
 	now := w.Now()
 
 	md := &MetaData{
+		SettingsChanged:        &now,
 		MasterKeyChanged:       &now,
 		MasterKeyChangeRec:     -1,
 		MasterKeyChangeForce:   -1,
@@ -45,7 +46,8 @@ func NewMetaData(options ...MetaDataOption) *MetaData {
 // it contains things like the name of the database
 type MetaData struct {
 	Generator                  string         `xml:"Generator"`
-	HeaderHash                 string         `xml:"HeaderHash"`
+	SettingsChanged            *w.TimeWrapper `xml:"SettingsChanged"`
+	HeaderHash                 string         `xml:"HeaderHash,omitempty"`
 	DatabaseName               string         `xml:"DatabaseName"`
 	DatabaseNameChanged        *w.TimeWrapper `xml:"DatabaseNameChanged"`
 	DatabaseDescription        string         `xml:"DatabaseDescription"`
@@ -67,11 +69,14 @@ type MetaData struct {
 	HistoryMaxSize             int64          `xml:"HistoryMaxSize"`
 	LastSelectedGroup          string         `xml:"LastSelectedGroup"`
 	LastTopVisibleGroup        string         `xml:"LastTopVisibleGroup"`
-	Binaries                   Binaries       `xml:"Binaries>Binary"`
+	Binaries                   Binaries       `xml:"Binaries>Binary,omitempty"`
 	CustomData                 []CustomData   `xml:"CustomData>Item"`
 }
 
 func (md *MetaData) setKdbxFormatVersion(version formatVersion) {
+	if md.SettingsChanged != nil {
+		md.SettingsChanged.Formatted = !isKdbx4(version)
+	}
 	if md.DatabaseNameChanged != nil {
 		md.DatabaseNameChanged.Formatted = !isKdbx4(version)
 	}
