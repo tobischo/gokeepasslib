@@ -293,9 +293,15 @@ func (k *KdfParameters) readKdfParameters(data []byte) error {
 	return nil
 }
 
-const variantDictionaryTypeBinary = 0x42
-const variantDictionaryTypeUInt32 = 0x4
-const variantDictionaryTypeUInt64 = 0x5
+const (
+	variantDictionaryTypeUInt32 = 0x4
+	variantDictionaryTypeUInt64 = 0x5
+	variantDictionaryTypeFlag   = 0x08
+	variantDictionaryTypeInt32  = 0x0C
+	variantDictionaryTypeInt64  = 0x0D
+	variantDictionaryTypeString = 0x18
+	variantDictionaryTypeBinary = 0x42
+)
 
 // updateRawData converts the kdf parameters into rawdata again
 func (k *KdfParameters) updateRawData() error {
