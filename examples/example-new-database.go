@@ -3,27 +3,13 @@ package main
 import (
 	"log"
 	"os"
-	"reflect"
 
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
-func CloneValue(source interface{}, destin interface{}) {
-	x := reflect.ValueOf(source)
-	if x.Kind() == reflect.Ptr {
-		starX := x.Elem()
-		y := reflect.New(starX.Type())
-		starY := y.Elem()
-		starY.Set(starX)
-		reflect.ValueOf(destin).Elem().Set(y.Elem())
-	} else {
-		destin = x.Interface()
-	}
-}
-
 func main() {
 	filename := "example-new-database.kdbx"
-	masterPassword := "123"
+	masterPassword := "supersecret"
 
 	file, err := os.Create(filename)
 	if err != nil {
