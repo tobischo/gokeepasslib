@@ -55,17 +55,17 @@ func ExampleNewDatabase_kdbxv3() {
 	buf := bytes.NewBuffer([]byte{})
 
 	// create the new database
-	db := gokeepasslib.NewDatabase(
-		gokeepasslib.WithDatabaseKDBXVersion3(),
+	db := NewDatabase(
+		WithDatabaseKDBXVersion3(),
 	)
 	db.Content.Meta.DatabaseName = "KDBX4"
-	db.Credentials = gokeepasslib.NewPasswordCredentials(masterPassword)
+	db.Credentials = NewPasswordCredentials("supersecret")
 
 	// Lock entries using stream cipher
 	db.LockProtectedEntries()
 
 	// and encode it into the file
-	keepassEncoder := gokeepasslib.NewEncoder(buf)
+	keepassEncoder := NewEncoder(buf)
 	if err := keepassEncoder.Encode(db); err != nil {
 		panic(err)
 	}
@@ -77,17 +77,17 @@ func ExampleNewDatabase_kdbxv4() {
 	buf := bytes.NewBuffer([]byte{})
 
 	// create the new database
-	db := gokeepasslib.NewDatabase(
-		gokeepasslib.WithDatabaseKDBXVersion4(),
+	db := NewDatabase(
+		WithDatabaseKDBXVersion4(),
 	)
 	db.Content.Meta.DatabaseName = "KDBX4"
-	db.Credentials = gokeepasslib.NewPasswordCredentials(masterPassword)
+	db.Credentials = NewPasswordCredentials("supersecret")
 
 	// Lock entries using stream cipher
 	db.LockProtectedEntries()
 
 	// and encode it into the file
-	keepassEncoder := gokeepasslib.NewEncoder(buf)
+	keepassEncoder := NewEncoder(buf)
 	if err := keepassEncoder.Encode(db); err != nil {
 		panic(err)
 	}
