@@ -15,6 +15,12 @@ type MemProtection struct {
 
 type MetaDataOption func(*MetaData)
 
+// CustomIcons is the structure needed to store custom icons.  Unsure of what version/format requires this
+type CustomIcons struct {
+	UUID UUID   `xml:"UUID"` //Entry's CustomIcon UUID should match this
+	Data string `xml:"Data"` //base64 encoded PNG icon.  Unknown size constraints
+}
+
 func WithMetaDataFormattedTime(formatted bool) MetaDataOption {
 	return func(md *MetaData) {
 		md.MasterKeyChanged.Formatted = formatted
@@ -60,6 +66,7 @@ type MetaData struct {
 	MasterKeyChangeRec         int64          `xml:"MasterKeyChangeRec"`
 	MasterKeyChangeForce       int64          `xml:"MasterKeyChangeForce"`
 	MemoryProtection           MemProtection  `xml:"MemoryProtection"`
+	CustomIcons                []CustomIcons  `xml:"CustomIcons>Icon"`
 	RecycleBinEnabled          w.BoolWrapper  `xml:"RecycleBinEnabled"`
 	RecycleBinUUID             UUID           `xml:"RecycleBinUUID"`
 	RecycleBinChanged          *w.TimeWrapper `xml:"RecycleBinChanged"`

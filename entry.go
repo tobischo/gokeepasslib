@@ -18,6 +18,7 @@ func WithEntryFormattedTime(formatted bool) EntryOption {
 type Entry struct {
 	UUID            UUID              `xml:"UUID"`
 	IconID          int64             `xml:"IconID"`
+	CustomIconUUID  UUID              `xml:"CustomIconUUID"`
 	ForegroundColor string            `xml:"ForegroundColor"`
 	BackgroundColor string            `xml:"BackgroundColor"`
 	OverrideURL     string            `xml:"OverrideURL"`

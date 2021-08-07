@@ -40,6 +40,28 @@ func TestNewMetaData(t *testing.T) {
 				MaintenanceHistoryDays: 123,
 			},
 		},
+		{
+			title: "with custom icon",
+			options: []MetaDataOption{
+				func(md *MetaData) {
+					md.CustomIcons = []CustomIcons{
+						{UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}, "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZQAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC"},
+						{UUID{0xdd, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}, "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZQAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC"},
+					}
+				},
+			},
+			expectedMetaData: &MetaData{
+				MasterKeyChangeRec:     -1,
+				MasterKeyChangeForce:   -1,
+				HistoryMaxItems:        10,
+				HistoryMaxSize:         6291456, // 6 MB
+				MaintenanceHistoryDays: 365,
+				CustomIcons: []CustomIcons{
+					{UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}, "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZQAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC"},
+					{UUID{0xdd, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}, "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZQAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC"},
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {
