@@ -1,3 +1,7 @@
+### v3.2.0
+
+* Add support for custom icons
+
 ### v3.1.0
 
 * Add initialization support for KDBXv4 files
