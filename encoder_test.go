@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -38,6 +39,11 @@ func TestEncodeFile31(t *testing.T) {
 
 	// Change the value of an entry element to see if the change stays after decoding
 	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = "http://github.com"
+	// apply a custom item
+	db.Content.Root.Groups[0].Groups[0].Entries[0].CustomIconUUID = UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}
+	db.Content.Meta.CustomIcons = []CustomIcon{
+		{UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}, "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZQAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC"},
+	}
 
 	// Lock entries
 	err = db.LockProtectedEntries()
@@ -90,6 +96,14 @@ func TestEncodeFile31(t *testing.T) {
 			url,
 		)
 	}
+
+	if !reflect.DeepEqual(db.Content.Root.Groups[0].Groups[0].Entries[0].CustomIconUUID, UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}) {
+		t.Fatal("Failed to properly encode Custom ICON URL")
+	}
+	if !reflect.DeepEqual(db.Content.Meta.CustomIcons[0], CustomIcon{UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}, "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZQAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC"}) {
+		t.Fatal("Failed to properly store a custom icon in the Meta block")
+	}
+
 }
 
 // Encode database v4.0
@@ -126,7 +140,7 @@ func TestEncodeFile4(t *testing.T) {
 	// Change the value of an entry element to see if the change stays after decoding
 	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = "http://github.com"
 	db.Content.Root.Groups[0].Groups[0].Entries[0].CustomIconUUID = UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}
-	db.Content.Meta.CustomIcons = []CustomIcons{
+	db.Content.Meta.CustomIcons = []CustomIcon{
 		{UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}, "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZQAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC"},
 	}
 
@@ -180,6 +194,12 @@ func TestEncodeFile4(t *testing.T) {
 			"Failed to decode url: should be 'http://github.com' not '%s'",
 			url,
 		)
+	}
+	if !reflect.DeepEqual(db.Content.Root.Groups[0].Groups[0].Entries[0].CustomIconUUID, UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}) {
+		t.Fatal("Failed to properly encode Custom ICON URL")
+	}
+	if !reflect.DeepEqual(db.Content.Meta.CustomIcons[0], CustomIcon{UUID{0xde, 0xad, 0xbe, 0xef, 0xc0, 0xff, 0xee, 0xde, 0xed, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd}, "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZQAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC"}) {
+		t.Fatal("Failed to properly store a custom icon in the Meta block")
 	}
 }
 
