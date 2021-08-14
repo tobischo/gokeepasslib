@@ -1,3 +1,7 @@
+### v3.2.1
+
+* Add missing DefaultSequence in AutoType data
+
 ### v3.2.0
 
 * Add support for custom icons
