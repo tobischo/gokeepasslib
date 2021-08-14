@@ -123,6 +123,7 @@ type V struct {
 type AutoTypeData struct {
 	Enabled                 w.BoolWrapper        `xml:"Enabled"`
 	DataTransferObfuscation int64                `xml:"DataTransferObfuscation"`
+	DefaultSequence         string               `xml:"DefaultSequence"`
 	Association             *AutoTypeAssociation `xml:"Association,omitempty"`
 }
 
