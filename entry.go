@@ -121,10 +121,10 @@ type V struct {
 
 // AutoTypeData is a structure containing auto type settings of an entry
 type AutoTypeData struct {
-	Enabled                 w.BoolWrapper        `xml:"Enabled"`
-	DataTransferObfuscation int64                `xml:"DataTransferObfuscation"`
-	DefaultSequence         string               `xml:"DefaultSequence"`
-	Association             *AutoTypeAssociation `xml:"Association,omitempty"`
+	Enabled                 w.BoolWrapper         `xml:"Enabled"`
+	DataTransferObfuscation int64                 `xml:"DataTransferObfuscation"`
+	DefaultSequence         string                `xml:"DefaultSequence"`
+	Associations            []AutoTypeAssociation `xml:"Association,omitempty"`
 }
 
 // AutoTypeAssociation is a structure that store the keystroke sequence of a window for AutoTypeData

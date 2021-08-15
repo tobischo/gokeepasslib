@@ -1,3 +1,7 @@
+### v3.2.2
+
+* Correctly support multiple Window Associations in an entry's AutoType data
+
 ### v3.2.1
 
 * Add missing DefaultSequence in AutoType data
