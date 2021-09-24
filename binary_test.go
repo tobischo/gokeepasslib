@@ -30,12 +30,18 @@ func TestBinary(t *testing.T) {
 	if references[0].Value.ID != 4 {
 		t.Fatalf("Binary Reference ID is incorrect. Should be 4, was %d", references[0].Value.ID)
 	}
-	if str, _ := references[0].Find(db).GetContent(); str != "test" {
-		t.Fatalf("Binary Reference GetContent is incorrect. Should be `test`, was '%s'", str)
+	if data, _ := references[0].Find(db).GetContentBytes(); string(data) != "test" {
+		t.Fatalf("Binary Reference GetContentBytes is incorrect. Should be `test`, was '%s'", string(data))
+	}
+	if str, _ := references[0].Find(db).GetContentString(); str != "test" {
+		t.Fatalf("Binary Reference GetContentString is incorrect. Should be `test`, was '%s'", str)
 	}
 
 	found := binaries.Find(binary2.ID)
-	if str, _ := found.GetContent(); str != "Hello world!" {
+	if data, _ := found.GetContentBytes(); string(data) != "Hello world!" {
+		t.Fatalf("Binary content from Find is inncorrect. Should be `Hello world!`, was '%s'", string(data))
+	}
+	if str, _ := found.GetContentString(); str != "Hello world!" {
 		t.Fatalf("Binary content from Find is inncorrect. Should be `Hello world!`, was '%s'", str)
 	}
 }
