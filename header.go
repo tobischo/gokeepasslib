@@ -512,7 +512,7 @@ func (h *DBHeader) writeTo(w io.Writer) error {
 	binary.Write(mw, binary.LittleEndian, h.Signature)
 
 	if h.IsKdbx4() {
-		h.FileHeaders.writeTo4(mw, &buffer)
+		h.FileHeaders.writeTo4(mw)
 	} else {
 		h.FileHeaders.writeTo31(mw)
 	}
@@ -523,7 +523,7 @@ func (h *DBHeader) writeTo(w io.Writer) error {
 }
 
 // writeTo4 writes a Kdbx v4 structured file header to the given io.Writer
-func (fh FileHeaders) writeTo4(w io.Writer, buf *bytes.Buffer) error {
+func (fh FileHeaders) writeTo4(w io.Writer) error {
 	compressionFlags := make([]byte, 4)
 	binary.LittleEndian.PutUint32(compressionFlags, fh.CompressionFlags)
 
@@ -569,7 +569,7 @@ func writeTo4Header(w io.Writer, id uint8, data []byte) error {
 	return nil
 }
 
-// writeTo31Header is an helper to write a variant dictionary to the given io.Writer
+// writeTo4VariantDictionary is an helper to write a variant dictionary to the given io.Writer
 func writeTo4VariantDictionary(w io.Writer, id uint8, data *VariantDictionary) error {
 	if data != nil {
 		var buffer bytes.Buffer
