@@ -26,6 +26,7 @@ type Group struct {
 	Name                    string                `xml:"Name"`
 	Notes                   string                `xml:"Notes"`
 	IconID                  int64                 `xml:"IconID"`
+	CustomIconUUID          UUID                  `xml:"CustomIconUUID"`
 	Times                   TimeData              `xml:"Times"`
 	IsExpanded              w.BoolWrapper         `xml:"IsExpanded"`
 	DefaultAutoTypeSequence string                `xml:"DefaultAutoTypeSequence"`
