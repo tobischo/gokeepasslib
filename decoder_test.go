@@ -127,7 +127,7 @@ func TestDecodeFile(t *testing.T) {
 			if binary == nil {
 				t.Fatalf("Failed to find binary")
 			}
-			str, err := binary.GetContent()
+			str, err := binary.GetContentString()
 			if err != nil {
 				t.Fatal("Error getting content from binary: ", err, str)
 			}
