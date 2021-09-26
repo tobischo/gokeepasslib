@@ -65,7 +65,7 @@ func (bs *Binaries) Add(c []byte) *Binary {
 	return &(*bs)[len(*bs)-1]
 }
 
-// GetContentBytes returns a bytes array which is the content of a binary
+// GetContentBytes returns a bytes slice containing content of a binary
 func (b Binary) GetContentBytes() ([]byte, error) {
 	// Check for base64 content (KDBX 3.1), if it fail try with KDBX 4
 	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
@@ -90,7 +90,7 @@ func (b Binary) GetContentBytes() ([]byte, error) {
 	return decoded, nil
 }
 
-// GetContentString returns a string which is the plaintext content of a binary
+// GetContentString returns the content of a binary as a string
 func (b Binary) GetContentString() (string, error) {
 	data, err := b.GetContentBytes()
 
