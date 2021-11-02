@@ -65,8 +65,8 @@ func (bs *Binaries) Add(c []byte) *Binary {
 	return &(*bs)[len(*bs)-1]
 }
 
-// GetContent returns a string which is the plaintext content of a binary
-func (b Binary) GetContent() (string, error) {
+// GetContentBytes returns a bytes slice containing content of a binary
+func (b Binary) GetContentBytes() ([]byte, error) {
 	// Check for base64 content (KDBX 3.1), if it fail try with KDBX 4
 	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
 	_, err := base64.StdEncoding.Decode(decoded, b.Content)
@@ -78,16 +78,34 @@ func (b Binary) GetContent() (string, error) {
 	if b.Compressed.Bool {
 		reader, err := gzip.NewReader(bytes.NewReader(decoded))
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		defer reader.Close()
 		bts, err := ioutil.ReadAll(reader)
 		if err != nil && err != io.ErrUnexpectedEOF {
-			return "", err
+			return nil, err
 		}
-		return string(bts), nil
+		return bts, nil
 	}
-	return string(decoded), nil
+	return decoded, nil
+}
+
+// GetContentString returns the content of a binary as a string
+func (b Binary) GetContentString() (string, error) {
+	data, err := b.GetContentBytes()
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
+
+// GetContent returns a string which is the plaintext content of a binary
+//
+// Deprecated: use GetContentString() instead
+func (b Binary) GetContent() (string, error) {
+	return b.GetContentString()
 }
 
 // SetContent encodes and (if Compressed=true) compresses c and sets b's content

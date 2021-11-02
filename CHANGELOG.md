@@ -1,3 +1,8 @@
+### v3.2.3
+
+* Adds `(*Binary).GetContentString() (string, error)` and `(*Binary).GetContentBytes() ([]byte, error)` funcs
+* Deprecates `(*Binary).GetContent() (string, error)`
+
 ### v3.2.2
 
 * Correctly support multiple Window Associations in an entry's AutoType data
