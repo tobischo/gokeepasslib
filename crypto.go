@@ -27,7 +27,8 @@ type Encrypter interface {
 
 // StreamManager is the manager to handle a Stream
 type StreamManager struct {
-	Stream Stream
+	Stream                Stream
+	protectedValueMapping map[string][]byte
 }
 
 // Stream is responsible for stream encrypting and decrypting of protected fields
@@ -54,8 +55,17 @@ func NewEncrypterManager(key []byte, iv []byte) (manager *EncrypterManager, err 
 	return
 }
 
+// StreamManagerOption allows to provide additional options to the StreamManager
+type StreamManagerOption func(*StreamManager)
+
+func withProtectedValueMapping(mapping map[string][]byte) StreamManagerOption {
+	return func(manager *StreamManager) {
+		manager.protectedValueMapping = mapping
+	}
+}
+
 // NewStreamManager initialize a new StreamManager
-func NewStreamManager(id uint32, key []byte) (manager *StreamManager, err error) {
+func NewStreamManager(id uint32, key []byte, options ...StreamManagerOption) (manager *StreamManager, err error) {
 	var stream Stream
 	manager = new(StreamManager)
 	switch id {
@@ -69,6 +79,11 @@ func NewStreamManager(id uint32, key []byte) (manager *StreamManager, err error)
 		return nil, ErrUnsupportedStreamType
 	}
 	manager.Stream = stream
+
+	for _, option := range options {
+		option(manager)
+	}
+
 	return
 }
 
@@ -84,6 +99,10 @@ func (em *EncrypterManager) Encrypt(data []byte) []byte {
 
 // Unpack returns the payload as unencrypted byte array
 func (cs *StreamManager) Unpack(payload string) []byte {
+	if cs.protectedValueMapping != nil {
+		return cs.protectedValueMapping[payload]
+	}
+
 	return cs.Stream.Unpack(payload)
 }
 
