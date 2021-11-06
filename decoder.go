@@ -91,18 +91,11 @@ func (d *Decoder) Decode(db *Database) error {
 	db.protectedValueMapping = nil
 	// Re-Lock the protected values mapping to ensure that they are locked in memory and
 	// follow the order in which they would be written again
-	err = db.LockProtectedEntries()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.LockProtectedEntries()
 }
 
 func buildProtectedValueMapping(db *Database, content []byte) (map[string][]byte, error) {
-	contentReaderCopy := bytes.NewReader(content)
-
-	decoder := xml.NewDecoder(contentReaderCopy)
+	decoder := xml.NewDecoder(bytes.NewReader(content))
 
 	manager, err := db.GetStreamManager()
 	if err != nil {
