@@ -59,19 +59,87 @@ func (d *Decoder) Decode(db *Database) error {
 		return err
 	}
 
-	contentReader := bytes.NewReader(db.Content.RawData)
+	contentBuffer := bytes.NewBuffer(db.Content.RawData)
 
 	// Read InnerHeader (Kdbx v4)
 	if db.Header.IsKdbx4() {
 		db.Content.InnerHeader = new(InnerHeader)
-		if err := db.Content.InnerHeader.readFrom(contentReader); err != nil {
+		if err := db.Content.InnerHeader.readFrom(contentBuffer); err != nil {
 			return err
 		}
 	}
 
+	db.protectedValueMapping, err = buildProtectedValueMapping(db, contentBuffer.Bytes())
+	if err != nil {
+		return err
+	}
+
 	// Decode xml
-	xmlDecoder := xml.NewDecoder(contentReader)
-	return xmlDecoder.Decode(db.Content)
+	xmlDecoder := xml.NewDecoder(contentBuffer)
+
+	err = xmlDecoder.Decode(db.Content)
+	if err != nil {
+		return err
+	}
+
+	// Unlock protected entries using the protectedValueMapping
+	err = db.UnlockProtectedEntries()
+	if err != nil {
+		return err
+	}
+	// Unset the protected values mapping
+	db.protectedValueMapping = nil
+	// Re-Lock the protected values mapping to ensure that they are locked in memory and
+	// follow the order in which they would be written again
+	err = db.LockProtectedEntries()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func buildProtectedValueMapping(db *Database, content []byte) (map[string][]byte, error) {
+	contentReaderCopy := bytes.NewReader(content)
+
+	decoder := xml.NewDecoder(contentReaderCopy)
+
+	manager, err := db.GetStreamManager()
+	if err != nil {
+		return nil, err
+	}
+
+	protectedValueMapping := make(map[string][]byte)
+
+	var inElement string
+	for {
+		// Read tokens from the XML document in a stream so that we can ensure that
+		// we follow the order in XML for value fields
+		t, _ := decoder.Token()
+		if t == nil {
+			break
+		}
+		// Inspect the type of the token just read.
+		switch se := t.(type) {
+		case xml.StartElement:
+			// If we just read a StartElement token we want to check its name
+			inElement = se.Name.Local
+
+			// and decode it so that we can add it to our mapping
+			if inElement == "Value" {
+				var value V
+				decoder.DecodeElement(&value, &se)
+
+				if value.Protected.Bool {
+					protectedValueMapping[value.Content] = manager.Unpack(value.Content)
+				}
+			}
+		default:
+		}
+
+	}
+
+	return protectedValueMapping, nil
 }
 
 func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err error) {

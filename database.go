@@ -6,11 +6,12 @@ import (
 
 // Database stores all contents necessary for a keepass database file
 type Database struct {
-	Options     *DBOptions
-	Credentials *DBCredentials
-	Header      *DBHeader
-	Hashes      *DBHashes
-	Content     *DBContent
+	Options               *DBOptions
+	Credentials           *DBCredentials
+	Header                *DBHeader
+	Hashes                *DBHashes
+	Content               *DBContent
+	protectedValueMapping map[string][]byte
 }
 
 // DBOptions stores options for database decoding/encoding
@@ -100,12 +101,14 @@ func (db *Database) GetStreamManager() (*StreamManager, error) {
 			return NewStreamManager(
 				db.Content.InnerHeader.InnerRandomStreamID,
 				db.Content.InnerHeader.InnerRandomStreamKey,
+				withProtectedValueMapping(db.protectedValueMapping),
 			)
 		}
 
 		return NewStreamManager(
 			db.Header.FileHeaders.InnerRandomStreamID,
 			db.Header.FileHeaders.ProtectedStreamKey,
+			withProtectedValueMapping(db.protectedValueMapping),
 		)
 	}
 	return nil, nil
