@@ -6,12 +6,11 @@ import (
 
 // Database stores all contents necessary for a keepass database file
 type Database struct {
-	Options               *DBOptions
-	Credentials           *DBCredentials
-	Header                *DBHeader
-	Hashes                *DBHashes
-	Content               *DBContent
-	protectedValueMapping map[string][]byte
+	Options     *DBOptions
+	Credentials *DBCredentials
+	Header      *DBHeader
+	Hashes      *DBHashes
+	Content     *DBContent
 }
 
 // DBOptions stores options for database decoding/encoding
