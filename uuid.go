@@ -44,6 +44,10 @@ func (u *UUID) UnmarshalText(text []byte) error {
 	if err != nil {
 		return err
 	}
+	if length == 0 {
+		*u = NewUUID()
+		return nil
+	}
 	if length != 16 {
 		return ErrInvalidUUIDLength
 	}

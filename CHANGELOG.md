@@ -1,6 +1,7 @@
 ### v3.2.4
 
 * Add support for handling protected value unlocking with `Entry` or `Group` being loaded first from XML
+* Initialize fresh UUIDs on unmarshal in case they are missing
 
 ### v3.2.3
 
