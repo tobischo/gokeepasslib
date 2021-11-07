@@ -23,6 +23,19 @@ func NewEncoder(w io.Writer) *Encoder {
 
 // Encode writes db to e's internal writer
 func (e *Encoder) Encode(db *Database) error {
+	// Unlock protected entries ensuring that we have them prepared in the order that is matching
+	// the xml unmarshalling order
+	err := db.UnlockProtectedEntries()
+	if err != nil {
+		return err
+	}
+	// Re-Lock the protected values mapping to ensure that they are locked in memory and
+	// follow the order in which they would be written again
+	err = db.LockProtectedEntries()
+	if err != nil {
+		return err
+	}
+
 	// ensure timestamps will be formatted correctly
 	db.ensureKdbxFormatVersion()
 

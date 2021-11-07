@@ -1,7 +1,16 @@
 package gokeepasslib
 
 import (
+	"encoding/xml"
+	"io"
+
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
+)
+
+const (
+	groupChildOrderDefault = iota
+	groupChildOrderEntryFirst
+	groupChildOrderGroupFirst
 )
 
 type GroupOption func(*Group)
@@ -35,6 +44,76 @@ type Group struct {
 	LastTopVisibleEntry     string                `xml:"LastTopVisibleEntry"`
 	Entries                 []Entry               `xml:"Entry,omitempty"`
 	Groups                  []Group               `xml:"Group,omitempty"`
+	groupChildOrder         int                   `xml:"-"`
+}
+
+// UnmarshalXML unmarshals the boolean from d
+func (g *Group) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	for {
+		token, err := d.Token()
+		if err == io.EOF {
+			break
+		}
+		switch element := token.(type) {
+		case xml.StartElement:
+			unmarshalGroupToken(g, d, element)
+		}
+	}
+
+	return nil
+}
+
+func unmarshalGroupToken(g *Group, d *xml.Decoder, element xml.StartElement) error {
+	switch element.Name.Local {
+	case "Entry":
+		if g.groupChildOrder == groupChildOrderDefault {
+			g.groupChildOrder = groupChildOrderEntryFirst
+		}
+
+		var entry Entry
+		err := d.DecodeElement(&entry, &element)
+		if err != nil {
+			return err
+		}
+
+		g.Entries = append(g.Entries, entry)
+	case "Group":
+		if g.groupChildOrder == groupChildOrderDefault {
+			g.groupChildOrder = groupChildOrderGroupFirst
+		}
+
+		var group Group
+		err := d.DecodeElement(&group, &element)
+		if err != nil {
+			return err
+		}
+
+		g.Groups = append(g.Groups, group)
+	case "UUID":
+		return d.DecodeElement(&g.UUID, &element)
+	case "Name":
+		return d.DecodeElement(&g.Name, &element)
+	case "Notes":
+		return d.DecodeElement(&g.Notes, &element)
+	case "IconID":
+		return d.DecodeElement(&g.IconID, &element)
+	case "CustomIconUUID":
+		return d.DecodeElement(&g.CustomIconUUID, &element)
+	case "Times":
+		return d.DecodeElement(&g.Times, &element)
+	case "IsExpanded":
+		return d.DecodeElement(&g.IsExpanded, &element)
+	case "DefaultAutoTypeSequence":
+		return d.DecodeElement(&g.DefaultAutoTypeSequence, &element)
+	case "EnableAutoType":
+		return d.DecodeElement(&g.EnableAutoType, &element)
+	case "EnableSearching":
+		return d.DecodeElement(&g.EnableSearching, &element)
+	case "LastTopVisibleEntry":
+		return d.DecodeElement(&g.LastTopVisibleEntry, &element)
+	}
+
+	return nil
 }
 
 // NewGroup returns a new group with time data and uuid set

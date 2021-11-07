@@ -28,4 +28,16 @@ func TestUUID(t *testing.T) {
 	if err != ErrInvalidUUIDLength {
 		t.Fatalf("Expected invalid uuid error, got: %s", err)
 	}
+
+	four := UUID{}
+	err = four.UnmarshalText([]byte(""))
+	if err != nil {
+		t.Fatalf("Expected no error but received: %s", err)
+	}
+
+	five := UUID{}
+
+	if five.Compare(four) {
+		t.Fatalf("four and five UUIDs should not be equal but are")
+	}
 }

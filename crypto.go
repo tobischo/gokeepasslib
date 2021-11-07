@@ -101,8 +101,22 @@ func (cs *StreamManager) UnlockProtectedGroups(gs []Group) {
 
 // UnlockProtectedGroup unlocks a protected group
 func (cs *StreamManager) UnlockProtectedGroup(g *Group) {
-	cs.UnlockProtectedEntries(g.Entries)
-	cs.UnlockProtectedGroups(g.Groups)
+	// Some KDBX files have groups defined before entries depending on the tool that
+	// they were created with.
+	// This also influences the locking order for the stream processing.
+	// In order to correctly check the order we have to check based on the groupChildOrder value
+	// this is set during unmarshalling
+	if g.groupChildOrder == groupChildOrderGroupFirst {
+		cs.UnlockProtectedGroups(g.Groups)
+		cs.UnlockProtectedEntries(g.Entries)
+	} else {
+		cs.UnlockProtectedEntries(g.Entries)
+		cs.UnlockProtectedGroups(g.Groups)
+	}
+
+	// unset groupChildOrder as for future marshalling the order in the struct superseeds
+	// the order in the XML
+	g.groupChildOrder = groupChildOrderDefault
 }
 
 // UnlockProtectedEntries unlocks an array of protected entries
