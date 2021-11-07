@@ -1,7 +1,14 @@
 package gokeepasslib
 
 import (
+	"bytes"
+	"encoding/xml"
+	"errors"
+	"reflect"
 	"testing"
+	"time"
+
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 func TestNewGroup(t *testing.T) {
@@ -125,5 +132,110 @@ func TestGroupSetKdbxFormatVersion(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestGroupUnmarshalXML(t *testing.T) {
+	creationTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26+02:00")
+	lastModificationTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26+02:00")
+	lastAccessTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:10:00+02:00")
+	expiryTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:07:11+02:00")
+	locationChanged, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26+02:00")
+
+	cases := []struct {
+		title         string
+		xmlData       string
+		expectedGroup Group
+		expectedErr   error
+	}{
+		{
+			title:   "empty group",
+			xmlData: "<Group></Group>",
+		},
+		{
+			title:   "child group first",
+			xmlData: "<Group><Group></Group><Entry></Entry></Group>",
+			expectedGroup: Group{
+				Entries:         []Entry{{}},
+				Groups:          []Group{{}},
+				groupChildOrder: groupChildOrderGroupFirst,
+			},
+		},
+		{
+			title:   "child entry first",
+			xmlData: "<Group><Entry></Entry><Group></Group></Group>",
+			expectedGroup: Group{
+				Entries:         []Entry{{}},
+				Groups:          []Group{{}},
+				groupChildOrder: groupChildOrderEntryFirst,
+			},
+		},
+		{
+			title: "with the other fields",
+			xmlData: `
+      <Group>
+        <UUID>uJSFMJ8KrUSO0Qiivnk2Eg==</UUID>
+        <Name>kdbx4key</Name>
+        <Notes>notes</Notes>
+        <IconID>49</IconID>
+        <Times>
+          <CreationTime>ZqNL1A4AAAA=</CreationTime>
+          <LastModificationTime>ZqNL1A4AAAA=</LastModificationTime>
+          <LastAccessTime>iKNL1A4AAAA=</LastAccessTime>
+          <ExpiryTime>36JL1A4AAAA=</ExpiryTime>
+          <Expires>False</Expires>
+          <UsageCount>1</UsageCount>
+          <LocationChanged>ZqNL1A4AAAA=</LocationChanged>
+        </Times>
+        <IsExpanded>True</IsExpanded>
+        <DefaultAutoTypeSequence>abc</DefaultAutoTypeSequence>
+        <EnableAutoType>True</EnableAutoType>
+        <EnableSearching>False</EnableSearching>
+        <LastTopVisibleEntry>SnB29sd3a06jo6GR1BkGBQ==</LastTopVisibleEntry>
+       </Group>`,
+			expectedGroup: Group{
+				UUID: UUID{
+					0xb8, 0x94, 0x85, 0x30,
+					0x9f, 0xa, 0xad, 0x44,
+					0x8e, 0xd1, 0x8, 0xa2,
+					0xbe, 0x79, 0x36, 0x12,
+				},
+				Name:   "kdbx4key",
+				Notes:  "notes",
+				IconID: 49,
+				Times: TimeData{
+					CreationTime:         &w.TimeWrapper{Formatted: false, Time: creationTime},
+					LastModificationTime: &w.TimeWrapper{Formatted: false, Time: lastModificationTime},
+					LastAccessTime:       &w.TimeWrapper{Formatted: false, Time: lastAccessTime},
+					ExpiryTime:           &w.TimeWrapper{Formatted: false, Time: expiryTime},
+					Expires:              w.NewBoolWrapper(false),
+					UsageCount:           1,
+					LocationChanged:      &w.TimeWrapper{Formatted: false, Time: locationChanged},
+				},
+				IsExpanded:              w.NewBoolWrapper(true),
+				DefaultAutoTypeSequence: "abc",
+				EnableAutoType:          w.NewNullableBoolWrapper(true),
+				EnableSearching:         w.NewNullableBoolWrapper(false),
+				LastTopVisibleEntry:     "SnB29sd3a06jo6GR1BkGBQ==",
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			decoder := xml.NewDecoder(bytes.NewBuffer([]byte(c.xmlData)))
+
+			var group Group
+
+			err := decoder.Decode(&group)
+
+			if !errors.Is(c.expectedErr, err) {
+				t.Errorf("Expected %#v, received %#v", c.expectedErr, err)
+			}
+
+			if !reflect.DeepEqual(c.expectedGroup, group) {
+				t.Errorf("Expected %#v, received %#v", c.expectedGroup, group)
+			}
+
+		})
+	}
 }

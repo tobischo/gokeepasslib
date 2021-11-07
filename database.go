@@ -101,14 +101,12 @@ func (db *Database) GetStreamManager() (*StreamManager, error) {
 			return NewStreamManager(
 				db.Content.InnerHeader.InnerRandomStreamID,
 				db.Content.InnerHeader.InnerRandomStreamKey,
-				withProtectedValueMapping(db.protectedValueMapping),
 			)
 		}
 
 		return NewStreamManager(
 			db.Header.FileHeaders.InnerRandomStreamID,
 			db.Header.FileHeaders.ProtectedStreamKey,
-			withProtectedValueMapping(db.protectedValueMapping),
 		)
 	}
 	return nil, nil

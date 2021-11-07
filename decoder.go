@@ -59,39 +59,20 @@ func (d *Decoder) Decode(db *Database) error {
 		return err
 	}
 
-	contentBuffer := bytes.NewBuffer(db.Content.RawData)
+	contentReader := bytes.NewReader(db.Content.RawData)
 
 	// Read InnerHeader (Kdbx v4)
 	if db.Header.IsKdbx4() {
 		db.Content.InnerHeader = new(InnerHeader)
-		if err := db.Content.InnerHeader.readFrom(contentBuffer); err != nil {
+		if err := db.Content.InnerHeader.readFrom(contentReader); err != nil {
 			return err
 		}
 	}
 
-	db.protectedValueMapping, err = buildProtectedValueMapping(db, contentBuffer.Bytes())
-	if err != nil {
-		return err
-	}
-
 	// Decode xml
-	xmlDecoder := xml.NewDecoder(contentBuffer)
+	xmlDecoder := xml.NewDecoder(contentReader)
 
-	err = xmlDecoder.Decode(db.Content)
-	if err != nil {
-		return err
-	}
-
-	// Unlock protected entries using the protectedValueMapping
-	err = db.UnlockProtectedEntries()
-	if err != nil {
-		return err
-	}
-	// Unset the protected values mapping
-	db.protectedValueMapping = nil
-	// Re-Lock the protected values mapping to ensure that they are locked in memory and
-	// follow the order in which they would be written again
-	return db.LockProtectedEntries()
+	return xmlDecoder.Decode(db.Content)
 }
 
 func buildProtectedValueMapping(db *Database, content []byte) (map[string][]byte, error) {
