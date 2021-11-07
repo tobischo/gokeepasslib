@@ -69,7 +69,6 @@ func NewStreamManager(id uint32, key []byte) (manager *StreamManager, err error)
 		return nil, ErrUnsupportedStreamType
 	}
 	manager.Stream = stream
-
 	return
 }
 

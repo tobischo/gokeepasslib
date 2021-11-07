@@ -71,49 +71,7 @@ func (d *Decoder) Decode(db *Database) error {
 
 	// Decode xml
 	xmlDecoder := xml.NewDecoder(contentReader)
-
 	return xmlDecoder.Decode(db.Content)
-}
-
-func buildProtectedValueMapping(db *Database, content []byte) (map[string][]byte, error) {
-	decoder := xml.NewDecoder(bytes.NewReader(content))
-
-	manager, err := db.GetStreamManager()
-	if err != nil {
-		return nil, err
-	}
-
-	protectedValueMapping := make(map[string][]byte)
-
-	var inElement string
-	for {
-		// Read tokens from the XML document in a stream so that we can ensure that
-		// we follow the order in XML for value fields
-		t, _ := decoder.Token()
-		if t == nil {
-			break
-		}
-		// Inspect the type of the token just read.
-		switch se := t.(type) {
-		case xml.StartElement:
-			// If we just read a StartElement token we want to check its name
-			inElement = se.Name.Local
-
-			// and decode it so that we can add it to our mapping
-			if inElement == "Value" {
-				var value V
-				decoder.DecodeElement(&value, &se)
-
-				if value.Protected.Bool {
-					protectedValueMapping[value.Content] = manager.Unpack(value.Content)
-				}
-			}
-		default:
-		}
-
-	}
-
-	return protectedValueMapping, nil
 }
 
 func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err error) {
