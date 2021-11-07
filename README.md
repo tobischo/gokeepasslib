@@ -1,8 +1,6 @@
 gokeepasslib
 ============
 
-[![Travis Build state](https://api.travis-ci.org/tobischo/gokeepasslib.svg)](https://travis-ci.org/tobischo/gokeepasslib)
-
 gokeepasslib is a library which allows reading Keepass 2 files (kdbx).
 
 Note: only Keepass v2.30 or higher is properly supported since earlier versions do not allow empty XML tags but expected self-closing tags (which is valid XML but not really supported by Golang on XML marshaling)
