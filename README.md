@@ -36,7 +36,7 @@ import (
 )
 
 func main() {
-    file, _ := os.Open("examples/example.kdbx")
+    file, _ := os.Open("examples/reading/example.kdbx")
 
     db := gokeepasslib.NewDatabase()
     db.Credentials = gokeepasslib.NewPasswordCredentials("abcdefg12345678")
@@ -58,11 +58,11 @@ In kdbx files, which are encrypted using the file credentials, fields are protec
 
 ### Example: writing a file
 
-See [examples/example-writing.go](examples/example-writing.go)
+See [examples/writing/example-writing.go](examples/example-writing.go)
 
 ### Example: deleting a file
 
-See [examples/example-deleting.go](examples/example-deleting.go)
+See [examples/deleting/example-deleting.go](examples/example-deleting.go)
 
 ### TODO
 
