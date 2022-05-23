@@ -1,11 +1,13 @@
 package gokeepasslib
 
 import (
+	"bytes"
+	"crypto/rand"
 	"testing"
 )
 
 // Tests that binaries can set and get content correctly compressed or uncompressed
-func TestBinary(t *testing.T) {
+func TestBinaryKDBXv31(t *testing.T) {
 	db := NewDatabase()
 	binaries := Binaries{}
 
@@ -43,5 +45,29 @@ func TestBinary(t *testing.T) {
 	}
 	if str, _ := found.GetContentString(); str != "Hello world!" {
 		t.Fatalf("Binary content from Find is inncorrect. Should be `Hello world!`, was '%s'", str)
+	}
+}
+
+func TestBinaryKDBXv4(t *testing.T) {
+	db := NewDatabase(WithDatabaseKDBXVersion4())
+
+	randomData := make([]byte, 1024*1024)
+	rand.Read(randomData)
+	binary := db.AddBinary(randomData)
+
+	db.LockProtectedEntries()
+	var buffer bytes.Buffer
+	encoder := NewEncoder(&buffer)
+	encoder.Encode(db)
+	db = NewDatabase(WithDatabaseKDBXVersion4())
+	decoder := NewDecoder(bytes.NewReader(buffer.Bytes()))
+	decoder.Decode(db)
+	db.UnlockProtectedEntries()
+
+	found := db.Content.InnerHeader.Binaries.Find(binary.ID)
+	if data, _ := found.GetContentBytes(); string(data) != string(randomData) {
+		t.Log("Received:", len(data))
+		t.Log("Expexted:", len(randomData))
+		t.Fatalf("Binary content from Find is incorrect")
 	}
 }
