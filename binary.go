@@ -68,7 +68,7 @@ func WithKDBXv31Binary(binary *Binary) {
 	binary.isKDBX4 = false
 }
 
-// Add appends binary data to the slice
+// Deprecated: Add appends binary data to the slice
 // Note: this function should not be used directly, use `Database.AddBinary(c []byte) *Binary` instead
 func (bs *Binaries) Add(c []byte, options ...BinaryOption) *Binary {
 	binary := Binary{
