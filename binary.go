@@ -91,18 +91,12 @@ func (bs *Binaries) Add(c []byte, options ...BinaryOption) *Binary {
 
 // GetContentBytes returns a bytes slice containing content of a binary
 func (b Binary) GetContentBytes() ([]byte, error) {
-	var decoded []byte
-
-	// KDBX 3.1 content is base64 encoded, KDBX 4 content is not
-	if b.isKDBX4 {
+	// Check for base64 content (KDBX 3.1), if it fail try with KDBX 4
+	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
+	_, err := base64.StdEncoding.Decode(decoded, b.Content)
+	if err != nil {
+		// KDBX 4 doesn't encode it
 		decoded = b.Content[:]
-	} else {
-		decoded = make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
-		_, err := base64.StdEncoding.Decode(decoded, b.Content)
-		// In case of an error here, assume that it was not base64 encoded
-		if err != nil {
-			decoded = b.Content[:]
-		}
 	}
 
 	if b.Compressed.Bool {
