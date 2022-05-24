@@ -37,10 +37,22 @@ func TestBinaryKDBXv31(t *testing.T) {
 
 	found := db.FindBinary(binary2.ID)
 	if data, _ := found.GetContentBytes(); string(data) != "Hello world!" {
-		t.Fatalf("Binary content from Find is inncorrect. Should be `Hello world!`, was '%s'", string(data))
+		t.Fatalf("Binary content from FindBinary is inncorrect. Should be `Hello world!`, was '%s'", string(data))
 	}
 	if str, _ := found.GetContentString(); str != "Hello world!" {
-		t.Fatalf("Binary content from Find is inncorrect. Should be `Hello world!`, was '%s'", str)
+		t.Fatalf("Binary content from FindBinary is inncorrect. Should be `Hello world!`, was '%s'", str)
+	}
+
+	removed := db.RemoveBinary(binary2.ID)
+	if data, _ := removed.GetContentBytes(); string(data) != "Hello world!" {
+		t.Fatalf("Binary content from RemoveBinary is inncorrect. Should be `Hello world!`, was '%s'", string(data))
+	}
+	if str, _ := removed.GetContentString(); str != "Hello world!" {
+		t.Fatalf("Binary content from RemoveBinary is inncorrect. Should be `Hello world!`, was '%s'", str)
+	}
+
+	if db.FindBinary(binary2.ID) != nil {
+		t.Fatalf("Binary content from FindBinary is inncorrect. It should be removed, but it still exists")
 	}
 }
 

@@ -156,6 +156,20 @@ func (db *Database) FindBinary(id int) *Binary {
 	return db.Content.Meta.Binaries.Find(id)
 }
 
+// RemoveBinary removes a binary from the database by the given id.
+// If no binary with the ID exists, it return nil
+func (db *Database) RemoveBinary(id int) *Binary {
+	if db.Header.IsKdbx4() {
+		b, binaries := db.Content.InnerHeader.Binaries.remove(id)
+		db.Content.InnerHeader.Binaries = binaries
+		return b
+	}
+
+	b, binaries := db.Content.Meta.Binaries.remove(id)
+	db.Content.Meta.Binaries = binaries
+	return b
+}
+
 // ErrRequiredAttributeMissing is returned if a required value is not given
 type ErrRequiredAttributeMissing string
 
