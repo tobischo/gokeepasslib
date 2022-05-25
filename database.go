@@ -149,6 +149,7 @@ func (db *Database) AddBinary(binaryContent []byte) *Binary {
 	return db.Content.Meta.Binaries.Add(binaryContent, WithKDBXv31Binary)
 }
 
+// FindBinary returns the binary with the given id if one could be found. It returns nil otherwise
 func (db *Database) FindBinary(id int) *Binary {
 	if db.Header.IsKdbx4() {
 		return db.Content.InnerHeader.Binaries.Find(id)
