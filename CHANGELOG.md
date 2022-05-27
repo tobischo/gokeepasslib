@@ -1,3 +1,7 @@
+### v3.3.0
+
+* Add database `AddBinary` and `FindBinary` functions
+
 ### v3.2.5
 
 * Add missing CustomData support for entries
