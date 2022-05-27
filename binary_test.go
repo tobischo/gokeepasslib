@@ -44,48 +44,6 @@ func TestBinaryKDBXv31(t *testing.T) {
 	}
 }
 
-func TestBinaryKDBXv31RemoveBinary(t *testing.T) {
-	db := NewDatabase()
-
-	db.AddBinary([]byte("test 1"))
-	binary2 := db.AddBinary([]byte("test 2"))
-	binary3 := db.AddBinary([]byte("test 3"))
-	db.AddBinary([]byte("test 4"))
-	db.AddBinary([]byte("test 5"))
-
-	if len(db.Content.Meta.Binaries) != 5 {
-		t.Fatalf("Expected 5 binary elements, found %d", len(db.Content.Meta.Binaries))
-	}
-
-	found := db.FindBinary(binary2.ID)
-	if data, _ := found.GetContentBytes(); string(data) != "test 2" {
-		t.Fatalf("Binary content from FindBinary is incorrect. Should be `test 2`, was '%s'", string(data))
-	}
-
-	removed := db.RemoveBinary(binary2.ID)
-	str, _ := removed.GetContentString()
-	expectedStr, _ := binary2.GetContentString()
-	if str != expectedStr {
-		t.Fatalf(
-			"Binary content from RemoveBinary is incorrect. Should be `%s`, was '%s'",
-			expectedStr,
-			str,
-		)
-	}
-
-	if db.FindBinary(binary2.ID) != nil {
-		t.Fatalf("Binary content from FindBinary is incorrect. It should be removed, but it still exists")
-	}
-
-	if db.FindBinary(binary3.ID) == nil {
-		t.Fatalf("Binary content from FindBinary is incorrect. It should exist")
-	}
-
-	if len(db.Content.Meta.Binaries) != 4 {
-		t.Fatalf("Expected 4 binary elements, found %d", len(db.Content.Meta.Binaries))
-	}
-}
-
 func TestBinaryKDBXv4(t *testing.T) {
 	db := NewDatabase(WithDatabaseKDBXVersion4())
 
@@ -107,47 +65,5 @@ func TestBinaryKDBXv4(t *testing.T) {
 		t.Log("Received:", len(data))
 		t.Log("Expexted:", len(randomData))
 		t.Fatalf("Binary content from Find is incorrect")
-	}
-}
-
-func TestBinaryKDBXv4RemoveBinary(t *testing.T) {
-	db := NewDatabase(WithDatabaseKDBXVersion4())
-
-	db.AddBinary([]byte("test 1"))
-	binary2 := db.AddBinary([]byte("test 2"))
-	binary3 := db.AddBinary([]byte("test 3"))
-	db.AddBinary([]byte("test 4"))
-	db.AddBinary([]byte("test 5"))
-
-	if len(db.Content.InnerHeader.Binaries) != 5 {
-		t.Fatalf("Expected 5 binary elements, found %d", len(db.Content.InnerHeader.Binaries))
-	}
-
-	found := db.FindBinary(binary2.ID)
-	if data, _ := found.GetContentBytes(); string(data) != "test 2" {
-		t.Fatalf("Binary content from FindBinary is incorrect. Should be `test 2`, was '%s'", string(data))
-	}
-
-	removed := db.RemoveBinary(binary2.ID)
-	str, _ := removed.GetContentString()
-	expectedStr, _ := binary2.GetContentString()
-	if str != expectedStr {
-		t.Fatalf(
-			"Binary content from RemoveBinary is incorrect. Should be `%s`, was '%s'",
-			expectedStr,
-			str,
-		)
-	}
-
-	if db.FindBinary(binary2.ID) != nil {
-		t.Fatalf("Binary content from FindBinary is incorrect. It should be removed, but it still exists")
-	}
-
-	if db.FindBinary(binary3.ID) == nil {
-		t.Fatalf("Binary content from FindBinary is incorrect. It should exist")
-	}
-
-	if len(db.Content.InnerHeader.Binaries) != 4 {
-		t.Fatalf("Expected 4 binary elements, found %d", len(db.Content.InnerHeader.Binaries))
 	}
 }
