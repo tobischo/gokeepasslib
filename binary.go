@@ -43,20 +43,6 @@ func (bs Binaries) Find(id int) *Binary {
 	return nil
 }
 
-func (bs Binaries) remove(id int) (*Binary, Binaries) {
-	for i := range bs {
-		if bs[i].ID == id {
-
-			b := bs[i]
-
-			updated := append(bs[:i], bs[i+1:]...)
-
-			return &b, updated
-		}
-	}
-	return nil, bs
-}
-
 // Find returns a reference to a binary in the database db with the same id as br, or nil if none is found
 func (br *BinaryReference) Find(db *Database) *Binary {
 	if db.Header.IsKdbx4() {
