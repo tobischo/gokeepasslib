@@ -43,7 +43,8 @@ func (bs Binaries) Find(id int) *Binary {
 	return nil
 }
 
-// Find returns a reference to a binary in the database db with the same id as br, or nil if none is found
+// Deprecated: Find returns a reference to a binary in the database db with the same id as br, or nil if none is found
+// Note: this function should not be used directly, use `Database.FindBinary(id int) *Binary` instead
 func (br *BinaryReference) Find(db *Database) *Binary {
 	if db.Header.IsKdbx4() {
 		return db.Content.InnerHeader.Binaries.Find(br.Value.ID)
@@ -52,6 +53,7 @@ func (br *BinaryReference) Find(db *Database) *Binary {
 }
 
 // BinaryOption is the option function type for use with Binary structs
+// TODO: Remove this option and call all the KDBX version depended functions from database interface
 type BinaryOption func(binary *Binary)
 
 // WithKDBXv4Binary can be passed to the Binaries.Add function as an option to ensure
@@ -71,6 +73,12 @@ func WithKDBXv31Binary(binary *Binary) {
 // Deprecated: Add appends binary data to the slice
 // Note: this function should not be used directly, use `Database.AddBinary(c []byte) *Binary` instead
 func (bs *Binaries) Add(c []byte, options ...BinaryOption) *Binary {
+	for _, binary := range *bs {
+		if bytes.Equal(binary.Content, c) {
+			return &binary
+		}
+	}
+
 	binary := Binary{
 		Compressed: w.NewBoolWrapper(true),
 	}

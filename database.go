@@ -136,6 +136,7 @@ func (db *Database) LockProtectedEntries() error {
 	if err != nil {
 		return err
 	}
+	db.cleanupBinaries()
 	manager.LockProtectedGroups(db.Content.Root.Groups)
 	return nil
 }
@@ -151,10 +152,7 @@ func (db *Database) AddBinary(binaryContent []byte) *Binary {
 
 // FindBinary returns the binary with the given id if one could be found. It returns nil otherwise
 func (db *Database) FindBinary(id int) *Binary {
-	if db.Header.IsKdbx4() {
-		return db.Content.InnerHeader.Binaries.Find(id)
-	}
-	return db.Content.Meta.Binaries.Find(id)
+	return db.getBinaries().Find(id)
 }
 
 // ErrRequiredAttributeMissing is returned if a required value is not given
@@ -165,4 +163,68 @@ func (e ErrRequiredAttributeMissing) Error() string {
 		"gokeepasslib: operation can not be performed if database does not have %s",
 		string(e),
 	)
+}
+
+type BinariesUsages map[int][]BinaryReference
+
+func (db *Database) getBinaries() *Binaries {
+	if db.Header.IsKdbx4() {
+		return &db.Content.InnerHeader.Binaries
+	}
+
+	return &db.Content.Meta.Binaries
+}
+
+func (db *Database) cleanupBinaries() int {
+	usages := db.getBinariesUsages()
+	binaries := Binaries{}
+
+	removed := 0
+	counter := 0
+
+	for _, binary := range *db.getBinaries() {
+		if _, ok := usages[binary.ID]; ok {
+			binary.ID = counter
+			binaries = append(binaries, binary)
+			for _, ref := range usages[binary.ID] {
+				ref.Value.ID = binary.ID
+			}
+			counter++
+		} else {
+			removed++
+		}
+	}
+
+	*db.getBinaries() = append(Binaries{}, binaries...)
+	return removed
+}
+
+func (db *Database) getBinariesUsages() BinariesUsages {
+	result := BinariesUsages{}
+
+	for _, ref := range db.getAllBinariesReferenes(&db.Content.Root.Groups[0]) {
+		result[ref.Value.ID] = append(result[ref.Value.ID], ref)
+	}
+
+	return result
+}
+
+func (db *Database) getAllBinariesReferenes(parent *Group) []BinaryReference {
+	result := []BinaryReference{}
+
+	if parent != nil {
+		for _, entry := range parent.Entries {
+			result = append(result, entry.Binaries...)
+			for _, history := range entry.Histories {
+				for _, historyEntry := range history.Entries {
+					result = append(result, historyEntry.Binaries...)
+				}
+			}
+		}
+		for _, group := range parent.Groups {
+			result = append(result, db.getAllBinariesReferenes(&group)...)
+		}
+	}
+
+	return result
 }

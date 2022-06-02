@@ -1,7 +1,6 @@
 package gokeepasslib
 
 import (
-	"bytes"
 	"crypto/rand"
 	"testing"
 )
@@ -28,10 +27,10 @@ func TestBinaryKDBXv31(t *testing.T) {
 	if references[0].Value.ID != 4 {
 		t.Fatalf("Binary Reference ID is incorrect. Should be 4, was %d", references[0].Value.ID)
 	}
-	if data, _ := references[0].Find(db).GetContentBytes(); string(data) != "test" {
+	if data, _ := db.FindBinary(references[0].Value.ID).GetContentBytes(); string(data) != "test" {
 		t.Fatalf("Binary Reference GetContentBytes is incorrect. Should be `test`, was '%s'", string(data))
 	}
-	if str, _ := references[0].Find(db).GetContentString(); str != "test" {
+	if str, _ := db.FindBinary(references[0].Value.ID).GetContentString(); str != "test" {
 		t.Fatalf("Binary Reference GetContentString is incorrect. Should be `test`, was '%s'", str)
 	}
 
@@ -51,16 +50,7 @@ func TestBinaryKDBXv4(t *testing.T) {
 	rand.Read(randomData)
 	binary := db.AddBinary(randomData)
 
-	db.LockProtectedEntries()
-	var buffer bytes.Buffer
-	encoder := NewEncoder(&buffer)
-	encoder.Encode(db)
-	db = NewDatabase(WithDatabaseKDBXVersion4())
-	decoder := NewDecoder(bytes.NewReader(buffer.Bytes()))
-	decoder.Decode(db)
-	db.UnlockProtectedEntries()
-
-	found := db.Content.InnerHeader.Binaries.Find(binary.ID)
+	found := db.FindBinary(binary.ID)
 	if data, _ := found.GetContentBytes(); string(data) != string(randomData) {
 		t.Log("Received:", len(data))
 		t.Log("Expexted:", len(randomData))
