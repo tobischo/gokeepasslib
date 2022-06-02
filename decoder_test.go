@@ -123,7 +123,7 @@ func TestDecodeFile(t *testing.T) {
 			}
 
 			// Test binary file matching
-			binary := db.Content.Root.Groups[0].Groups[1].Entries[0].Binaries[0].Find(db)
+			binary := db.FindBinary(db.Content.Root.Groups[0].Groups[1].Entries[0].Binaries[0].Value.ID)
 			if binary == nil {
 				t.Fatalf("Failed to find binary")
 			}
