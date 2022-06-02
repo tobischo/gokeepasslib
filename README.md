@@ -58,11 +58,11 @@ In kdbx files, which are encrypted using the file credentials, fields are protec
 
 ### Example: writing a file
 
-See [examples/writing/example-writing.go](examples/example-writing.go)
+See [examples/writing/example-writing.go](examples/writing/example-writing.go)
 
 ### Example: deleting a file
 
-See [examples/deleting/example-deleting.go](examples/example-deleting.go)
+See [examples/deleting/example-deleting.go](examples/deleting/example-deleting.go)
 
 ### TODO
 
@@ -79,4 +79,4 @@ See [examples/deleting/example-deleting.go](examples/example-deleting.go)
 [LICENSE](LICENSE.md)
 
 ### Copyright
-Copyright &copy; 2020 Tobias Schoknecht. All rights reserved.
+Copyright &copy; 2022 Tobias Schoknecht. All rights reserved.

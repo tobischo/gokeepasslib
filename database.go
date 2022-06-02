@@ -140,6 +140,23 @@ func (db *Database) LockProtectedEntries() error {
 	return nil
 }
 
+// AddBinary adds a binary to the database.
+// It takes care of adding it to the correct place based on the format version
+func (db *Database) AddBinary(binaryContent []byte) *Binary {
+	if db.Header.IsKdbx4() {
+		return db.Content.InnerHeader.Binaries.Add(binaryContent, WithKDBXv4Binary)
+	}
+	return db.Content.Meta.Binaries.Add(binaryContent, WithKDBXv31Binary)
+}
+
+// FindBinary returns the binary with the given id if one could be found. It returns nil otherwise
+func (db *Database) FindBinary(id int) *Binary {
+	if db.Header.IsKdbx4() {
+		return db.Content.InnerHeader.Binaries.Find(id)
+	}
+	return db.Content.Meta.Binaries.Find(id)
+}
+
 // ErrRequiredAttributeMissing is returned if a required value is not given
 type ErrRequiredAttributeMissing string
 

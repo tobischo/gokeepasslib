@@ -28,6 +28,7 @@ type Entry struct {
 	AutoType        AutoTypeData      `xml:"AutoType"`
 	Histories       []History         `xml:"History"`
 	Binaries        []BinaryReference `xml:"Binary,omitempty"`
+	CustomData      []CustomData      `xml:"CustomData>Item"`
 }
 
 // NewEntry return a new entry with time data and uuid set

@@ -112,11 +112,17 @@ ForLoop:
 			binary.Read(reader, binary.LittleEndian, &protection) // Read memory protection flag
 			content, _ := ioutil.ReadAll(reader)                  // Read content
 
-			ih.Binaries = append(ih.Binaries, Binary{
-				ID:               binaryCount,
-				MemoryProtection: protection,
-				Content:          content,
-			})
+			ih.Binaries = append(
+				ih.Binaries,
+				Binary{
+					ID:               binaryCount,
+					MemoryProtection: protection,
+					Content:          content,
+					// Ensure that loading the binary data
+					// correctly considers the encoding/decoding of binary data
+					isKDBX4: true,
+				},
+			)
 
 			binaryCount = binaryCount + 1
 		default:

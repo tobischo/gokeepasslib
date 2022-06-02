@@ -22,6 +22,7 @@ type Binary struct {
 	MemoryProtection byte          `xml:"-"`               // Memory protection flag (Only KDBX v4)
 	Content          []byte        `xml:",innerxml"`       // Binary content
 	Compressed       w.BoolWrapper `xml:"Compressed,attr"` // Compressed flag (Only KDBX v3.1)
+	isKDBX4          bool          `xml:"-"`
 }
 
 // BinaryReference stores a reference to a binary which appears in the xml of an entry
@@ -50,11 +51,34 @@ func (br *BinaryReference) Find(db *Database) *Binary {
 	return db.Content.Meta.Binaries.Find(br.Value.ID)
 }
 
-// Add appends binary data to the slice
-func (bs *Binaries) Add(c []byte) *Binary {
+// BinaryOption is the option function type for use with Binary structs
+type BinaryOption func(binary *Binary)
+
+// WithKDBXv4Binary can be passed to the Binaries.Add function as an option to ensure
+// that the Binary will follow the KDBXv4 format
+func WithKDBXv4Binary(binary *Binary) {
+	binary.Compressed = w.NewBoolWrapper(false)
+	binary.isKDBX4 = true
+}
+
+// WithKDBXv31Binary can be passed to the Binaries.Add function as an option to ensure
+// that the Binary will follow the KDBXv31 format
+func WithKDBXv31Binary(binary *Binary) {
+	binary.Compressed = w.NewBoolWrapper(true)
+	binary.isKDBX4 = false
+}
+
+// Deprecated: Add appends binary data to the slice
+// Note: this function should not be used directly, use `Database.AddBinary(c []byte) *Binary` instead
+func (bs *Binaries) Add(c []byte, options ...BinaryOption) *Binary {
 	binary := Binary{
 		Compressed: w.NewBoolWrapper(true),
 	}
+
+	for _, option := range options {
+		option(&binary)
+	}
+
 	if len(*bs) == 0 {
 		binary.ID = 0
 	} else {
@@ -85,6 +109,7 @@ func (b Binary) GetContentBytes() ([]byte, error) {
 		if err != nil && err != io.ErrUnexpectedEOF {
 			return nil, err
 		}
+
 		return bts, nil
 	}
 	return decoded, nil
@@ -108,10 +133,26 @@ func (b Binary) GetContent() (string, error) {
 	return b.GetContentString()
 }
 
+type writeCloser struct {
+	io.Writer
+}
+
+func (wc writeCloser) Close() error {
+	return nil
+}
+
 // SetContent encodes and (if Compressed=true) compresses c and sets b's content
 func (b *Binary) SetContent(c []byte) error {
 	buff := &bytes.Buffer{}
-	writer := base64.NewEncoder(base64.StdEncoding, buff)
+
+	var writer io.WriteCloser
+
+	if b.isKDBX4 {
+		writer = writeCloser{Writer: buff}
+	} else {
+		writer = base64.NewEncoder(base64.StdEncoding, buff)
+	}
+
 	if b.Compressed.Bool {
 		writer = gzip.NewWriter(writer)
 	}
@@ -123,6 +164,7 @@ func (b *Binary) SetContent(c []byte) error {
 		return err
 	}
 	b.Content = buff.Bytes()
+
 	return nil
 }
 

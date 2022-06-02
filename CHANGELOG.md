@@ -1,3 +1,11 @@
+### v3.3.0
+
+* Add database `AddBinary` and `FindBinary` functions
+
+### v3.2.5
+
+* Add missing CustomData support for entries
+
 ### v3.2.4
 
 * Add support for handling protected value unlocking with `Entry` or `Group` being loaded first from XML
