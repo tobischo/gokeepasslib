@@ -23,6 +23,8 @@ func NewEncoder(w io.Writer) *Encoder {
 
 // Encode writes db to e's internal writer
 func (e *Encoder) Encode(db *Database) error {
+	db.cleanupBinaries()
+
 	// Unlock protected entries ensuring that we have them prepared in the order that is matching
 	// the xml unmarshalling order
 	err := db.UnlockProtectedEntries()

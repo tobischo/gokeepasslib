@@ -1,7 +1,9 @@
 package gokeepasslib
 
 import (
+	"bytes"
 	"crypto/rand"
+	"fmt"
 	"testing"
 )
 
@@ -50,10 +52,145 @@ func TestBinaryKDBXv4(t *testing.T) {
 	rand.Read(randomData)
 	binary := db.AddBinary(randomData)
 
-	found := db.FindBinary(binary.ID)
+	entry := NewEntry(WithEntryFormattedTime(!db.Header.IsKdbx4()))
+	entry.Binaries = append(entry.Binaries, binary.CreateReference("test"))
+	db.Content.Root.Groups[0].Entries = append(db.Content.Root.Groups[0].Entries, entry)
+
+	db.LockProtectedEntries()
+	var buffer bytes.Buffer
+	encoder := NewEncoder(&buffer)
+	encoder.Encode(db)
+	db = NewDatabase(WithDatabaseKDBXVersion4())
+	decoder := NewDecoder(bytes.NewReader(buffer.Bytes()))
+	decoder.Decode(db)
+	db.UnlockProtectedEntries()
+
+	found := db.Content.InnerHeader.Binaries.Find(binary.ID)
 	if data, _ := found.GetContentBytes(); string(data) != string(randomData) {
 		t.Log("Received:", len(data))
 		t.Log("Expexted:", len(randomData))
 		t.Fatalf("Binary content from Find is incorrect")
+	}
+}
+
+func TestBinaryKDBXv31CleanBinaries(t *testing.T) {
+	db := NewDatabase()
+
+	expected := []*Binary{}
+	expectedContent := []string{}
+	count := 5
+
+	for i := 0; i < count; i++ {
+		str := "test " + fmt.Sprint(i)
+		expectedContent = append(expectedContent, str)
+		expected = append(expected, db.AddBinary([]byte(str)))
+	}
+
+	if len(db.Content.Meta.Binaries) != count {
+		t.Fatalf("Expected %d binary elements, found %d", count, len(db.Content.Meta.Binaries))
+	}
+
+	entry := NewEntry(WithEntryFormattedTime(!db.Header.IsKdbx4()))
+	for i := 0; i < count; i++ {
+		entry.Binaries = append(entry.Binaries, expected[i].CreateReference("test"))
+	}
+	db.Content.Root.Groups[0].Entries = []Entry{}
+	db.Content.Root.Groups[0].Entries = append(db.Content.Root.Groups[0].Entries, entry)
+
+	binaries := db.Content.Root.Groups[0].Entries[0].Binaries
+	for i := 0; i < count; i++ {
+		found := db.FindBinary(binaries[i].Value.ID)
+		if data, _ := found.GetContentString(); string(data) != expectedContent[i] {
+			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", expectedContent[i], string(data))
+		}
+	}
+
+	toRemove := []int{2}
+	for _, i := range toRemove {
+		binaries = append(binaries[:i], binaries[i+1:]...)
+		expected = append(expected[:i], expected[i+1:]...)
+		expectedContent = append(expectedContent[:i], expectedContent[i+1:]...)
+	}
+
+	db.LockProtectedEntries()
+	var buffer bytes.Buffer
+	encoder := NewEncoder(&buffer)
+	encoder.Encode(db)
+	db = NewDatabase()
+	decoder := NewDecoder(bytes.NewReader(buffer.Bytes()))
+	decoder.Decode(db)
+	db.UnlockProtectedEntries()
+
+	if len(db.Content.Meta.Binaries) != len(expected) {
+		t.Fatalf("Expected %d binary elements, found %d", len(expected), len(db.Content.Meta.Binaries))
+	}
+
+	for i := 0; i < len(expected); i++ {
+		found := db.FindBinary(i)
+		if found == nil {
+			t.Fatalf("Binary (ID=%d) not found", i)
+		}
+		if data, _ := found.GetContentBytes(); string(data) != expectedContent[i] {
+			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", expectedContent[i], string(data))
+		}
+	}
+}
+
+func TestBinaryKDBXv4CleanBinaries(t *testing.T) {
+	db := NewDatabase(WithDatabaseKDBXVersion4())
+
+	expected := []*Binary{}
+	count := 5
+
+	for i := 0; i < count; i++ {
+		expected = append(expected, db.AddBinary([]byte("test "+fmt.Sprint(i))))
+	}
+
+	if len(db.Content.InnerHeader.Binaries) != count {
+		t.Fatalf("Expected %d binary elements, found %d", count, len(db.Content.InnerHeader.Binaries))
+	}
+
+	entry := NewEntry(WithEntryFormattedTime(!db.Header.IsKdbx4()))
+	for i := 0; i < count; i++ {
+		entry.Binaries = append(entry.Binaries, expected[i].CreateReference("test"))
+	}
+	db.Content.Root.Groups[0].Entries = []Entry{}
+	db.Content.Root.Groups[0].Entries = append(db.Content.Root.Groups[0].Entries, entry)
+
+	binaries := db.Content.Root.Groups[0].Entries[0].Binaries
+	for i := 0; i < count; i++ {
+		found := db.FindBinary(binaries[i].Value.ID)
+		if data, _ := found.GetContentBytes(); string(data) != string(expected[i].Content) {
+			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", string(expected[i].Content), string(data))
+		}
+	}
+
+	toRemove := []int{2}
+	for _, i := range toRemove {
+		binaries = append(binaries[:i], binaries[i+1:]...)
+		expected = append(expected[:i], expected[i+1:]...)
+	}
+
+	db.LockProtectedEntries()
+	var buffer bytes.Buffer
+	encoder := NewEncoder(&buffer)
+	encoder.Encode(db)
+	db = NewDatabase(WithDatabaseKDBXVersion4())
+	decoder := NewDecoder(bytes.NewReader(buffer.Bytes()))
+	decoder.Decode(db)
+	db.UnlockProtectedEntries()
+
+	if len(db.Content.InnerHeader.Binaries) != len(expected) {
+		t.Fatalf("Expected %d binary elements, found %d", len(expected), len(db.Content.InnerHeader.Binaries))
+	}
+
+	for i := 0; i < len(expected); i++ {
+		found := db.FindBinary(i)
+		if found == nil {
+			t.Fatalf("Binary (ID=%d) not found", i)
+		}
+		if data, _ := found.GetContentBytes(); string(data) != string(expected[i].Content) {
+			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", string(expected[i].Content), string(data))
+		}
 	}
 }

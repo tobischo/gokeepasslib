@@ -53,7 +53,6 @@ func (br *BinaryReference) Find(db *Database) *Binary {
 }
 
 // BinaryOption is the option function type for use with Binary structs
-// TODO: Remove this option and call all the KDBX version depended functions from database interface
 type BinaryOption func(binary *Binary)
 
 // WithKDBXv4Binary can be passed to the Binaries.Add function as an option to ensure
