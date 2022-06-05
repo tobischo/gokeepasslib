@@ -136,7 +136,6 @@ func (db *Database) LockProtectedEntries() error {
 	if err != nil {
 		return err
 	}
-	db.cleanupBinaries()
 	manager.LockProtectedGroups(db.Content.Root.Groups)
 	return nil
 }
@@ -165,7 +164,7 @@ func (e ErrRequiredAttributeMissing) Error() string {
 	)
 }
 
-type BinariesUsages map[int][]BinaryReference
+type binariesUsages map[int][]*BinaryReference
 
 func (db *Database) getBinaries() *Binaries {
 	if db.Header.IsKdbx4() {
@@ -177,30 +176,30 @@ func (db *Database) getBinaries() *Binaries {
 
 func (db *Database) cleanupBinaries() int {
 	usages := db.getBinariesUsages()
-	binaries := Binaries{}
-
+	binaries := *db.getBinaries()
+	updated := Binaries{}
 	removed := 0
 	counter := 0
 
-	for _, binary := range *db.getBinaries() {
+	for _, binary := range binaries {
 		if _, ok := usages[binary.ID]; ok {
-			binary.ID = counter
-			binaries = append(binaries, binary)
 			for _, ref := range usages[binary.ID] {
-				ref.Value.ID = binary.ID
+				ref.Value.ID = counter
 			}
+			binary.ID = counter
+			updated = append(updated, binary)
 			counter++
 		} else {
 			removed++
 		}
 	}
 
-	*db.getBinaries() = append(Binaries{}, binaries...)
+	*db.getBinaries() = updated
 	return removed
 }
 
-func (db *Database) getBinariesUsages() BinariesUsages {
-	result := BinariesUsages{}
+func (db *Database) getBinariesUsages() binariesUsages {
+	result := binariesUsages{}
 
 	for _, ref := range db.getAllBinariesReferenes(&db.Content.Root.Groups[0]) {
 		result[ref.Value.ID] = append(result[ref.Value.ID], ref)
@@ -209,15 +208,19 @@ func (db *Database) getBinariesUsages() BinariesUsages {
 	return result
 }
 
-func (db *Database) getAllBinariesReferenes(parent *Group) []BinaryReference {
-	result := []BinaryReference{}
+func (db *Database) getAllBinariesReferenes(parent *Group) []*BinaryReference {
+	result := []*BinaryReference{}
 
 	if parent != nil {
 		for _, entry := range parent.Entries {
-			result = append(result, entry.Binaries...)
+			for i := range entry.Binaries {
+				result = append(result, &entry.Binaries[i])
+			}
 			for _, history := range entry.Histories {
 				for _, historyEntry := range history.Entries {
-					result = append(result, historyEntry.Binaries...)
+					for i := range historyEntry.Binaries {
+						result = append(result, &historyEntry.Binaries[i])
+					}
 				}
 			}
 		}
