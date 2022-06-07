@@ -164,7 +164,7 @@ func (e ErrRequiredAttributeMissing) Error() string {
 	)
 }
 
-type binariesUsages map[int][]*BinaryReference
+type binariesUsages map[int][]BinaryReference
 
 func (db *Database) getBinaries() *Binaries {
 	if db.Header.IsKdbx4() {
@@ -174,14 +174,12 @@ func (db *Database) getBinaries() *Binaries {
 	return &db.Content.Meta.Binaries
 }
 
-func (db *Database) cleanupBinaries() int {
+func (db *Database) cleanupBinaries() {
 	usages := db.getBinariesUsages()
-	binaries := *db.getBinaries()
 	updated := Binaries{}
-	removed := 0
 	counter := 0
 
-	for _, binary := range binaries {
+	for _, binary := range *db.getBinaries() {
 		if _, ok := usages[binary.ID]; ok {
 			for _, ref := range usages[binary.ID] {
 				ref.Value.ID = counter
@@ -189,13 +187,10 @@ func (db *Database) cleanupBinaries() int {
 			binary.ID = counter
 			updated = append(updated, binary)
 			counter++
-		} else {
-			removed++
 		}
 	}
 
 	*db.getBinaries() = updated
-	return removed
 }
 
 func (db *Database) getBinariesUsages() binariesUsages {
@@ -208,25 +203,22 @@ func (db *Database) getBinariesUsages() binariesUsages {
 	return result
 }
 
-func (db *Database) getAllBinariesReferenes(parent *Group) []*BinaryReference {
-	result := []*BinaryReference{}
+func (db *Database) getAllBinariesReferenes(parent *Group) []BinaryReference {
+	result := []BinaryReference{}
 
-	if parent != nil {
-		for _, entry := range parent.Entries {
-			for i := range entry.Binaries {
-				result = append(result, &entry.Binaries[i])
-			}
+	var addBinaries func(entries []Entry)
+	addBinaries = func(entries []Entry) {
+		for _, entry := range entries {
+			result = append(result, entry.Binaries...)
 			for _, history := range entry.Histories {
-				for _, historyEntry := range history.Entries {
-					for i := range historyEntry.Binaries {
-						result = append(result, &historyEntry.Binaries[i])
-					}
-				}
+				addBinaries(history.Entries)
 			}
 		}
-		for _, group := range parent.Groups {
-			result = append(result, db.getAllBinariesReferenes(&group)...)
-		}
+	}
+
+	addBinaries(parent.Entries)
+	for _, group := range parent.Groups {
+		result = append(result, db.getAllBinariesReferenes(&group)...)
 	}
 
 	return result

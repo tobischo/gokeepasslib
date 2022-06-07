@@ -65,7 +65,7 @@ func TestBinaryKDBXv4(t *testing.T) {
 	decoder.Decode(db)
 	db.UnlockProtectedEntries()
 
-	found := db.Content.InnerHeader.Binaries.Find(binary.ID)
+	found := db.FindBinary(binary.ID)
 	if data, _ := found.GetContentBytes(); string(data) != string(randomData) {
 		t.Log("Received:", len(data))
 		t.Log("Expexted:", len(randomData))
@@ -105,12 +105,20 @@ func TestBinaryKDBXv31CleanBinaries(t *testing.T) {
 		}
 	}
 
-	toRemove := []int{2}
-	for _, i := range toRemove {
-		binaries = append(binaries[:i], binaries[i+1:]...)
-		expected = append(expected[:i], expected[i+1:]...)
-		expectedContent = append(expectedContent[:i], expectedContent[i+1:]...)
+	toRemove := map[int]bool{0: true, 2: true, 4: true}
+	newBinaries := []BinaryReference{}
+	newExpected := []*Binary{}
+	newExpectedContent := []string{}
+	for i := range binaries {
+		if _, remove := toRemove[i]; !remove {
+			newBinaries = append(newBinaries, binaries[i])
+			newExpected = append(newExpected, expected[i])
+			newExpectedContent = append(newExpectedContent, expectedContent[i])
+		}
 	}
+	db.Content.Root.Groups[0].Entries[0].Binaries = newBinaries
+	expected = newExpected
+	expectedContent = newExpectedContent
 
 	db.LockProtectedEntries()
 	var buffer bytes.Buffer
@@ -165,11 +173,17 @@ func TestBinaryKDBXv4CleanBinaries(t *testing.T) {
 		}
 	}
 
-	toRemove := []int{2}
-	for _, i := range toRemove {
-		binaries = append(binaries[:i], binaries[i+1:]...)
-		expected = append(expected[:i], expected[i+1:]...)
+	toRemove := map[int]bool{0: true, 2: true, 4: true}
+	newBinaries := []BinaryReference{}
+	newExpected := []*Binary{}
+	for i := range binaries {
+		if _, remove := toRemove[i]; !remove {
+			newBinaries = append(newBinaries, binaries[i])
+			newExpected = append(newExpected, expected[i])
+		}
 	}
+	db.Content.Root.Groups[0].Entries[0].Binaries = newBinaries
+	expected = newExpected
 
 	db.LockProtectedEntries()
 	var buffer bytes.Buffer
