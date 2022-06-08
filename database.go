@@ -164,7 +164,7 @@ func (e ErrRequiredAttributeMissing) Error() string {
 	)
 }
 
-type binariesUsages map[int][]BinaryReference
+type binariesUsages map[int][]*BinaryReference
 
 func (db *Database) getBinaries() *Binaries {
 	if db.Header.IsKdbx4() {
@@ -180,8 +180,8 @@ func (db *Database) cleanupBinaries() {
 	counter := 0
 
 	for _, binary := range *db.getBinaries() {
-		if _, ok := usages[binary.ID]; ok {
-			for _, ref := range usages[binary.ID] {
+		if refs, ok := usages[binary.ID]; ok {
+			for _, ref := range refs {
 				ref.Value.ID = counter
 			}
 			binary.ID = counter
@@ -195,31 +195,28 @@ func (db *Database) cleanupBinaries() {
 
 func (db *Database) getBinariesUsages() binariesUsages {
 	result := binariesUsages{}
+	var addEntriesBinaries func(entries []Entry)
+	var addGroupBinaries func(parent *Group)
 
-	for _, ref := range db.getAllBinariesReferenes(&db.Content.Root.Groups[0]) {
-		result[ref.Value.ID] = append(result[ref.Value.ID], ref)
-	}
-
-	return result
-}
-
-func (db *Database) getAllBinariesReferenes(parent *Group) []BinaryReference {
-	result := []BinaryReference{}
-
-	var addBinaries func(entries []Entry)
-	addBinaries = func(entries []Entry) {
+	addEntriesBinaries = func(entries []Entry) {
 		for _, entry := range entries {
-			result = append(result, entry.Binaries...)
+			for i := range entry.Binaries {
+				id := entry.Binaries[i].Value.ID
+				result[id] = append(result[id], &entry.Binaries[i])
+			}
 			for _, history := range entry.Histories {
-				addBinaries(history.Entries)
+				addEntriesBinaries(history.Entries)
 			}
 		}
 	}
 
-	addBinaries(parent.Entries)
-	for _, group := range parent.Groups {
-		result = append(result, db.getAllBinariesReferenes(&group)...)
+	addGroupBinaries = func(parent *Group) {
+		addEntriesBinaries(parent.Entries)
+		for _, group := range parent.Groups {
+			addGroupBinaries(&group)
+		}
 	}
 
+	addGroupBinaries(&db.Content.Root.Groups[0])
 	return result
 }

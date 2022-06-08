@@ -141,6 +141,11 @@ func TestBinaryKDBXv31CleanBinaries(t *testing.T) {
 		if data, _ := found.GetContentBytes(); string(data) != expectedContent[i] {
 			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", expectedContent[i], string(data))
 		}
+
+		ref := db.Content.Root.Groups[0].Entries[0].Binaries[i]
+		if ref.Value.ID != i {
+			t.Fatalf("Binary reference is incorrect. Should be `%d`, was '%d'", i, ref.Value.ID)
+		}
 	}
 }
 
@@ -205,6 +210,11 @@ func TestBinaryKDBXv4CleanBinaries(t *testing.T) {
 		}
 		if data, _ := found.GetContentBytes(); string(data) != string(expected[i].Content) {
 			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", string(expected[i].Content), string(data))
+		}
+
+		ref := db.Content.Root.Groups[0].Entries[0].Binaries[i]
+		if ref.Value.ID != i {
+			t.Fatalf("Binary reference is incorrect. Should be `%d`, was '%d'", i, ref.Value.ID)
 		}
 	}
 }
