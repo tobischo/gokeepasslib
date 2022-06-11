@@ -65,6 +65,8 @@ func (e *Encoder) Encode(db *Database) error {
 		if err = db.Hashes.writeTo(e.w); err != nil {
 			return err
 		}
+
+		db.Content.Meta.HeaderHash = ""
 	} else {
 		db.Content.Meta.HeaderHash = base64.StdEncoding.EncodeToString(hash[:])
 	}
