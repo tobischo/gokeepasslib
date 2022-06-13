@@ -144,9 +144,9 @@ func (db *Database) LockProtectedEntries() error {
 // It takes care of adding it to the correct place based on the format version
 func (db *Database) AddBinary(binaryContent []byte) *Binary {
 	if db.Header.IsKdbx4() {
-		return db.Content.InnerHeader.Binaries.Add(binaryContent, WithKDBXv4Binary)
+		return db.getBinaries().Add(binaryContent, WithKDBXv4Binary)
 	}
-	return db.Content.Meta.Binaries.Add(binaryContent, WithKDBXv31Binary)
+	return db.getBinaries().Add(binaryContent, WithKDBXv31Binary)
 }
 
 // FindBinary returns the binary with the given id if one could be found. It returns nil otherwise
@@ -193,30 +193,28 @@ func (db *Database) cleanupBinaries() {
 	*db.getBinaries() = updated
 }
 
+func addEntriesBinaries(result binariesUsages, entries []Entry) {
+	for _, entry := range entries {
+		for i, binary := range entry.Binaries {
+			id := binary.Value.ID
+			result[id] = append(result[id], &entry.Binaries[i])
+		}
+		for _, history := range entry.Histories {
+			addEntriesBinaries(result, history.Entries)
+		}
+	}
+}
+
+func addGroupBinaries(result binariesUsages, parent *Group) {
+	addEntriesBinaries(result, parent.Entries)
+	for _, group := range parent.Groups {
+		addGroupBinaries(result, &group)
+	}
+}
+
 func (db *Database) getBinariesUsages() binariesUsages {
 	result := binariesUsages{}
-	var addEntriesBinaries func(entries []Entry)
-	var addGroupBinaries func(parent *Group)
 
-	addEntriesBinaries = func(entries []Entry) {
-		for _, entry := range entries {
-			for i := range entry.Binaries {
-				id := entry.Binaries[i].Value.ID
-				result[id] = append(result[id], &entry.Binaries[i])
-			}
-			for _, history := range entry.Histories {
-				addEntriesBinaries(history.Entries)
-			}
-		}
-	}
-
-	addGroupBinaries = func(parent *Group) {
-		addEntriesBinaries(parent.Entries)
-		for _, group := range parent.Groups {
-			addGroupBinaries(&group)
-		}
-	}
-
-	addGroupBinaries(&db.Content.Root.Groups[0])
+	addGroupBinaries(result, &db.Content.Root.Groups[0])
 	return result
 }
