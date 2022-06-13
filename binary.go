@@ -46,10 +46,7 @@ func (bs Binaries) Find(id int) *Binary {
 // Deprecated: Find returns a reference to a binary in the database db with the same id as br, or nil if none is found
 // Note: this function should not be used directly, use `Database.FindBinary(id int) *Binary` instead
 func (br *BinaryReference) Find(db *Database) *Binary {
-	if db.Header.IsKdbx4() {
-		return db.Content.InnerHeader.Binaries.Find(br.Value.ID)
-	}
-	return db.Content.Meta.Binaries.Find(br.Value.ID)
+	return db.getBinaries().Find(br.Value.ID)
 }
 
 // BinaryOption is the option function type for use with Binary structs
