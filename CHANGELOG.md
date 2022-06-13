@@ -1,3 +1,8 @@
+### v3.4.0
+
+* Fix binary referencing after remove
+* Add binary garbage collections if all references have been removed
+
 ### v3.3.0
 
 * Add database `AddBinary` and `FindBinary` functions
