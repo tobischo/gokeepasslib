@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
+	"encoding/hex"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -145,24 +147,73 @@ func ParseKeyFile(location string) ([]byte, error) {
 	return ParseKeyData(data)
 }
 
-var keyDataPattern = regexp.MustCompile(`<Data>(.+)</Data>`)
+type xmlKeyFileData struct {
+	XMLName xml.Name       `xml:"KeyFile"`
+	Meta    xmlKeyFileMeta `xml:"Meta"`
+	Key     xmlKeyFileKey  `xml:"Key"`
+}
+
+type xmlKeyFileMeta struct {
+	Version string `xml:"Version"`
+}
+
+type xmlKeyFileKey struct {
+	Hash string `xml:"Hash,attr"`
+	Data []byte `xml:"Data"`
+}
+
+var whiteSpacePattern = regexp.MustCompile(`\s+`)
+
+const xmlKeyDataHashLength = 4
+
+// var keyDataPattern = regexp.MustCompile(`<Data>(.+)</Data>`)
 
 // ParseKeyData returns the hashed key from a key file in bytes, parsing xml if needed
 func ParseKeyData(data []byte) ([]byte, error) {
-	if keyDataPattern.Match(data) { //If keyfile is in xml form, extract key data
-		base := keyDataPattern.FindSubmatch(data)[1]
-		data = make([]byte, base64.StdEncoding.DecodedLen(len(base)))
-		if _, err := base64.StdEncoding.Decode(data, base); err != nil {
-			return nil, err
+	keyFileData := xmlKeyFileData{}
+	err := xml.Unmarshal(data, &keyFileData)
+	if err == nil {
+		keyFileData.Key.Data = whiteSpacePattern.ReplaceAll(keyFileData.Key.Data, []byte(``))
+
+		switch keyFileData.Meta.Version {
+		case "1.00", "1.0":
+			decodedKey := make([]byte, base64.StdEncoding.DecodedLen(len(keyFileData.Key.Data)))
+			_, err := base64.StdEncoding.Decode(decodedKey, keyFileData.Key.Data)
+			return decodedKey, err
+		case "2.0":
+			decodedHexKey, err := hex.DecodeString(string(keyFileData.Key.Data))
+			if err != nil {
+				return nil, err
+			}
+
+			keyHash := sha256.Sum256(decodedHexKey)
+			keyHashPart := fmt.Sprintf("%X", keyHash[:xmlKeyDataHashLength])
+
+			if keyHashPart != keyFileData.Key.Hash {
+				return nil, fmt.Errorf("key hash mismatch")
+			}
+
+			return decodedHexKey, err
+		default:
+			return nil, fmt.Errorf("Unsupported key file XML format %s", keyFileData.Meta.Version)
 		}
+
+		// handle key version parsing
 	}
 
-	if len(data) < 32 {
+	if len(data) == 32 {
 		return data, nil
 	}
 
-	// Slice necessary due to padding at the end of the hash
-	return data[:32], nil
+	if len(data) == 64 {
+		decodedHex, err := hex.DecodeString(string(data))
+		if err == nil {
+			return decodedHex, nil
+		}
+	}
+
+	hashedKey := sha256.Sum256(data)
+	return hashedKey[:], nil
 }
 
 // NewKeyCredentials builds a new DBCredentials from a key file at the path specified by location
