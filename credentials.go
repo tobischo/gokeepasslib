@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -166,45 +167,23 @@ var whiteSpacePattern = regexp.MustCompile(`\s+`)
 
 const xmlKeyDataHashLength = 4
 
-// var keyDataPattern = regexp.MustCompile(`<Data>(.+)</Data>`)
-
 // ParseKeyData returns the hashed key from a key file in bytes, parsing xml if needed
 func ParseKeyData(data []byte) ([]byte, error) {
-	keyFileData := xmlKeyFileData{}
-	err := xml.Unmarshal(data, &keyFileData)
-	if err == nil {
-		keyFileData.Key.Data = whiteSpacePattern.ReplaceAll(keyFileData.Key.Data, []byte(``))
-
-		switch keyFileData.Meta.Version {
-		case "1.00", "1.0":
-			decodedKey := make([]byte, base64.StdEncoding.DecodedLen(len(keyFileData.Key.Data)))
-			_, err := base64.StdEncoding.Decode(decodedKey, keyFileData.Key.Data)
-			return decodedKey, err
-		case "2.0":
-			decodedHexKey, err := hex.DecodeString(string(keyFileData.Key.Data))
-			if err != nil {
-				return nil, err
-			}
-
-			keyHash := sha256.Sum256(decodedHexKey)
-			keyHashPart := fmt.Sprintf("%X", keyHash[:xmlKeyDataHashLength])
-
-			if keyHashPart != keyFileData.Key.Hash {
-				return nil, fmt.Errorf("key hash mismatch")
-			}
-
-			return decodedHexKey, err
-		default:
-			return nil, fmt.Errorf("Unsupported key file XML format %s", keyFileData.Meta.Version)
-		}
-
-		// handle key version parsing
+	// Check if the provided file is an XML key file
+	// errInvalidKeyFileXML is returned if it was not actually parseable xml data
+	decodedKey, err := parseXMLKeyFileData(data)
+	if err != errInvalidKeyFileXML {
+		return decodedKey, err
 	}
 
+	// If the key is exactly 32 byte it is assumed to already be in the correct format
 	if len(data) == 32 {
 		return data, nil
 	}
 
+	// If the key is 64 byte as a hex string, it should be decoded into 32 byte
+	// If this does not work, it is not a hex string
+	// In that case we have to default to simply hashing the body
 	if len(data) == 64 {
 		decodedHex, err := hex.DecodeString(string(data))
 		if err == nil {
@@ -214,6 +193,60 @@ func ParseKeyData(data []byte) ([]byte, error) {
 
 	hashedKey := sha256.Sum256(data)
 	return hashedKey[:], nil
+}
+
+var errInvalidKeyFileXML = errors.New("invalid key file XML")
+var errKeyHashMismatch = errors.New("key hash mismatch")
+
+func parseXMLKeyFileData(data []byte) ([]byte, error) {
+	keyFileData := xmlKeyFileData{}
+	err := xml.Unmarshal(data, &keyFileData)
+	if err != nil {
+		return nil, errInvalidKeyFileXML
+	}
+
+	keyFileData.Key.Data = whiteSpacePattern.ReplaceAll(keyFileData.Key.Data, []byte(``))
+
+	switch keyFileData.Meta.Version {
+	// 1.00 has to be supported as it is used in some older versions of keepass
+	case "1.00", "1.0":
+		return parseV1XMLKeyFileData(keyFileData.Key.Data)
+	case "2.0":
+		return parseV2XMLKeyFileData(keyFileData.Key.Data, keyFileData.Key.Hash)
+	default:
+		return nil, fmt.Errorf("Unsupported key file XML format %s", keyFileData.Meta.Version)
+	}
+}
+
+func parseV1XMLKeyFileData(data []byte) ([]byte, error) {
+	// v1 keyfile data should just be base64 encoded content
+	decodedKey := make([]byte, base64.StdEncoding.DecodedLen(len(data)))
+	if _, err := base64.StdEncoding.Decode(decodedKey, data); err != nil {
+		return nil, err
+	}
+
+	if len(decodedKey) < 32 {
+		return decodedKey, nil
+	}
+
+	// Slice necessary due to padding at the end of the hash
+	return decodedKey[:32], nil
+}
+
+func parseV2XMLKeyFileData(data []byte, hash string) ([]byte, error) {
+	decodedHexKey, err := hex.DecodeString(string(data))
+	if err != nil {
+		return nil, err
+	}
+
+	keyHash := sha256.Sum256(decodedHexKey)
+	keyHashPart := fmt.Sprintf("%X", keyHash[:xmlKeyDataHashLength])
+
+	if keyHashPart != hash {
+		return nil, errKeyHashMismatch
+	}
+
+	return decodedHexKey, err
 }
 
 // NewKeyCredentials builds a new DBCredentials from a key file at the path specified by location
