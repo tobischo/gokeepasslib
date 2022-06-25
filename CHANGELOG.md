@@ -1,3 +1,7 @@
+### v3.4.1
+
+* Fix key file support to actually deal with the different supported key file types
+
 ### v3.4.0
 
 * Fix binary referencing after remove
