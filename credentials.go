@@ -159,8 +159,12 @@ type xmlKeyFileMeta struct {
 }
 
 type xmlKeyFileKey struct {
-	Hash string `xml:"Hash,attr"`
-	Data []byte `xml:"Data"`
+	Data xmlKeyFileKeyData `xml:"Data"`
+}
+
+type xmlKeyFileKeyData struct {
+	Hash  string `xml:"Hash,attr"`
+	Value []byte `xml:",innerxml"`
 }
 
 var whiteSpacePattern = regexp.MustCompile(`\s+`)
@@ -205,14 +209,14 @@ func parseXMLKeyFileData(data []byte) ([]byte, error) {
 		return nil, errInvalidKeyFileXML
 	}
 
-	keyFileData.Key.Data = whiteSpacePattern.ReplaceAll(keyFileData.Key.Data, []byte(``))
+	keyFileData.Key.Data.Value = whiteSpacePattern.ReplaceAll(keyFileData.Key.Data.Value, []byte(``))
 
 	switch keyFileData.Meta.Version {
 	// 1.00 has to be supported as it is used in some older versions of keepass
 	case "1.00", "1.0":
-		return parseV1XMLKeyFileData(keyFileData.Key.Data)
+		return parseV1XMLKeyFileData(keyFileData.Key.Data.Value)
 	case "2.0":
-		return parseV2XMLKeyFileData(keyFileData.Key.Data, keyFileData.Key.Hash)
+		return parseV2XMLKeyFileData(keyFileData.Key.Data.Value, keyFileData.Key.Data.Hash)
 	default:
 		return nil, fmt.Errorf("Unsupported key file XML format %s", keyFileData.Meta.Version)
 	}
