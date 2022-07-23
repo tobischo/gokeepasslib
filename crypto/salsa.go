@@ -5,13 +5,19 @@ import (
 	"encoding/base64"
 )
 
-var iv = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
-var sigmaWords = []uint32{
-	0x61707865,
-	0x3320646e,
-	0x79622d32,
-	0x6b206574,
-}
+var (
+	iv      = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
+	ivNonce = []uint32{
+		0x4b0930e8, // u8to32little(iv, 0)
+		0x2a5d2097, // u8to32little(iv, 4)
+	}
+	sigmaWords = []uint32{
+		0x61707865,
+		0x3320646e,
+		0x79622d32,
+		0x6b206574,
+	}
+)
 
 // SalsaStream is a Salsa20 cipher that implements CryptoStream interface
 type SalsaStream struct {
@@ -39,10 +45,9 @@ func NewSalsaStream(key []byte) (*SalsaStream, error) {
 	state[10] = sigmaWords[2]
 	state[15] = sigmaWords[3]
 
-	state[6] = u8to32little(iv, 0)
-	state[7] = u8to32little(iv, 4)
-	state[8] = uint32(0)
-	state[9] = uint32(0)
+	state[6] = ivNonce[0]
+	state[7] = ivNonce[1]
+	// state[8] = state[9] = 0
 
 	s := SalsaStream{
 		State:     state,
