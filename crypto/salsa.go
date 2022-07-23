@@ -45,9 +45,9 @@ func NewSalsaStream(key []byte) (*SalsaStream, error) {
 	state[9] = uint32(0)
 
 	s := SalsaStream{
-		State:        state,
-		blockUsed:    64, // Ensure a fresh block is generated, the first time bytes are needed
-		currentBlock: make([]byte, 0),
+		State:     state,
+		blockUsed: 64, // Ensure a fresh block is generated, the first time bytes are needed
+		block:     make([]byte, 64),
 	}
 	return &s, nil
 }
@@ -108,7 +108,6 @@ func (s *SalsaStream) getBytes(length int) []byte {
 	for i := 0; i < length; i++ {
 		if s.blockUsed == 64 {
 			s.generateBlock()
-			s.blockUsed = 0
 		}
 		b[i] = s.block[s.blockUsed]
 		s.blockUsed++
@@ -118,8 +117,6 @@ func (s *SalsaStream) getBytes(length int) []byte {
 }
 
 func (s *SalsaStream) generateBlock() {
-	s.block = make([]byte, 64)
-
 	x := make([]uint32, 16)
 	copy(x, s.State)
 
