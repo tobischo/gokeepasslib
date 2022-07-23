@@ -54,26 +54,26 @@ func NewSalsaStream(key []byte) (*SalsaStream, error) {
 
 // Unpack returns the payload as unencrypted byte array
 func (s *SalsaStream) Unpack(payload string) []byte {
-	var result []byte
-
 	data, _ := base64.StdEncoding.DecodeString(payload)
 
 	salsaBytes := s.fetchBytes(len(data))
 
+	result := make([]byte, len(data))
+
 	for i := 0; i < len(data); i++ {
-		result = append(result, salsaBytes[i]^data[i])
+		result[i] = salsaBytes[i] ^ data[i]
 	}
 	return result
 }
 
 // Pack returns the payload as encrypted string
 func (s *SalsaStream) Pack(payload []byte) string {
-	var data []byte
+	data := make([]byte, len(payload))
 
 	salsaBytes := s.fetchBytes(len(payload))
 
 	for i := 0; i < len(payload); i++ {
-		data = append(data, salsaBytes[i]^payload[i])
+		data[i] = salsaBytes[i] ^ payload[i]
 	}
 
 	lockedPassword := base64.StdEncoding.EncodeToString(data)
