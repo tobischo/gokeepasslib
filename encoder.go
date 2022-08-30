@@ -137,14 +137,12 @@ func encodeRawContent(db *Database, content []byte, transformedKey []byte) (enco
 		content = append(db.Header.FileHeaders.StreamStartBytes, blocks.Bytes()...)
 	}
 
-	// Adds padding to data as required to encrypt properly
-	if len(content)%16 != 0 {
-		padding := make([]byte, 16-(len(content)%16))
-		for i := 0; i < len(padding); i++ {
-			padding[i] = byte(len(padding))
-		}
-		content = append(content, padding...)
+	// Always add padding, so that decoders that check for the last bytes can work correctly
+	padding := make([]byte, 16-(len(content)%16))
+	for i := 0; i < len(padding); i++ {
+		padding[i] = byte(len(padding))
 	}
+	content = append(content, padding...)
 
 	// Encrypt content
 	// Decrypt content
