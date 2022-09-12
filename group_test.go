@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
@@ -232,9 +233,7 @@ func TestGroupUnmarshalXML(t *testing.T) {
 				t.Errorf("Expected %#v, received %#v", c.expectedErr, err)
 			}
 
-			if !reflect.DeepEqual(c.expectedGroup, group) {
-				t.Errorf("Expected %#v, received %#v", c.expectedGroup, group)
-			}
+			assert.Equal(t, c.expectedGroup, group, "The groups should be identical")
 
 		})
 	}
