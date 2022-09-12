@@ -139,6 +139,7 @@ func prepareTimeWrapper(time time.Time) (*w.TimeWrapper, string) {
 	wrapper := &w.TimeWrapper{Time: time}
 	data, _ := wrapper.MarshalText()
 	text := string(data)
+	wrapper.UnmarshalText(data)
 
 	return wrapper, text
 }
