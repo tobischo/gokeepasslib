@@ -135,12 +135,28 @@ func TestGroupSetKdbxFormatVersion(t *testing.T) {
 	}
 }
 
+func prepareTimeWrapper(time time.Time) (*w.TimeWrapper, string) {
+	wrapper := &w.TimeWrapper{Time: time}
+	data, _ := wrapper.MarshalText()
+	text := string(data)
+
+	return wrapper, text
+}
+
 func TestGroupUnmarshalXML(t *testing.T) {
-	creationTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26Z")
-	lastModificationTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26Z")
-	lastAccessTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:10:00Z")
-	expiryTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:07:11Z")
-	locationChanged, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26Z")
+	now := time.Now()
+
+	creationTime := now
+	lastModificationTime := now.AddDate(0, 0, 1)
+	lastAccessTime := now.AddDate(0, 0, 2)
+	expiryTime := now.AddDate(0, 0, 3)
+	locationChanged := now.AddDate(0, 0, 4)
+
+	creationTimeWrapper, creationTimeText := prepareTimeWrapper(creationTime)
+	lastModificationTimeWrapper, lastModificationTimeText := prepareTimeWrapper(lastModificationTime)
+	lastAccessTimeWrapper, lastAccessTimeText := prepareTimeWrapper(lastAccessTime)
+	expiryTimeWrapper, expiryTimeText := prepareTimeWrapper(expiryTime)
+	locationChangedWrapper, locationChangedText := prepareTimeWrapper(locationChanged)
 
 	cases := []struct {
 		title         string
@@ -179,13 +195,13 @@ func TestGroupUnmarshalXML(t *testing.T) {
         <Notes>notes</Notes>
         <IconID>49</IconID>
         <Times>
-          <CreationTime>ZqNL1A4AAAA=</CreationTime>
-          <LastModificationTime>ZqNL1A4AAAA=</LastModificationTime>
-          <LastAccessTime>iKNL1A4AAAA=</LastAccessTime>
-          <ExpiryTime>36JL1A4AAAA=</ExpiryTime>
+          <CreationTime>` + creationTimeText + `</CreationTime>
+          <LastModificationTime>` + lastModificationTimeText + `</LastModificationTime>
+          <LastAccessTime>` + lastAccessTimeText + `</LastAccessTime>
+          <ExpiryTime>` + expiryTimeText + `</ExpiryTime>
           <Expires>False</Expires>
           <UsageCount>1</UsageCount>
-          <LocationChanged>ZqNL1A4AAAA=</LocationChanged>
+          <LocationChanged>` + locationChangedText + `</LocationChanged>
         </Times>
         <IsExpanded>True</IsExpanded>
         <DefaultAutoTypeSequence>abc</DefaultAutoTypeSequence>
@@ -204,13 +220,13 @@ func TestGroupUnmarshalXML(t *testing.T) {
 				Notes:  "notes",
 				IconID: 49,
 				Times: TimeData{
-					CreationTime:         &w.TimeWrapper{Formatted: false, Time: creationTime},
-					LastModificationTime: &w.TimeWrapper{Formatted: false, Time: lastModificationTime},
-					LastAccessTime:       &w.TimeWrapper{Formatted: false, Time: lastAccessTime},
-					ExpiryTime:           &w.TimeWrapper{Formatted: false, Time: expiryTime},
+					CreationTime:         creationTimeWrapper,
+					LastModificationTime: lastModificationTimeWrapper,
+					LastAccessTime:       lastAccessTimeWrapper,
+					ExpiryTime:           expiryTimeWrapper,
 					Expires:              w.NewBoolWrapper(false),
 					UsageCount:           1,
-					LocationChanged:      &w.TimeWrapper{Formatted: false, Time: locationChanged},
+					LocationChanged:      locationChangedWrapper,
 				},
 				IsExpanded:              w.NewBoolWrapper(true),
 				DefaultAutoTypeSequence: "abc",
