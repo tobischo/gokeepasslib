@@ -136,11 +136,11 @@ func TestGroupSetKdbxFormatVersion(t *testing.T) {
 }
 
 func TestGroupUnmarshalXML(t *testing.T) {
-	creationTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26+02:00")
-	lastModificationTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26+02:00")
-	lastAccessTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:10:00+02:00")
-	expiryTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:07:11+02:00")
-	locationChanged, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26+02:00")
+	creationTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26Z")
+	lastModificationTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26Z")
+	lastAccessTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:10:00Z")
+	expiryTime, _ := time.Parse(time.RFC3339, "2019-04-19T13:07:11Z")
+	locationChanged, _ := time.Parse(time.RFC3339, "2019-04-19T13:09:26Z")
 
 	cases := []struct {
 		title         string
