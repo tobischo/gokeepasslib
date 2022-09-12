@@ -17,4 +17,4 @@ jobs:
       run: docker build -t gokeepasslib .
 
     - name: Test
-      run: docker-compose run --rm -T gokeepasslib make testci
+      run: docker-compose run --rm -T gokeepasslib make test
