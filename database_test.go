@@ -3,6 +3,7 @@ package gokeepasslib
 import (
 	"bytes"
 	"log"
+	"reflect"
 	"testing"
 )
 
@@ -46,6 +47,101 @@ func TestNewDatabase(t *testing.T) {
 					database.Options.ValidateHashes,
 					c.expectedDatabase.Options.ValidateHashes,
 				)
+			}
+		})
+	}
+}
+
+func TestDatabase_GetStreamManager(t *testing.T) {
+	cases := []struct {
+		title           string
+		database        *Database
+		expectedManager *StreamManager
+		expectedErr     error
+	}{
+		{
+			title:           "when db header is empty",
+			database:        &Database{},
+			expectedManager: nil,
+			expectedErr:     nil,
+		},
+		{
+			title: "when header FileHeaders is empty",
+			database: &Database{
+				Header: &DBHeader{},
+			},
+			expectedManager: nil,
+			expectedErr:     nil,
+		},
+		{
+			title: "when db content is empty (kdbx4)",
+			database: &Database{
+				Header: &DBHeader{
+					Signature: &Signature{
+						MajorVersion: 4,
+					},
+				},
+			},
+			expectedManager: nil,
+			expectedErr:     ErrInvalidDatabaseOrCredentials,
+		},
+		{
+			title: "when content InnerHeader is empty (kdbx4)",
+			database: &Database{
+				Header: &DBHeader{
+					Signature: &Signature{
+						MajorVersion: 4,
+					},
+				},
+				Content: &DBContent{},
+			},
+			expectedManager: nil,
+			expectedErr:     ErrInvalidDatabaseOrCredentials,
+		},
+		{
+			title: "when content InnerHeader.InnerRandomStreamKey is empty (kdbx4)",
+			database: &Database{
+				Header: &DBHeader{
+					Signature: &Signature{
+						MajorVersion: 4,
+					},
+				},
+				Content: &DBContent{
+					InnerHeader: &InnerHeader{
+						InnerRandomStreamKey: nil,
+					},
+				},
+			},
+			expectedManager: nil,
+			expectedErr:     ErrInvalidDatabaseOrCredentials,
+		},
+		{
+			title: "when header FileHeaders.ProtectedStreamKey is empty (kdbx3)",
+			database: &Database{
+				Header: &DBHeader{
+					Signature: &Signature{
+						MajorVersion: 3,
+					},
+					FileHeaders: &FileHeaders{
+						ProtectedStreamKey: nil,
+					},
+				},
+			},
+			expectedManager: nil,
+			expectedErr:     ErrInvalidDatabaseOrCredentials,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			manager, err := c.database.GetStreamManager()
+
+			if !reflect.DeepEqual(manager, c.expectedManager) {
+				t.Fatalf("Expected %v, received %v", c.expectedErr, err)
+			}
+
+			if err != c.expectedErr {
+				t.Fatalf("Expected %v, received %v", c.expectedErr, err)
 			}
 		})
 	}

@@ -1,7 +1,13 @@
 package gokeepasslib
 
 import (
+	"errors"
 	"fmt"
+)
+
+// ErrInvalidDatabaseOrCredentials is returned when the file cannot be read properly.
+var ErrInvalidDatabaseOrCredentials = errors.New(
+	"Cannot read database: Either credentials are invalid or the database file is corrupted",
 )
 
 // Database stores all contents necessary for a keepass database file
@@ -95,12 +101,23 @@ func (db *Database) GetEncrypterManager(transformedKey []byte) (*EncrypterManage
 // GetStreamManager returns a StreamManager based on the db headers, or nil if the type is unsupported
 // Can be used to lock only certain entries instead of calling
 func (db *Database) GetStreamManager() (*StreamManager, error) {
-	if db.Header.FileHeaders != nil {
+	if db.Header != nil && db.Header.Signature != nil {
 		if db.Header.IsKdbx4() {
+			if db.Content == nil ||
+				db.Content.InnerHeader == nil ||
+				db.Content.InnerHeader.InnerRandomStreamKey == nil {
+				return nil, ErrInvalidDatabaseOrCredentials
+			}
+
 			return NewStreamManager(
 				db.Content.InnerHeader.InnerRandomStreamID,
 				db.Content.InnerHeader.InnerRandomStreamKey,
 			)
+		}
+
+		if db.Header.FileHeaders != nil &&
+			db.Header.FileHeaders.ProtectedStreamKey == nil {
+			return nil, ErrInvalidDatabaseOrCredentials
 		}
 
 		return NewStreamManager(
