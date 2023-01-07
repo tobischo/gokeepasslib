@@ -7,7 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/exp/slices"
 
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
@@ -61,6 +64,71 @@ func TestNewGroup(t *testing.T) {
 					c.expectedGroup.Name,
 				)
 			}
+		})
+	}
+}
+
+func compareGroup(a, b Group) bool {
+	if !cmp.Equal(
+		a,
+		b,
+		cmp.AllowUnexported(Group{}),
+		cmpopts.IgnoreFields(Group{}, "Entries", "Groups"),
+	) {
+		return false
+	}
+
+	if !slices.EqualFunc(
+		a.Groups,
+		b.Groups,
+		compareGroup,
+	) {
+		return false
+	}
+
+	if !slices.EqualFunc(
+		a.Entries,
+		b.Entries,
+		compareEntry,
+	) {
+		return false
+	}
+
+	return true
+}
+
+func TestGroup_Clone(t *testing.T) {
+	cases := []struct {
+		title string
+	}{
+		{
+			title: "success",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			group := NewGroup()
+
+			clone := group.Clone()
+
+			if &clone == &group {
+				t.Errorf("clone struct has the same pointer address")
+			}
+
+			if clone.UUID == group.UUID {
+				t.Errorf("clone did not receive a new UUID")
+			}
+
+			clone.UUID = group.UUID
+			if !compareGroup(clone, group) {
+				t.Errorf(
+					"Did not receive expected Group %+v, received %+v",
+					clone,
+					group,
+				)
+			}
+
 		})
 	}
 }

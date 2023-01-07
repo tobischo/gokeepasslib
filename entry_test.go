@@ -3,6 +3,10 @@ package gokeepasslib
 import (
 	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"golang.org/x/exp/slices"
 )
 
 func TestNewEntry(t *testing.T) {
@@ -54,6 +58,94 @@ func TestNewEntry(t *testing.T) {
 				t.Errorf(
 					"Did not receive expected Entry %+v, received %+v",
 					c.expectedEntry,
+					entry,
+				)
+			}
+
+		})
+	}
+}
+
+func compareEntry(a, b Entry) bool {
+	if !cmp.Equal(
+		a,
+		b,
+		cmpopts.IgnoreFields(Entry{}, "Values", "Histories", "Binaries", "CustomData"),
+	) {
+		return false
+	}
+
+	if !slices.EqualFunc(
+		a.Values,
+		b.Values,
+		func(a, b ValueData) bool {
+			return cmp.Equal(a, b)
+		},
+	) {
+		return false
+	}
+
+	if !slices.EqualFunc(
+		a.Histories,
+		b.Histories,
+		func(a, b History) bool {
+			return cmp.Equal(a, b)
+		},
+	) {
+		return false
+	}
+
+	if !slices.EqualFunc(
+		a.Binaries,
+		b.Binaries,
+		func(a, b BinaryReference) bool {
+			return cmp.Equal(a, b)
+		},
+	) {
+		return false
+	}
+
+	if !slices.EqualFunc(
+		a.CustomData,
+		b.CustomData,
+		func(a, b CustomData) bool {
+			return cmp.Equal(a, b)
+		},
+	) {
+		return false
+	}
+
+	return true
+}
+
+func TestEntry_Clone(t *testing.T) {
+	cases := []struct {
+		title string
+	}{
+		{
+			title: "success",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			entry := NewEntry()
+
+			clone := entry.Clone()
+
+			if &clone == &entry {
+				t.Errorf("clone struct has the same pointer address")
+			}
+
+			if clone.UUID == entry.UUID {
+				t.Errorf("clone did not receive a new UUID")
+			}
+
+			clone.UUID = entry.UUID
+			if !compareEntry(entry, clone) {
+				t.Errorf(
+					"Did not receive expected Entry %+v, received %+v",
+					clone,
 					entry,
 				)
 			}
@@ -126,4 +218,49 @@ func TestEntrySetKdbxFormatVersion(t *testing.T) {
 		})
 	}
 
+}
+
+func TestHistory_Clone(t *testing.T) {
+	cases := []struct {
+		title string
+	}{
+		{
+			title: "success",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			entry := NewEntry()
+			history := History{
+				Entries: []Entry{entry},
+			}
+
+			clone := history.Clone()
+
+			if &clone == &history {
+				t.Errorf("clone struct has the same pointer address")
+			}
+
+			if clone.Entries[0].UUID == history.Entries[0].UUID {
+				t.Errorf("cloned entry did not receive a new UUID")
+			}
+
+			clone.Entries[0].UUID = history.Entries[0].UUID
+			if !slices.EqualFunc(
+				history.Entries,
+				clone.Entries,
+				func(a, b Entry) bool {
+					return compareEntry(a, b)
+				},
+			) {
+				t.Errorf(
+					"Did not receive expected History %+v, received %+v",
+					clone,
+					history,
+				)
+			}
+
+		})
+	}
 }
