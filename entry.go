@@ -52,6 +52,29 @@ func (e *Entry) setKdbxFormatVersion(version formatVersion) {
 	}
 }
 
+// Clone creates a copy of an Entry struct including its child entities
+func (e Entry) Clone() Entry {
+	clone := e
+	clone.UUID = NewUUID()
+	clone.Values = make([]ValueData, len(clone.Values))
+	for i, value := range e.Values {
+		clone.Values[i] = value
+	}
+	clone.Histories = make([]History, len(clone.Histories))
+	for i, history := range e.Histories {
+		clone.Histories[i] = history.Clone()
+	}
+	clone.Binaries = make([]BinaryReference, len(clone.Binaries))
+	for i, binary := range e.Binaries {
+		clone.Binaries[i] = binary
+	}
+	clone.CustomData = make([]CustomData, len(clone.CustomData))
+	for i, data := range e.CustomData {
+		clone.CustomData[i] = data
+	}
+	return clone
+}
+
 // Get returns the value in e corresponding with key k, or an empty string otherwise
 func (e *Entry) Get(key string) *ValueData {
 	for i := range e.Values {
@@ -106,6 +129,18 @@ func (h *History) setKdbxFormatVersion(version formatVersion) {
 	for i := range h.Entries {
 		(&h.Entries[i]).setKdbxFormatVersion(version)
 	}
+}
+
+// Clone creates a copy of a History struct including its child entities
+func (h History) Clone() History {
+	clone := h
+
+	clone.Entries = make([]Entry, len(h.Entries))
+	for i, entry := range h.Entries {
+		clone.Entries[i] = entry.Clone()
+	}
+
+	return clone
 }
 
 // ValueData is a structure containing key value pairs of information stored in an entry

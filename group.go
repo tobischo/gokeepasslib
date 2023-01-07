@@ -47,6 +47,21 @@ type Group struct {
 	groupChildOrder         int                   `xml:"-"`
 }
 
+// Clone creates a copy of a Group struct including its child entities
+func (g Group) Clone() Group {
+	clone := g
+	clone.UUID = NewUUID()
+	clone.Entries = make([]Entry, len(clone.Entries))
+	for i, entry := range g.Entries {
+		clone.Entries[i] = entry.Clone()
+	}
+	clone.Groups = make([]Group, len(clone.Groups))
+	for i, group := range g.Groups {
+		clone.Groups[i] = group.Clone()
+	}
+	return clone
+}
+
 // UnmarshalXML unmarshals the boolean from d
 func (g *Group) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	for {
