@@ -1,3 +1,7 @@
+### v3.5.0
+
+* Add support for Cloning `Group` and `Entry`
+
 ### v3.4.1
 
 * Fix key file support to actually deal with the different supported key file types
