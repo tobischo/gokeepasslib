@@ -1,3 +1,8 @@
+### v3.5.1
+
+* Update `golang.org/x/crypto` to `v0.8.0`
+* Update `golang.org/x/sys` to `v0.7.0`
+
 ### v3.5.0
 
 * Add support for Cloning `Group` and `Entry`
