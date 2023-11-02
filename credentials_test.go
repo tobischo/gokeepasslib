@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestCryptAESKey(t *testing.T) {
@@ -48,7 +49,8 @@ func TestCryptAESKey(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.title, func(t *testing.T) {
-			result, err := cryptAESKey(c.masterKey, c.seed, c.rounds)
+			cryptAESKey(c.masterKey, c.seed, c.rounds)
+			result, err := cryptAESKey2(c.masterKey, c.seed, c.rounds)
 
 			if !bytes.Equal(result, c.expectedResult) {
 				t.Errorf("Received % X, expected % X", result, c.expectedResult)
@@ -201,4 +203,14 @@ func BenchmarkCryptAESKey(b *testing.B) {
 		})
 	}
 
+}
+
+func TestSpeed(t *testing.T) {
+	start := time.Now()
+	cryptAESKey(
+		[]byte("8ee89711330c1ccf39a2e65ad12bbd7d"),
+		[]byte("a25ca73c7189e2a2ca5acf2088b57e28"),
+		60_000_000)
+	elapsed := time.Since(start)
+	t.Log(elapsed)
 }

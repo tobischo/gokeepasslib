@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"crypto/aes"
+	"crypto/cipher"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
@@ -109,6 +110,18 @@ func buildHmacKey(db *Database, transformedKey []byte) []byte {
 	return hmacKey.Sum(nil)
 }
 
+func minOf(vars ...uint64) uint64 {
+	min := vars[0]
+
+	for _, i := range vars {
+		if min > i {
+			min = i
+		}
+	}
+
+	return min
+}
+
 func cryptAESKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
 	block, err := aes.NewCipher(seed)
 	if err != nil {
@@ -124,6 +137,42 @@ func cryptAESKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
 	}
 
 	hash := sha256.Sum256(newKey)
+	return hash[:], nil
+}
+
+func cryptAESKey2(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
+	block, err := aes.NewCipher(seed)
+	if err != nil {
+		return nil, err
+	}
+
+	newKey := make([]byte, len(masterKey))
+	copy(newKey, masterKey)
+
+	key1 := newKey[0:16]
+	key2 := newKey[16:32]
+
+	for rounds > 0 {
+		curRounds := minOf(rounds, 10000)
+
+		cbc1 := cipher.NewCBCEncrypter(block, key1)
+		cbc2 := cipher.NewCBCEncrypter(block, key2)
+
+		zeros := make([]byte, aes.BlockSize*curRounds)
+
+		k1 := make([]byte, aes.BlockSize*curRounds)
+		k2 := make([]byte, aes.BlockSize*curRounds)
+
+		cbc1.CryptBlocks(k1, zeros)
+		cbc2.CryptBlocks(k2, zeros)
+
+		key1 = k1[len(k1)-16:]
+		key2 = k2[len(k2)-16:]
+
+		rounds = rounds - curRounds
+	}
+
+	hash := sha256.Sum256(append(key1, key2...))
 	return hash[:], nil
 }
 
