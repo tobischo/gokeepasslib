@@ -26,7 +26,10 @@ func TestChaCha(t *testing.T) {
 	payload := []byte("test message")
 
 	// Encrypt
-	c, _ := NewStreamManager(ChaChaStreamID, key)
+	c, err := NewStreamManager(ChaChaStreamID, key)
+	if err != nil {
+		t.Fatalf("Failed to create stream manager: %v", err)
+	}
 	crypted := c.Pack(payload)
 
 	// Decrypt

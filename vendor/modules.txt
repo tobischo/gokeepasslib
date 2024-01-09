@@ -1,10 +1,6 @@
 # github.com/aead/argon2 v0.0.0-20180111183520-a87724528b07
 ## explicit
 github.com/aead/argon2
-# github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da
-## explicit
-github.com/aead/chacha20
-github.com/aead/chacha20/chacha
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
@@ -25,6 +21,8 @@ github.com/stretchr/testify/assert
 # golang.org/x/crypto v0.17.0
 ## explicit; go 1.18
 golang.org/x/crypto/blake2b
+golang.org/x/crypto/chacha20
+golang.org/x/crypto/internal/alias
 # golang.org/x/exp v0.0.0-20230105202349-8879d0199aa3
 ## explicit; go 1.18
 golang.org/x/exp/constraints
