@@ -5,7 +5,7 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 
-	"github.com/aead/chacha20"
+	"golang.org/x/crypto/chacha20"
 )
 
 // ChaChaStream is a ChaCha20 cipher that implements Stream and Encrypter interface
@@ -15,7 +15,7 @@ type ChaChaStream struct {
 
 // NewChaChaEncrypter initialize a new ChaChaStream interfaced with Encrypter
 func NewChaChaEncrypter(key []byte, iv []byte) (*ChaChaStream, error) {
-	cipher, err := chacha20.NewCipher(iv, key)
+	cipher, err := chacha20.NewUnauthenticatedCipher(key, iv)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func NewChaChaEncrypter(key []byte, iv []byte) (*ChaChaStream, error) {
 func NewChaChaStream(key []byte) (*ChaChaStream, error) {
 	hash := sha512.Sum512(key)
 
-	cipher, err := chacha20.NewCipher(hash[32:44], hash[:32])
+	cipher, err := chacha20.NewUnauthenticatedCipher(hash[:32], hash[32:44])
 	if err != nil {
 		return nil, err
 	}
