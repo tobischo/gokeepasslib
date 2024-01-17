@@ -1,8 +1,8 @@
-// Copyright (c) 2017 Andreas Auernhammer. All rights reserved.
-// Use of this source code is governed by a license that can be
-// found in the LICENSE file.
+// Copyright 2017 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
-// +build !amd64 appengine gccgo
+//go:build !amd64 || purego || !gc
 
 package argon2
 

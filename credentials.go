@@ -14,7 +14,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/aead/argon2"
+	"github.com/tobischo/argon2"
 )
 
 // DBCredentials holds the key used to lock and unlock the database
@@ -56,7 +56,7 @@ func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
 	if db.Header.IsKdbx4() {
 		if reflect.DeepEqual(db.Header.FileHeaders.KdfParameters.UUID, KdfArgon2) {
 			// Argon 2
-			transformedKey = argon2.Key2d(
+			transformedKey = argon2.DKey(
 				transformedKey, // Master key
 				db.Header.FileHeaders.KdfParameters.Salt[:],             // Salt
 				uint32(db.Header.FileHeaders.KdfParameters.Iterations),  // Time cost

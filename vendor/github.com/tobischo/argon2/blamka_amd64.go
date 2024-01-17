@@ -1,15 +1,16 @@
-// Copyright (c) 2017 Andreas Auernhammer. All rights reserved.
-// Use of this source code is governed by a license that can be
-// found in the LICENSE file.
+// Copyright 2017 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+//go:build amd64 && gc && !purego
 
 package argon2
 
-func init() {
-	useSSE4 = supportsSSE4()
-}
+import "golang.org/x/sys/cpu"
 
-//go:noescape
-func supportsSSE4() bool
+func init() {
+	useSSE4 = cpu.X86.HasSSE41
+}
 
 //go:noescape
 func mixBlocksSSE2(out, a, b, c *block)
