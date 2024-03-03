@@ -9,11 +9,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 )
 
 // Block size of 1MB - https://keepass.info/help/kb/kdbx_4.html#dataauth
-const blockSplitRate = 1048576
+const blockSplitRate = 1 * 1024 * 1024
 
 type BlockHMACBuilder struct {
 	baseKey []byte
@@ -49,7 +48,7 @@ func (b *BlockHMACBuilder) BuildHMAC(index uint64, length uint32, data []byte) [
 func decomposeContentBlocks4(r io.Reader, masterSeed []byte, transformedKey []byte) ([]byte, error) {
 	var contentData []byte
 	// Get all the content
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +97,7 @@ func decomposeContentBlocks4(r io.Reader, masterSeed []byte, transformedKey []by
 func decomposeContentBlocks31(r io.Reader) ([]byte, error) {
 	var contentData []byte
 	// Get all the content
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

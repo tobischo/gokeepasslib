@@ -6,11 +6,14 @@ import (
 	"errors"
 )
 
+// uuidLength defines how many bytes are in an uuid
+const uuidLength = 16
+
 // ErrInvalidUUIDLength is an error which is returned during unmarshaling if the UUID does not have 16 bytes length
 var ErrInvalidUUIDLength = errors.New("gokeepasslib: length of decoded UUID was not 16")
 
 // UUID stores a universal identifier for each group+entry
-type UUID [16]byte
+type UUID [uuidLength]byte
 
 // NewUUID returns a new randomly generated UUID
 func NewUUID() UUID {
@@ -48,9 +51,9 @@ func (u *UUID) UnmarshalText(text []byte) error {
 		*u = NewUUID()
 		return nil
 	}
-	if length != 16 {
+	if length != uuidLength {
 		return ErrInvalidUUIDLength
 	}
-	copy((*u)[:], id[:16])
+	copy((*u)[:], id[:uuidLength])
 	return nil
 }

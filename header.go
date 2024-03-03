@@ -191,7 +191,7 @@ func NewKDBX4FileHeaders() *FileHeaders {
 			Rounds:      0,
 			Salt:        salt,
 			Parallelism: 2,
-			Memory:      1048576,
+			Memory:      1 * 1024 * 1024, // 1 MB
 			Iterations:  2,
 			Version:     19,
 		},
