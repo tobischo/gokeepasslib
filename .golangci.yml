@@ -51,7 +51,6 @@ linters:
   enable-all: true
   disable:
     - depguard
-    - goddox
     - nlreturn
     - paralleltest
     - tagliatelle
@@ -67,8 +66,6 @@ linters:
     - cyclop
     - gofumpt
     - deadcode
-    - exhaustrivestruct
-    - golangci-lintifshort
     - interfacer
     - maligned
     - nosnakecase
