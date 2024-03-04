@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 )
 
 // Inner header bytes
@@ -110,7 +109,7 @@ ForLoop:
 			reader := bytes.NewReader(data)
 
 			binary.Read(reader, binary.LittleEndian, &protection) // Read memory protection flag
-			content, _ := ioutil.ReadAll(reader)                  // Read content
+			content, _ := io.ReadAll(reader)                      // Read content
 
 			ih.Binaries = append(
 				ih.Binaries,

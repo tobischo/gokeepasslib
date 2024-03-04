@@ -1,6 +1,7 @@
 package gokeepasslib
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -35,7 +36,7 @@ func TestDecodeFile(t *testing.T) {
 			newCredentials: func() (*DBCredentials, error) {
 				file, err := os.Open("tests/kdbx3/example-key.key")
 				var keyData []byte
-				if keyData, err = ioutil.ReadAll(file); err != nil {
+				if keyData, err = io.ReadAll(file); err != nil {
 					return nil, nil
 				}
 

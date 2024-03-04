@@ -49,7 +49,7 @@ func (b *BlockHMACBuilder) BuildHMAC(index uint64, length uint32, data []byte) [
 func decomposeContentBlocks4(r io.Reader, masterSeed []byte, transformedKey []byte) ([]byte, error) {
 	var contentData []byte
 	// Get all the content
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
