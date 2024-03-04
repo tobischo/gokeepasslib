@@ -3,7 +3,7 @@ package gokeepasslib
 import (
 	"bytes"
 	"crypto/rand"
-	"fmt"
+	"strconv"
 	"testing"
 )
 
@@ -81,7 +81,7 @@ func TestBinaryKDBXv31CleanBinaries(t *testing.T) {
 	count := 5
 
 	for i := 0; i < count; i++ {
-		str := "test " + fmt.Sprint(i)
+		str := "test " + strconv.Itoa(i)
 		expectedContent = append(expectedContent, str)
 		expected = append(expected, db.AddBinary([]byte(str)))
 	}
@@ -156,7 +156,7 @@ func TestBinaryKDBXv4CleanBinaries(t *testing.T) {
 	count := 5
 
 	for i := 0; i < count; i++ {
-		expected = append(expected, db.AddBinary([]byte("test "+fmt.Sprint(i))))
+		expected = append(expected, db.AddBinary([]byte("test "+strconv.Itoa(i))))
 	}
 
 	if len(db.Content.InnerHeader.Binaries) != count {

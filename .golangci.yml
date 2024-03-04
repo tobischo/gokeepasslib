@@ -72,6 +72,9 @@ linters:
     - scopelint
     - structcheck
     - varcheck
+    - wrapcheck
+    - stylecheck
+    - testableexamples
 
 issues:
   max-ame-issues: 50
