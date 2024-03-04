@@ -1,0 +1,81 @@
+run:
+  timeout: 5m
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+
+  funlen:
+    lines: 100
+    statements: 50
+
+  gci:
+    sections:
+      - standard                       # Standard section: captures all standard packages.
+      - prefix(github.com/tobischo/gokeepasslib) # Custom section: groups all imports with the specified Prefix.
+      - default                        # Default section: contains all imports that could not be matched to another section type.
+
+    skip-generated: false
+    custom-order: true
+
+  gocognit:
+    # Minimal code complexity to report.
+    # Default: 30 (but we recommend 10-20)
+    min-complexity: 10
+
+  gomnd:
+    ignored-functions:
+      - os.Chmod
+      - os.Mkdir
+      - os.MkdirAll
+      - os.OpenFile
+      - os.WriteFile
+
+  govet:
+    settings:
+      shadow:
+        strict: true
+    enable-all: true
+
+  nakedret:
+    max-func-lines: 0 # Do not use naked returns
+
+  lll:
+    line-length: 100
+    tab-width: 2
+
+  godot:
+    period: false
+
+linters:
+  enable-all: true
+  disable:
+    - depguard
+    - goddox
+    - nlreturn
+    - paralleltest
+    - tagliatelle
+    - thelper
+    - wsl
+    - forbidigo
+    - varnamelen
+    - exhaustruct
+    - errname
+    - gochecknoglobals
+    - testpackage
+    - funlen
+    - cyclop
+    - gofumpt
+    - deadcode
+    - exhaustrivestruct
+    - golangci-lintifshort
+    - interfacer
+    - maligned
+    - nosnakecase
+    - scopelint
+    - structcheck
+    - varcheck
+
+issues:
+  max-ame-issues: 50
+
