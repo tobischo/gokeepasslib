@@ -5,10 +5,8 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"fmt"
-	"io"
-	"io/ioutil"
-
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
+	"io"
 )
 
 // Binaries Stores a slice of binaries in the metadata header of a database
@@ -109,7 +107,7 @@ func (b Binary) GetContentBytes() ([]byte, error) {
 			return nil, err
 		}
 		defer reader.Close()
-		bts, err := ioutil.ReadAll(reader)
+		bts, err := io.ReadAll(reader)
 		if err != nil && err != io.ErrUnexpectedEOF {
 			return nil, err
 		}

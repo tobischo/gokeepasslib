@@ -4,6 +4,12 @@ import (
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
+const (
+	_defaultHistoryMaxItems        = 10
+	_defaultHistorySize            = 6 * 1024 * 1024 // 6 MB
+	_defaultMaintenanceHistoryDays = 365             // 1 year
+)
+
 // MemProtection is a structure containing settings for MemoryProtection
 type MemProtection struct {
 	ProtectTitle    w.BoolWrapper `xml:"ProtectTitle"`
@@ -36,9 +42,9 @@ func NewMetaData(options ...MetaDataOption) *MetaData {
 		MasterKeyChanged:       &now,
 		MasterKeyChangeRec:     -1,
 		MasterKeyChangeForce:   -1,
-		HistoryMaxItems:        10,
-		HistoryMaxSize:         6291456, // 6 MB
-		MaintenanceHistoryDays: 365,
+		HistoryMaxItems:        _defaultHistoryMaxItems,
+		HistoryMaxSize:         _defaultHistorySize,
+		MaintenanceHistoryDays: _defaultMaintenanceHistoryDays,
 	}
 
 	for _, option := range options {

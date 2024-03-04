@@ -9,7 +9,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"reflect"
 	"regexp"
@@ -141,7 +141,7 @@ func ParseKeyFile(location string) ([]byte, error) {
 	}
 
 	var data []byte
-	if data, err = ioutil.ReadAll(file); err != nil {
+	if data, err = io.ReadAll(file); err != nil {
 		return nil, err
 	}
 

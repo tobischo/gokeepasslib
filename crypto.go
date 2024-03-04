@@ -12,6 +12,9 @@ const (
 	ARC4StreamID   uint32 = 1 // ID for ARC4 protection, not implemented
 	SalsaStreamID  uint32 = 2 // ID for Salsa20 protection
 	ChaChaStreamID uint32 = 3 // ID for ChaCha20 protection
+
+	ivChaCha20Length = 12
+	ivAESLength      = 16
 )
 
 // EncrypterManager is the manager to handle an Encrypter
@@ -41,11 +44,9 @@ func NewEncrypterManager(key []byte, iv []byte) (manager *EncrypterManager, err 
 	var encrypter Encrypter
 	manager = new(EncrypterManager)
 	switch len(iv) {
-	case 12:
-		// ChaCha20
+	case ivChaCha20Length:
 		encrypter, err = crypto.NewChaChaEncrypter(key, iv)
-	case 16:
-		// AES
+	case ivAESLength:
 		encrypter, err = crypto.NewAESEncrypter(key, iv)
 	default:
 		return nil, ErrUnsupportedEncrypterType

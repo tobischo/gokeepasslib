@@ -6,7 +6,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"io"
-	"io/ioutil"
 	"reflect"
 )
 
@@ -54,7 +53,7 @@ func (d *Decoder) Decode(db *Database) error {
 	}
 
 	// Decode raw content
-	rawContent, _ := ioutil.ReadAll(d.r)
+	rawContent, _ := io.ReadAll(d.r)
 	if err := decodeRawContent(db, rawContent, transformedKey); err != nil {
 		return err
 	}
@@ -89,7 +88,7 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err 
 	} else {
 		// In Kdbx v3.1 you must decrypt before parse blocks
 		reader := bytes.NewReader(content)
-		content, err = ioutil.ReadAll(reader)
+		content, err = io.ReadAll(reader)
 		if err != nil {
 			return err
 		}
@@ -131,7 +130,7 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err 
 		}
 		defer r.Close()
 
-		decryptedContent, _ = ioutil.ReadAll(r)
+		decryptedContent, _ = io.ReadAll(r)
 	}
 
 	db.Content.RawData = decryptedContent
