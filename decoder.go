@@ -54,7 +54,7 @@ func (d *Decoder) Decode(db *Database) error {
 	}
 
 	// Decode raw content
-	rawContent, _ := ioutil.ReadAll(d.r)
+	rawContent, _ := io.ReadAll(d.r)
 	if err := decodeRawContent(db, rawContent, transformedKey); err != nil {
 		return err
 	}
