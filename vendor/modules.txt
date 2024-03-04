@@ -12,8 +12,8 @@ github.com/google/go-cmp/cmp/internal/value
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/stretchr/testify v1.8.4
-## explicit; go 1.20
+# github.com/stretchr/testify v1.9.0
+## explicit; go 1.17
 github.com/stretchr/testify/assert
 # github.com/tobischo/argon2 v0.1.0
 ## explicit; go 1.21.6
