@@ -133,7 +133,8 @@ func NewPasswordCredentials(password string) *DBCredentials {
 	return &DBCredentials{Passphrase: hashedpw[:]}
 }
 
-// ParseKeyFile returns the hashed key from a key file at the path specified by location, parsing xml if needed
+// ParseKeyFile returns the hashed key from a key file
+// at the path specified by location, parsing xml if needed
 func ParseKeyFile(location string) ([]byte, error) {
 	file, err := os.Open(location)
 	if err != nil {
@@ -273,7 +274,8 @@ func NewKeyDataCredentials(data []byte) (*DBCredentials, error) {
 	return &DBCredentials{Key: key}, nil
 }
 
-// NewPasswordAndKeyCredentials builds a new DBCredentials from a password and the key file at the path specified by location
+// NewPasswordAndKeyCredentials builds a new DBCredentials from a password
+// and the key file at the path specified by location
 func NewPasswordAndKeyCredentials(password, location string) (*DBCredentials, error) {
 	key, err := ParseKeyFile(location)
 	if err != nil {
@@ -288,7 +290,8 @@ func NewPasswordAndKeyCredentials(password, location string) (*DBCredentials, er
 	}, nil
 }
 
-// NewPasswordAndKeyDataCredentials builds a new DBCredentials from a password and the key file in bytes
+// NewPasswordAndKeyDataCredentials builds a new DBCredentials
+// from a password and the key file in bytes
 func NewPasswordAndKeyDataCredentials(password string, data []byte) (*DBCredentials, error) {
 	key, err := ParseKeyData(data)
 	if err != nil {

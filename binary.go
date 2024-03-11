@@ -17,7 +17,7 @@ type Binaries []Binary
 
 // Binary stores a binary found in the metadata header of a database
 type Binary struct {
-	ID               int           `xml:"ID,attr"`         // Index of binary (Manually counted on KDBX v4)
+	ID               int           `xml:"ID,attr"`         // Index (Manually counted on KDBX v4)
 	MemoryProtection byte          `xml:"-"`               // Memory protection flag (Only KDBX v4)
 	Content          []byte        `xml:",innerxml"`       // Binary content
 	Compressed       w.BoolWrapper `xml:"Compressed,attr"` // Compressed flag (Only KDBX v3.1)
@@ -42,8 +42,10 @@ func (bs Binaries) Find(id int) *Binary {
 	return nil
 }
 
-// Deprecated: Find returns a reference to a binary in the database db with the same id as br, or nil if none is found
-// Note: this function should not be used directly, use `Database.FindBinary(id int) *Binary` instead
+// Deprecated: Find returns a reference to a binary in the database db
+// with the same id as br, or nil if none is found
+// Note: this function should not be used directly, use `Database.FindBinary(id int) *Binary`
+// instead
 func (br *BinaryReference) Find(db *Database) *Binary {
 	return db.getBinaries().Find(br.Value.ID)
 }
@@ -66,7 +68,8 @@ func WithKDBXv31Binary(binary *Binary) {
 }
 
 // Deprecated: Add appends binary data to the slice
-// Note: this function should not be used directly, use `Database.AddBinary(c []byte) *Binary` instead
+// Note: this function should not be used directly,
+// use `Database.AddBinary(c []byte) *Binary` instead
 func (bs *Binaries) Add(c []byte, options ...BinaryOption) *Binary {
 	for _, binary := range *bs {
 		if bytes.Equal(binary.Content, c) {
