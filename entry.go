@@ -57,21 +57,15 @@ func (e Entry) Clone() Entry {
 	clone := e
 	clone.UUID = NewUUID()
 	clone.Values = make([]ValueData, len(clone.Values))
-	for i, value := range e.Values {
-		clone.Values[i] = value
-	}
+	copy(clone.Values, e.Values)
 	clone.Histories = make([]History, len(clone.Histories))
 	for i, history := range e.Histories {
 		clone.Histories[i] = history.Clone()
 	}
 	clone.Binaries = make([]BinaryReference, len(clone.Binaries))
-	for i, binary := range e.Binaries {
-		clone.Binaries[i] = binary
-	}
+	copy(clone.Binaries, e.Binaries)
 	clone.CustomData = make([]CustomData, len(clone.CustomData))
-	for i, data := range e.CustomData {
-		clone.CustomData[i] = data
-	}
+	copy(clone.CustomData, e.CustomData)
 	return clone
 }
 

@@ -56,7 +56,7 @@ func (d *Decoder) Decode(db *Database) error {
 	}
 
 	// Decode raw content
-	rawContent, err := io.ReadAll(d.r)
+	rawContent, _ := io.ReadAll(d.r)
 	if err != nil {
 		return err
 	}
@@ -139,9 +139,6 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err 
 		defer r.Close()
 
 		decryptedContent, err = io.ReadAll(r)
-		if err != nil {
-			return err
-		}
 	}
 
 	db.Content.RawData = decryptedContent

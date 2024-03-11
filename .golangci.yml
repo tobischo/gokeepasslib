@@ -76,6 +76,7 @@ linters:
     - stylecheck
     - testableexamples
     - ifshort
+    - errcheck
 
 issues:
   max-ame-issues: 50

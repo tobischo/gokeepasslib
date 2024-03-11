@@ -112,21 +112,21 @@ func encodeRawContent(
 	db *Database,
 	content []byte,
 	transformedKey []byte,
-) (encoded []byte, err error) {
+) ([]byte, error) {
 	// Compress if the header compression flag is 1 (gzip)
 	if db.Header.FileHeaders.CompressionFlags == GzipCompressionFlag {
 		b := new(bytes.Buffer)
 		w := gzip.NewWriter(b)
 
-		if _, err = w.Write(content); err != nil {
-			return encoded, err
+		if _, err := w.Write(content); err != nil {
+			return nil, err
 		}
 
 		// Close() needs to be explicitly called to write Gzip stream footer,
 		// Flush() is not enough. some gzip decoders treat missing footer as error
 		// while some don't). internally Close() also does flush.
-		if err = w.Close(); err != nil {
-			return encoded, err
+		if err := w.Close(); err != nil {
+			return nil, err
 		}
 
 		content = b.Bytes()
@@ -152,7 +152,7 @@ func encodeRawContent(
 	// Decrypt content
 	encrypter, err := db.GetEncrypterManager(transformedKey)
 	if err != nil {
-		return encoded, err
+		return nil, err
 	}
 	encrypted := encrypter.Encrypt(content)
 
