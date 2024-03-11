@@ -37,39 +37,61 @@ type Stream interface {
 }
 
 // NewEncrypterManager initialize a new EncrypterManager
-func NewEncrypterManager(key []byte, iv []byte) (manager *EncrypterManager, err error) {
-	var encrypter Encrypter
-	manager = new(EncrypterManager)
+func NewEncrypterManager(key []byte, iv []byte) (*EncrypterManager, error) {
 	switch len(iv) {
 	case 12:
 		// ChaCha20
-		encrypter, err = crypto.NewChaChaEncrypter(key, iv)
+		encrypter, err := crypto.NewChaChaEncrypter(key, iv)
+		if err != nil {
+			return nil, err
+		}
+
+		return &EncrypterManager{
+			Encrypter: encrypter,
+		}, nil
 	case 16:
 		// AES
-		encrypter, err = crypto.NewAESEncrypter(key, iv)
+		encrypter, err := crypto.NewAESEncrypter(key, iv)
+		if err != nil {
+			return nil, err
+		}
+
+		return &EncrypterManager{
+			Encrypter: encrypter,
+		}, nil
 	default:
 		return nil, ErrUnsupportedEncrypterType
 	}
-	manager.Encrypter = encrypter
-	return manager, nil
 }
 
 // NewStreamManager initialize a new StreamManager
-func NewStreamManager(id uint32, key []byte) (manager *StreamManager, err error) {
-	var stream Stream
-	manager = new(StreamManager)
+func NewStreamManager(id uint32, key []byte) (*StreamManager, error) {
 	switch id {
 	case NoStreamID:
-		stream = crypto.NewInsecureStream()
+		return &StreamManager{
+			Stream: crypto.NewInsecureStream(),
+		}, nil
 	case SalsaStreamID:
-		stream, err = crypto.NewSalsaStream(key)
+		stream, err := crypto.NewSalsaStream(key)
+		if err != nil {
+			return nil, err
+		}
+
+		return &StreamManager{
+			Stream: stream,
+		}, nil
 	case ChaChaStreamID:
-		stream, err = crypto.NewChaChaStream(key)
+		stream, err := crypto.NewChaChaStream(key)
+		if err != nil {
+			return nil, err
+		}
+
+		return &StreamManager{
+			Stream: stream,
+		}, nil
 	default:
 		return nil, ErrUnsupportedStreamType
 	}
-	manager.Stream = stream
-	return
 }
 
 // Decrypt returns the decrypted data

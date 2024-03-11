@@ -15,8 +15,8 @@ var sigmaWords = []uint32{
 
 // SalsaStream is a Salsa20 cipher that implements CryptoStream interface
 type SalsaStream struct {
-	State        []uint32
 	blockUsed    int
+	State        []uint32
 	block        []byte
 	currentBlock []byte
 }
