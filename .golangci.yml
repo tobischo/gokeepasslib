@@ -78,6 +78,18 @@ linters:
     - ifshort
     - errcheck
     - nestif
+    - exhaustivestruct
+    - govet
+    - musttag
+    - nilnil
+    - gomnd
+    - errorlint
+    - revive
+    - unconvert
+    - gocritic
+    - gocognit
+    - dupl
+    - goconst
 
 issues:
   max-ame-issues: 50
