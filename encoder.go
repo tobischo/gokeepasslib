@@ -108,7 +108,11 @@ func (e *Encoder) Encode(db *Database) error {
 	return err
 }
 
-func encodeRawContent(db *Database, content []byte, transformedKey []byte) (encoded []byte, err error) {
+func encodeRawContent(
+	db *Database,
+	content []byte,
+	transformedKey []byte,
+) (encoded []byte, err error) {
 	// Compress if the header compression flag is 1 (gzip)
 	if db.Header.FileHeaders.CompressionFlags == GzipCompressionFlag {
 		b := new(bytes.Buffer)

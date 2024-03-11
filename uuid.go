@@ -6,7 +6,8 @@ import (
 	"errors"
 )
 
-// ErrInvalidUUIDLength is an error which is returned during unmarshaling if the UUID does not have 16 bytes length
+// ErrInvalidUUIDLength is an error which is returned during unmarshaling
+// if the UUID does not have 16 bytes length
 var ErrInvalidUUIDLength = errors.New("gokeepasslib: length of decoded UUID was not 16")
 
 // UUID stores a universal identifier for each group+entry

@@ -15,7 +15,8 @@ type MemProtection struct {
 
 type MetaDataOption func(*MetaData)
 
-// CustomIcon is the structure needed to store custom icons.  Unsure of what version/format requires this
+// CustomIcon is the structure needed to store custom icons.
+// Unsure of what version/format requires this
 type CustomIcon struct {
 	UUID UUID   `xml:"UUID"` //Entry's CustomIcon UUID should match this
 	Data string `xml:"Data"` //base64 encoded PNG icon.  Unknown size constraints

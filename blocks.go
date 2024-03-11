@@ -45,7 +45,11 @@ func (b *BlockHMACBuilder) BuildHMAC(index uint64, length uint32, data []byte) [
 
 // decomposeContentBlocks4 decodes the content data block by block (Kdbx v4)
 // Used to extract data blocks from the entire content
-func decomposeContentBlocks4(r io.Reader, masterSeed []byte, transformedKey []byte) ([]byte, error) {
+func decomposeContentBlocks4(
+	r io.Reader,
+	masterSeed []byte,
+	transformedKey []byte,
+) ([]byte, error) {
 	var contentData []byte
 	// Get all the content
 	content, err := io.ReadAll(r)
@@ -132,7 +136,12 @@ func decomposeContentBlocks31(r io.Reader) ([]byte, error) {
 }
 
 // composeContentBlocks4 composes every content block into a HMAC-LENGTH-DATA block scheme (Kdbx v4)
-func composeContentBlocks4(w io.Writer, contentData []byte, masterSeed []byte, transformedKey []byte) {
+func composeContentBlocks4(
+	w io.Writer,
+	contentData []byte,
+	masterSeed []byte,
+	transformedKey []byte,
+) {
 	hmacBuilder := NewBlockHMACBuilder(masterSeed, transformedKey)
 
 	var offset int
@@ -170,7 +179,8 @@ func composeContentBlocks4(w io.Writer, contentData []byte, masterSeed []byte, t
 	binary.Write(w, binary.LittleEndian, uint32(0))
 }
 
-// composeBlocks31 composes every content block into a INDEX-SHA-LENGTH-DATA block scheme (Kdbx v3.1)
+// composeBlocks31 composes every content block
+// into a INDEX-SHA-LENGTH-DATA block scheme (Kdbx v3.1)
 func composeContentBlocks31(w io.Writer, contentData []byte) {
 	index := uint32(0)
 	offset := 0

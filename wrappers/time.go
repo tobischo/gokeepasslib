@@ -56,7 +56,8 @@ func Now(options ...TimeOption) TimeWrapper {
 }
 
 // MarshalText marshals time into an RFC3339 compliant value in UTC (Kdbx v3.1)
-// On Kdbx v4 it calculates the timestamp subtracting seconds from the time date and encode it with base64
+// On Kdbx v4 it calculates the timestamp subtracting seconds
+// from the time date and encode it with base64
 func (tw TimeWrapper) MarshalText() ([]byte, error) {
 	t := time.Time(tw.Time).In(time.UTC)
 	if y := t.Year(); y < 0 || y >= 10000 {
@@ -80,7 +81,8 @@ func (tw TimeWrapper) MarshalText() ([]byte, error) {
 	return ret, nil
 }
 
-// UnmarshalText take a string of format time.RFC3339 and marshals it into the TimeWrapper value (Kdbx v3.1)
+// UnmarshalText take a string of format time.RFC3339 and marshals
+// it into the TimeWrapper value (Kdbx v3.1)
 // On Kdbx v4 it calculates the time with given seconds via data byte array (base64 encoded)
 func (tw *TimeWrapper) UnmarshalText(data []byte) error {
 	var formatted bool

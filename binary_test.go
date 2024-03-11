@@ -30,7 +30,10 @@ func TestBinaryKDBXv31(t *testing.T) {
 		t.Fatalf("Binary Reference ID is incorrect. Should be 4, was %d", references[0].Value.ID)
 	}
 	if data, _ := db.FindBinary(references[0].Value.ID).GetContentBytes(); string(data) != "test" {
-		t.Fatalf("Binary Reference GetContentBytes is incorrect. Should be `test`, was '%s'", string(data))
+		t.Fatalf(
+			"Binary Reference GetContentBytes is incorrect. Should be `test`, was '%s'",
+			string(data),
+		)
 	}
 	if str, _ := db.FindBinary(references[0].Value.ID).GetContentString(); str != "test" {
 		t.Fatalf("Binary Reference GetContentString is incorrect. Should be `test`, was '%s'", str)
@@ -38,7 +41,10 @@ func TestBinaryKDBXv31(t *testing.T) {
 
 	found := db.FindBinary(binary2.ID)
 	if data, _ := found.GetContentBytes(); string(data) != "Hello world!" {
-		t.Fatalf("Binary content from FindBinary is incorrect. Should be `Hello world!`, was '%s'", string(data))
+		t.Fatalf(
+			"Binary content from FindBinary is incorrect. Should be `Hello world!`, was '%s'",
+			string(data),
+		)
 	}
 	if str, _ := found.GetContentString(); str != "Hello world!" {
 		t.Fatalf("Binary content from FindBinary is incorrect. Should be `Hello world!`, was '%s'", str)
@@ -101,7 +107,11 @@ func TestBinaryKDBXv31CleanBinaries(t *testing.T) {
 	for i := 0; i < count; i++ {
 		found := db.FindBinary(binaries[i].Value.ID)
 		if data, _ := found.GetContentString(); string(data) != expectedContent[i] {
-			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", expectedContent[i], string(data))
+			t.Fatalf(
+				"Binary content from FindBinary is incorrect. Should be `%s`, was '%s'",
+				expectedContent[i],
+				string(data),
+			)
 		}
 	}
 
@@ -139,7 +149,11 @@ func TestBinaryKDBXv31CleanBinaries(t *testing.T) {
 			t.Fatalf("Binary (ID=%d) not found", i)
 		}
 		if data, _ := found.GetContentBytes(); string(data) != expectedContent[i] {
-			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", expectedContent[i], string(data))
+			t.Fatalf(
+				"Binary content from FindBinary is incorrect. Should be `%s`, was '%s'",
+				expectedContent[i],
+				string(data),
+			)
 		}
 
 		ref := db.Content.Root.Groups[0].Entries[0].Binaries[i]
@@ -174,7 +188,11 @@ func TestBinaryKDBXv4CleanBinaries(t *testing.T) {
 	for i := 0; i < count; i++ {
 		found := db.FindBinary(binaries[i].Value.ID)
 		if data, _ := found.GetContentBytes(); string(data) != string(expected[i].Content) {
-			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", string(expected[i].Content), string(data))
+			t.Fatalf(
+				"Binary content from FindBinary is incorrect. Should be `%s`, was '%s'",
+				string(expected[i].Content),
+				string(data),
+			)
 		}
 	}
 
@@ -200,7 +218,11 @@ func TestBinaryKDBXv4CleanBinaries(t *testing.T) {
 	db.UnlockProtectedEntries()
 
 	if len(db.Content.InnerHeader.Binaries) != len(expected) {
-		t.Fatalf("Expected %d binary elements, found %d", len(expected), len(db.Content.InnerHeader.Binaries))
+		t.Fatalf(
+			"Expected %d binary elements, found %d",
+			len(expected),
+			len(db.Content.InnerHeader.Binaries),
+		)
 	}
 
 	for i := 0; i < len(expected); i++ {
@@ -209,7 +231,11 @@ func TestBinaryKDBXv4CleanBinaries(t *testing.T) {
 			t.Fatalf("Binary (ID=%d) not found", i)
 		}
 		if data, _ := found.GetContentBytes(); string(data) != string(expected[i].Content) {
-			t.Fatalf("Binary content from FindBinary is incorrect. Should be `%s`, was '%s'", string(expected[i].Content), string(data))
+			t.Fatalf(
+				"Binary content from FindBinary is incorrect. Should be `%s`, was '%s'",
+				string(expected[i].Content),
+				string(data),
+			)
 		}
 
 		ref := db.Content.Root.Groups[0].Entries[0].Binaries[i]

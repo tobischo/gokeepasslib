@@ -89,7 +89,8 @@ func (db *Database) getTransformedKey() ([]byte, error) {
 	return db.Credentials.buildTransformedKey(db)
 }
 
-// GetEncrypterManager returns an EncryptManager based on the master key and EncryptionIV, or nil if the type is unsupported
+// GetEncrypterManager returns an EncryptManager based on the master key and EncryptionIV,
+// or nil if the type is unsupported
 func (db *Database) GetEncrypterManager(transformedKey []byte) (*EncrypterManager, error) {
 	return NewEncrypterManager(
 		buildMasterKey(db, transformedKey),
@@ -97,7 +98,8 @@ func (db *Database) GetEncrypterManager(transformedKey []byte) (*EncrypterManage
 	)
 }
 
-// GetStreamManager returns a StreamManager based on the db headers, or nil if the type is unsupported
+// GetStreamManager returns a StreamManager based on the db headers,
+// or nil if the type is unsupported
 // Can be used to lock only certain entries instead of calling
 func (db *Database) GetStreamManager() (*StreamManager, error) {
 	if db.Header != nil && db.Header.Signature != nil {
@@ -130,7 +132,8 @@ func (db *Database) GetStreamManager() (*StreamManager, error) {
 // UnlockProtectedEntries goes through the entire database and encrypts
 // any Values in entries with protected=true set.
 // This should be called after decoding if you want to view plaintext password in an entry
-// Warning: If you call this when entry values are already unlocked, it will cause them to be unreadable
+// Warning: If you call this when entry values are already unlocked,
+// it will cause them to be unreadable
 func (db *Database) UnlockProtectedEntries() error {
 	manager, err := db.GetStreamManager()
 	if err != nil {
