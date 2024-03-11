@@ -96,7 +96,8 @@ func (tw *TimeWrapper) UnmarshalText(data []byte) error {
 		if err != nil {
 			return err
 		}
-		if err := binary.Read(bytes.NewReader(decoded), binary.LittleEndian, &buf); err != nil {
+		err = binary.Read(bytes.NewReader(decoded), binary.LittleEndian, &buf)
+		if err != nil {
 			return err
 		}
 
