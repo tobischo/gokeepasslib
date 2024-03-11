@@ -51,7 +51,7 @@ func NewEncrypterManager(key []byte, iv []byte) (manager *EncrypterManager, err 
 		return nil, ErrUnsupportedEncrypterType
 	}
 	manager.Encrypter = encrypter
-	return
+	return manager, nil
 }
 
 // NewStreamManager initialize a new StreamManager
