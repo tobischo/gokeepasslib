@@ -9,7 +9,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 )
 
 // Block size of 1MB - https://keepass.info/help/kb/kdbx_4.html#dataauth
@@ -98,7 +97,7 @@ func decomposeContentBlocks4(r io.Reader, masterSeed []byte, transformedKey []by
 func decomposeContentBlocks31(r io.Reader) ([]byte, error) {
 	var contentData []byte
 	// Get all the content
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
