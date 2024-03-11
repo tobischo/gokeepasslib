@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/slices"
-
-	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 func TestNewGroup(t *testing.T) {
@@ -314,7 +314,7 @@ func TestGroupUnmarshalXML(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.title, func(t *testing.T) {
-			decoder := xml.NewDecoder(bytes.NewBuffer([]byte(c.xmlData)))
+			decoder := xml.NewDecoder(bytes.NewBufferString(c.xmlData))
 
 			var group Group
 

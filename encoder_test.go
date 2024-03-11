@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+const urlValue = "http://github.com"
+
 // Encode database v3.1
 func TestEncodeFile31(t *testing.T) {
 	// Open file
@@ -38,7 +40,7 @@ func TestEncodeFile31(t *testing.T) {
 	}
 
 	// Change the value of an entry element to see if the change stays after decoding
-	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = "http://github.com"
+	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = urlValue
 	// apply a custom item
 	db.Content.Root.Groups[0].Groups[0].Entries[0].CustomIconUUID = UUID{
 		0xde, 0xad, 0xbe, 0xef,
@@ -106,7 +108,7 @@ func TestEncodeFile31(t *testing.T) {
 
 	// Test new value matching
 	url := db.Content.Root.Groups[0].Groups[0].Entries[0].GetContent("URL")
-	if url != "http://github.com" {
+	if url != urlValue {
 		t.Fatalf(
 			"Failed to decode url: should be 'http://github.com' not '%s'",
 			url,
@@ -175,7 +177,7 @@ func TestEncodeFile4(t *testing.T) {
 	}
 
 	// Change the value of an entry element to see if the change stays after decoding
-	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = "http://github.com"
+	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = urlValue
 	db.Content.Root.Groups[0].Groups[0].Entries[0].CustomIconUUID = UUID{
 		0xde, 0xad, 0xbe, 0xef,
 		0xc0, 0xff, 0xee, 0xde,
@@ -242,7 +244,7 @@ func TestEncodeFile4(t *testing.T) {
 
 	// Test new value matching
 	url := db.Content.Root.Groups[0].Groups[0].Entries[0].GetContent("URL")
-	if url != "http://github.com" {
+	if url != urlValue {
 		t.Fatalf(
 			"Failed to decode url: should be 'http://github.com' not '%s'",
 			url,
@@ -310,7 +312,7 @@ func TestEncodeFile4_NoCompression(t *testing.T) {
 	}
 
 	// Change the value of an entry element to see if the change stays after decoding
-	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = "http://github.com"
+	db.Content.Root.Groups[0].Groups[0].Entries[0].Get("URL").Value.Content = urlValue
 
 	// Lock entries
 	err = db.LockProtectedEntries()
@@ -357,7 +359,7 @@ func TestEncodeFile4_NoCompression(t *testing.T) {
 
 	// Test new value matching
 	url := db.Content.Root.Groups[0].Groups[0].Entries[0].GetContent("URL")
-	if url != "http://github.com" {
+	if url != urlValue {
 		t.Fatalf(
 			"Failed to decode url: should be 'http://github.com' not '%s'",
 			url,

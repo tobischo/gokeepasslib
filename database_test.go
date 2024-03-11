@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"bytes"
+	"errors"
 	"log"
 	"reflect"
 	"testing"
@@ -140,7 +141,7 @@ func TestDatabase_GetStreamManager(t *testing.T) {
 				t.Fatalf("Expected %v, received %v", c.expectedErr, err)
 			}
 
-			if err != c.expectedErr {
+			if !errors.Is(err, c.expectedErr) {
 				t.Fatalf("Expected %v, received %v", c.expectedErr, err)
 			}
 		})

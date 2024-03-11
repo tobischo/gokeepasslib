@@ -86,7 +86,8 @@ func (d *Decoder) Decode(db *Database) error {
 	return xmlDecoder.Decode(db.Content)
 }
 
-func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err error) {
+func decodeRawContent(db *Database, content []byte, transformedKey []byte) error {
+	var err error
 	// Initialize content
 	db.Content = new(DBContent)
 

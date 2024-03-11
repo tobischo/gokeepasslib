@@ -17,7 +17,7 @@ func TestNewRootData(t *testing.T) {
 			title: "without options",
 			expectedRootData: RootData{
 				Groups: []Group{
-					Group{
+					{
 						Name: "NewDatabase",
 					},
 				},
@@ -33,7 +33,7 @@ func TestNewRootData(t *testing.T) {
 			},
 			expectedRootData: RootData{
 				Groups: []Group{
-					Group{
+					{
 						Name: "other name",
 					},
 				},

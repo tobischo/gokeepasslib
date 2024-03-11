@@ -181,7 +181,7 @@ func ParseKeyData(data []byte) ([]byte, error) {
 	// Check if the provided file is an XML key file
 	// errInvalidKeyFileXML is returned if it was not actually parseable xml data
 	decodedKey, err := parseXMLKeyFileData(data)
-	if err != errInvalidKeyFileXML {
+	if !errors.Is(err, errInvalidKeyFileXML) {
 		return decodedKey, err
 	}
 

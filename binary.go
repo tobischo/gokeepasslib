@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 
@@ -112,7 +113,7 @@ func (b Binary) GetContentBytes() ([]byte, error) {
 		}
 		defer reader.Close()
 		bts, err := io.ReadAll(reader)
-		if err != nil && err != io.ErrUnexpectedEOF {
+		if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
 			return nil, err
 		}
 

@@ -1,6 +1,7 @@
 package wrappers
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -145,7 +146,7 @@ func TestTimeWrapperMarshalText(t *testing.T) {
 				Time:      value,
 			}
 			data, err := timeWrap.MarshalText()
-			if err != c.expErr {
+			if !errors.Is(err, c.expErr) {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
 
@@ -200,7 +201,7 @@ func TestTimeWrapperUnmarshalText(t *testing.T) {
 				Formatted: true,
 			}
 			err := timeWrap.UnmarshalText([]byte(c.value))
-			if err != c.expErr {
+			if !errors.Is(err, c.expErr) {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
 
