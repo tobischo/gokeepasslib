@@ -7,12 +7,17 @@ import (
 	"crypto/sha512"
 	"crypto/subtle"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 )
 
 // Block size of 1MB - https://keepass.info/help/kb/kdbx_4.html#dataauth
 const blockSplitRate = 1048576
+
+var (
+	errHMACVerificationFailed = errors.New("failed to verify HMAC")
+)
 
 type BlockHMACBuilder struct {
 	baseKey []byte
@@ -81,7 +86,7 @@ func decomposeContentBlocks4(
 		calculatedHMAC := hmacBuilder.BuildHMAC(index, length, data)
 
 		if subtle.ConstantTimeCompare(calculatedHMAC, blockHMAC[:]) == 0 {
-			return nil, fmt.Errorf("Failed to verify HMAC for block %d", index)
+			return nil, fmt.Errorf("%w for block %d", errHMACVerificationFailed, index)
 		}
 
 		// Add to blocks
