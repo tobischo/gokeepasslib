@@ -71,7 +71,6 @@ func TestNewEntry(t *testing.T) {
 					entry,
 				)
 			}
-
 		})
 	}
 }
@@ -159,7 +158,6 @@ func TestEntry_Clone(t *testing.T) {
 					entry,
 				)
 			}
-
 		})
 	}
 }
@@ -217,17 +215,14 @@ func TestEntrySetKdbxFormatVersion(t *testing.T) {
 
 			// Takes a single time value as an example, as TimeData is independently tested.
 			if entry.Times.CreationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set root CreationTime formatted value accordingly")
 			}
 
 			if entry.Histories[0].Entries[0].Times.CreationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set history CreationTime formatted value accordingly")
 			}
 		})
 	}
-
 }
 
 func TestHistory_Clone(t *testing.T) {
@@ -270,7 +265,6 @@ func TestHistory_Clone(t *testing.T) {
 					history,
 				)
 			}
-
 		})
 	}
 }

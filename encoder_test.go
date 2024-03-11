@@ -141,7 +141,6 @@ func TestEncodeFile31(t *testing.T) {
 	) {
 		t.Fatal("Failed to properly store a custom icon in the Meta block")
 	}
-
 }
 
 // Encode database v4.0

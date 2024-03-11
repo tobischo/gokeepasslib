@@ -108,20 +108,16 @@ func TestRootDataSetKdbxFormatVersion(t *testing.T) {
 
 			// Takes a single time value as an example, as TimeData is independently tested.
 			if rootData.Groups[0].Times.CreationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set group CreationTime formatted value accordingly")
 			}
 
 			if rootData.Groups[0].Entries[0].Times.CreationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set entry CreationTime formatted value accordingly")
 			}
 
 			if rootData.DeletedObjects[0].DeletionTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set deleted object DeletionTime formatted value accordingly")
 			}
 		})
 	}
-
 }

@@ -87,7 +87,6 @@ func TestBoolWrapperUnmarshalXML(t *testing.T) {
 			if bool(x.Val.Bool) != c.expValue {
 				t.Errorf("Did not receive expected value '%+v', received: '%+v'", c.expValue, x.Val.Bool)
 			}
-
 		})
 	}
 }
@@ -177,7 +176,6 @@ func TestBoolWrapperUnmarshalXMLAttr(t *testing.T) {
 			if bool(x.Val.V.Bool) != c.expValue {
 				t.Errorf("Did not receive expected value '%+v', received: '%+v'", c.expValue, x.Val.V.Bool)
 			}
-
 		})
 	}
 }
@@ -278,7 +276,6 @@ func TestNullableBoolWrapperUnmarshalXML(t *testing.T) {
 			if bool(x.Val.Valid) != c.expValid {
 				t.Errorf("Did not receive expected value '%+v', received: '%+v'", c.expValid, x.Val.Valid)
 			}
-
 		})
 	}
 }
@@ -383,7 +380,6 @@ func TestNullableBoolWrapperUnmarshalXMLAttr(t *testing.T) {
 			if bool(x.Val.V.Valid) != c.expValid {
 				t.Errorf("Did not receive expected value '%+v', received: '%+v'", c.expValid, x.Val.V.Valid)
 			}
-
 		})
 	}
 }
