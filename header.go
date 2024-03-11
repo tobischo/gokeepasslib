@@ -258,7 +258,7 @@ func (h *DBHeader) readFrom(r io.Reader) error {
 		h.RawData = buffer.Bytes()
 
 		if err != nil {
-			if err == ErrEndOfHeaders {
+			if errors.Is(err, ErrEndOfHeaders) {
 				break
 			}
 			return err
@@ -390,7 +390,7 @@ const (
 )
 
 // updateRawData converts the kdf parameters into rawdata again
-func (k *KdfParameters) updateRawData() error {
+func (k *KdfParameters) updateRawData() {
 	dict := new(VariantDictionary)
 	dict.Version = 256
 	dict.Items = make([]*VariantDictionaryItem, 0, 9)
@@ -495,8 +495,6 @@ func (k *KdfParameters) updateRawData() error {
 	}
 
 	k.RawData = dict
-
-	return nil
 }
 
 // readVariantDictionary reads a variant dictionary

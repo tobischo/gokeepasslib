@@ -1,6 +1,7 @@
 package gokeepasslib
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -25,7 +26,7 @@ func TestUUID(t *testing.T) {
 
 	three := UUID{}
 	err = three.UnmarshalText([]byte("rGnBe1gIikK89aZD6n/plABBBB=="))
-	if err != ErrInvalidUUIDLength {
+	if !errors.Is(err, ErrInvalidUUIDLength) {
 		t.Fatalf("Expected invalid uuid error, got: %s", err)
 	}
 

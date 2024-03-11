@@ -2,6 +2,7 @@ package wrappers
 
 import (
 	"encoding/xml"
+	"errors"
 	"testing"
 )
 
@@ -81,7 +82,7 @@ func TestBoolWrapperUnmarshalXML(t *testing.T) {
 			}
 			err := xml.Unmarshal([]byte(c.value), &x)
 
-			if err != c.expErr {
+			if !errors.Is(err, c.expErr) {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
 			if bool(x.Val.Bool) != c.expValue {
@@ -170,7 +171,7 @@ func TestBoolWrapperUnmarshalXMLAttr(t *testing.T) {
 			}
 			err := xml.Unmarshal([]byte(c.value), &x)
 
-			if err != c.expErr {
+			if !errors.Is(err, c.expErr) {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
 			if bool(x.Val.V.Bool) != c.expValue {
@@ -267,7 +268,7 @@ func TestNullableBoolWrapperUnmarshalXML(t *testing.T) {
 			}
 			err := xml.Unmarshal([]byte(c.value), &x)
 
-			if err != c.expErr {
+			if !errors.Is(err, c.expErr) {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
 			if bool(x.Val.Bool) != c.expValue {
@@ -370,7 +371,7 @@ func TestNullableBoolWrapperUnmarshalXMLAttr(t *testing.T) {
 			}
 			err := xml.Unmarshal([]byte(c.value), &x)
 
-			if err != c.expErr {
+			if !errors.Is(err, c.expErr) {
 				t.Fatalf("Did not receive expected error %+v, received %+v", c.expErr, err)
 			}
 			if bool(x.Val.V.Bool) != c.expValue {

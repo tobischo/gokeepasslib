@@ -4,9 +4,11 @@ import (
 	"testing"
 )
 
+const testMessage = "test message"
+
 func TestInsecure(t *testing.T) {
 	key := make([]byte, 64)
-	payload := []byte("test message")
+	payload := []byte(testMessage)
 
 	// Encrypt
 	c, _ := NewStreamManager(NoStreamID, key)
@@ -16,14 +18,14 @@ func TestInsecure(t *testing.T) {
 	c2, _ := NewStreamManager(NoStreamID, key)
 	decrypted := c2.Unpack(crypted)
 
-	if string(decrypted) != "test message" {
+	if string(decrypted) != testMessage {
 		t.Fatalf("Failed to decode insecure: should be 'test message' not '%s'", decrypted)
 	}
 }
 
 func TestChaCha(t *testing.T) {
 	key := make([]byte, 64)
-	payload := []byte("test message")
+	payload := []byte(testMessage)
 
 	// Encrypt
 	c, err := NewStreamManager(ChaChaStreamID, key)

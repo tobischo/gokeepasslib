@@ -96,7 +96,7 @@ func decomposeContentBlocks4(
 			break
 		}
 
-		index += 1
+		index++
 	}
 	return contentData, nil
 }
@@ -178,7 +178,7 @@ func composeContentBlocks4(
 			break
 		}
 
-		index += 1
+		index++
 	}
 	binary.Write(w, binary.LittleEndian, [32]byte{})
 	binary.Write(w, binary.LittleEndian, uint32(0))
