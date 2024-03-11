@@ -34,9 +34,13 @@ func TestDecodeFile(t *testing.T) {
 			dbFilePath: "tests/kdbx3/example-key.kdbx",
 			newCredentials: func() (*DBCredentials, error) {
 				file, err := os.Open("tests/kdbx3/example-key.key")
+				if err != nil {
+					return nil, err
+				}
+
 				var keyData []byte
 				if keyData, err = io.ReadAll(file); err != nil {
-					return nil, nil
+					return nil, err
 				}
 
 				return NewPasswordAndKeyDataCredentials(
@@ -67,9 +71,13 @@ func TestDecodeFile(t *testing.T) {
 			dbFilePath: "tests/kdbx4/example-key.kdbx",
 			newCredentials: func() (*DBCredentials, error) {
 				file, err := os.Open("tests/kdbx4/example-key.key")
+				if err != nil {
+					return nil, err
+				}
+
 				var keyData []byte
 				if keyData, err = io.ReadAll(file); err != nil {
-					return nil, nil
+					return nil, err
 				}
 
 				return NewPasswordAndKeyDataCredentials(
