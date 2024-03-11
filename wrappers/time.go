@@ -16,7 +16,7 @@ import (
 // which can be used as offset here when using `.Unix()` as the conversion into an integer
 // from `time.Time`.
 // Since nix time counts since 1970-01-01, any value before that would be negative,
-// which also makes this offset negative. Substracting this value from any other
+// which also makes this offset negative. Subtracting this value from any other
 // time value will increase it by as much. So even a value before 1970 would be correct
 // converted back and forth.
 // This value is set directly as int64 const to avoid having to initialize time.Time values
