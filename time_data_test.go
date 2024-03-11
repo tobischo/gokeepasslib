@@ -97,7 +97,6 @@ func TestNewTimeData(t *testing.T) {
 					timeData,
 				)
 			}
-
 		})
 	}
 }
@@ -145,27 +144,22 @@ func TestTimeDataSetKdbxFormatVersion(t *testing.T) {
 
 			if td.CreationTime != nil &&
 				td.CreationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set CreationTime formatted value accordingly")
 			}
 			if td.LastModificationTime != nil &&
 				td.LastModificationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set LastModificationTime formatted value accordingly")
 			}
 			if td.LastAccessTime != nil &&
 				td.LastAccessTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set LastAccessTime formatted value accordingly")
 			}
 			if td.ExpiryTime != nil &&
 				td.ExpiryTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set ExpiryTime formatted value accordingly")
 			}
 			if td.LocationChanged != nil &&
 				td.LocationChanged.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set LocationChanged formatted value accordingly")
 			}
 		})

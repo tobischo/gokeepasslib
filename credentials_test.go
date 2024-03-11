@@ -8,7 +8,6 @@ import (
 )
 
 func TestCryptAESKey(t *testing.T) {
-
 	cases := []struct {
 		title     string
 		masterKey []byte
@@ -200,5 +199,4 @@ func BenchmarkCryptAESKey(b *testing.B) {
 			}
 		})
 	}
-
 }

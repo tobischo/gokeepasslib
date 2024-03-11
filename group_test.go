@@ -138,7 +138,6 @@ func TestGroup_Clone(t *testing.T) {
 					group,
 				)
 			}
-
 		})
 	}
 }
@@ -196,17 +195,14 @@ func TestGroupSetKdbxFormatVersion(t *testing.T) {
 
 			// Takes a single time value as an example, as TimeData is independently tested.
 			if group.Times.CreationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set root CreationTime formatted value accordingly")
 			}
 
 			if group.Groups[0].Times.CreationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set sub group CreationTime formatted value accordingly")
 			}
 
 			if group.Entries[0].Times.CreationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set entry CreationTime formatted value accordingly")
 			}
 		})
@@ -329,7 +325,6 @@ func TestGroupUnmarshalXML(t *testing.T) {
 			}
 
 			assert.Equal(t, c.expectedGroup, group, "The groups should be identical")
-
 		})
 	}
 }

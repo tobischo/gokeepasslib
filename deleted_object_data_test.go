@@ -51,9 +51,7 @@ func TestDeletedObjectDataSetKdbxFormatVersion(t *testing.T) {
 
 			d.setKdbxFormatVersion(c.version)
 
-			if d.DeletionTime != nil &&
-				d.DeletionTime.Formatted != c.expectedFormattedValue {
-
+			if d.DeletionTime != nil && d.DeletionTime.Formatted != c.expectedFormattedValue {
 				t.Errorf("Failed to set DeletionTime formatted value accordingly")
 			}
 		})

@@ -191,27 +191,21 @@ func TestMetaDataSetKdbxFormatVersion(t *testing.T) {
 			md.setKdbxFormatVersion(c.version)
 
 			if md.DatabaseNameChanged.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set DatabaseNameChanged formatted value accordingly")
 			}
 			if md.DatabaseDescriptionChanged.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set DatabaseDescriptionChanged formatted value accordingly")
 			}
 			if md.DefaultUserNameChanged.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set DefaultUserNameChanged formatted value accordingly")
 			}
 			if md.MasterKeyChanged.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set MasterKeyChanged formatted value accordingly")
 			}
 			if md.RecycleBinChanged.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set RecycleBinChanged formatted value accordingly")
 			}
 			if md.EntryTemplatesGroupChanged.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set EntryTemplatesGroupChanged formatted value accordingly")
 			}
 		})

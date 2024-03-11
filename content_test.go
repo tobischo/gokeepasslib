@@ -94,17 +94,14 @@ func TestDBContentSetKdbxFormatVersion(t *testing.T) {
 
 			// Takes a single time value as an example, as TimeData is independently tested.
 			if content.Root.Groups[0].Times.CreationTime.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set group CreationTime formatted value accordingly")
 			}
 
 			if content.Meta.MasterKeyChanged.Formatted != c.expectedFormattedValue {
-
 				t.Errorf("Failed to set meta MasterKeyChanged formatted value accordingly")
 			}
 		})
 	}
-
 }
 
 func TestVUnmarshal(t *testing.T) {

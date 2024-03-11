@@ -196,7 +196,6 @@ func TestTimeWrapperUnmarshalText(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.title, func(t *testing.T) {
-
 			timeWrap := &TimeWrapper{
 				Formatted: true,
 			}

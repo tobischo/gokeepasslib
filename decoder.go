@@ -138,7 +138,7 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err 
 		}
 		defer r.Close()
 
-		decryptedContent, err = io.ReadAll(r)
+		decryptedContent, _ = io.ReadAll(r)
 	}
 
 	db.Content.RawData = decryptedContent
