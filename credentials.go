@@ -17,6 +17,10 @@ import (
 	"github.com/tobischo/argon2"
 )
 
+var (
+	errUnsupportedKeyFileXMLFormat = errors.New("Unsupported key file XML format")
+)
+
 // DBCredentials holds the key used to lock and unlock the database
 type DBCredentials struct {
 	Passphrase []byte // Passphrase if using one, stored in sha256 hash
@@ -219,7 +223,7 @@ func parseXMLKeyFileData(data []byte) ([]byte, error) {
 	case "2.0":
 		return parseV2XMLKeyFileData(keyFileData.Key.Data.Value, keyFileData.Key.Data.Hash)
 	default:
-		return nil, fmt.Errorf("Unsupported key file XML format %s", keyFileData.Meta.Version)
+		return nil, fmt.Errorf("%w %s", errUnsupportedKeyFileXMLFormat, keyFileData.Meta.Version)
 	}
 }
 

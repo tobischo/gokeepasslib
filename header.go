@@ -12,20 +12,24 @@ import (
 	"reflect"
 )
 
-// BaseSignature is the valid base signature for kdbx files
-var BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
+var (
+	// BaseSignature is the valid base signature for kdbx files
+	BaseSignature = [...]byte{0x03, 0xd9, 0xa2, 0x9a}
 
-// SecondarySignature is the valid version signature for kdbx files
-var SecondarySignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
+	// SecondarySignature is the valid version signature for kdbx files
+	SecondarySignature = [...]byte{0x67, 0xfb, 0x4b, 0xb5}
 
-// DefaultKDBX3Sig is the full valid default signature struct for new databases (Kdbx v3.1)
-var DefaultKDBX3Sig = Signature{BaseSignature, SecondarySignature, 1, 3}
+	// DefaultKDBX3Sig is the full valid default signature struct for new databases (Kdbx v3.1)
+	DefaultKDBX3Sig = Signature{BaseSignature, SecondarySignature, 1, 3}
 
-// DefaultKDBX4Sig is the full valid default signature struct for new databases (Kdbx v4.0)
-var DefaultKDBX4Sig = Signature{BaseSignature, SecondarySignature, 0, 4}
+	// DefaultKDBX4Sig is the full valid default signature struct for new databases (Kdbx v4.0)
+	DefaultKDBX4Sig = Signature{BaseSignature, SecondarySignature, 0, 4}
 
-// DefaultSig is the full valid default signature struct for new databases (Kdbx v3.1)
-var DefaultSig = DefaultKDBX3Sig
+	// DefaultSig is the full valid default signature struct for new databases (Kdbx v3.1)
+	DefaultSig = DefaultKDBX3Sig
+
+	errHeaderSHA256MisMatching = errors.New("Sha256 of header mismatching")
+)
 
 // Compression flags
 const (
@@ -739,7 +743,7 @@ func (h *DBHeader) GetSha256() [32]byte {
 func (h *DBHeader) ValidateSha256(hash [32]byte) error {
 	sha := h.GetSha256()
 	if !reflect.DeepEqual(sha, hash) {
-		return errors.New("Sha256 of header mismatching")
+		return errHeaderSHA256MisMatching
 	}
 	return nil
 }
@@ -758,7 +762,7 @@ func (h *DBHeader) GetHmacSha256(hmacKey []byte) [32]byte {
 func (h *DBHeader) ValidateHmacSha256(hmacKey []byte, hash [32]byte) error {
 	hmacSha := h.GetHmacSha256(hmacKey)
 	if !reflect.DeepEqual(hmacSha, hash) {
-		return errors.New("HMAC-Sha256 of header mismatching")
+		return errHeaderSHA256MisMatching
 	}
 	return nil
 }

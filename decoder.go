@@ -9,6 +9,11 @@ import (
 	"reflect"
 )
 
+var (
+	errInvalidHMACKey          = errors.New("Wrong password? HMAC-SHA256 of header mismatching")
+	errDatabaseIntegrityFailed = errors.New("Wrong password? Database integrity check failed")
+)
+
 // Decoder stores a reader which is expected to be in kdbx format
 type Decoder struct {
 	r io.Reader
@@ -50,7 +55,7 @@ func (d *Decoder) Decode(db *Database) error {
 			hmacKey := buildHmacKey(db, transformedKey)
 			err = db.Header.ValidateHmacSha256(hmacKey, db.Hashes.Hmac)
 			if err != nil {
-				return errors.New("Wrong password? HMAC-SHA256 of header mismatching")
+				return errInvalidHMACKey
 			}
 		}
 	}
@@ -113,7 +118,7 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err 
 	if !db.Header.IsKdbx4() {
 		startBytes := db.Header.FileHeaders.StreamStartBytes
 		if !reflect.DeepEqual(decryptedContent[0:len(startBytes)], startBytes) {
-			return errors.New("Wrong password? Database integrity check failed")
+			return errDatabaseIntegrityFailed
 		}
 
 		decryptedContent = decryptedContent[len(startBytes):]
