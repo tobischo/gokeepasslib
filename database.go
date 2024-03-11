@@ -2,7 +2,6 @@ package gokeepasslib
 
 import (
 	"errors"
-	"fmt"
 )
 
 // ErrInvalidDatabaseOrCredentials is returned when the file cannot be read properly.
@@ -175,10 +174,7 @@ func (db *Database) FindBinary(id int) *Binary {
 type ErrRequiredAttributeMissing string
 
 func (e ErrRequiredAttributeMissing) Error() string {
-	return fmt.Sprintf(
-		"gokeepasslib: operation can not be performed if database does not have %s",
-		string(e),
-	)
+	return "gokeepasslib: operation can not be performed if database does not have " + string(e)
 }
 
 type binariesUsages map[int][]*BinaryReference

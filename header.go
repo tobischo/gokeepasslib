@@ -713,11 +713,13 @@ func (h *DBHeader) ValidateSha256(hash [32]byte) error {
 }
 
 // GetHmacSha256 returns the HMAC-Sha256 hash of the header
-func (h *DBHeader) GetHmacSha256(hmacKey []byte) (ret [32]byte) {
+func (h *DBHeader) GetHmacSha256(hmacKey []byte) [32]byte {
+	var ret [32]byte
+
 	hash := hmac.New(sha256.New, hmacKey)
 	hash.Write(h.RawData)
 	copy(ret[:32], hash.Sum(nil)[:32])
-	return
+	return ret
 }
 
 // ValidateHmacSha256 validates the given hash with the HMAC-Sha256 of the header

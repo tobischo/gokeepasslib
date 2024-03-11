@@ -135,8 +135,8 @@ func decomposeContentBlocks31(r io.Reader) ([]byte, error) {
 func composeContentBlocks4(w io.Writer, contentData []byte, masterSeed []byte, transformedKey []byte) {
 	hmacBuilder := NewBlockHMACBuilder(masterSeed, transformedKey)
 
-	offset := 0
-	endOffset := 0
+	var offset int
+	var endOffset int
 	var index = uint64(0)
 	for {
 		remainingLength := len(contentData[offset:])
