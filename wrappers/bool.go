@@ -5,6 +5,12 @@ import (
 	"strings"
 )
 
+const (
+	falseStr = `False`
+	trueStr  = `True`
+	nullStr  = `null`
+)
+
 func parseBoolValue(val string) bool {
 	switch strings.ToLower(val) {
 	case "true", "yes", "1", "enabled", "checked":
@@ -28,10 +34,10 @@ func NewBoolWrapper(value bool) BoolWrapper {
 
 // MarshalXML marshals the boolean into e
 func (b *BoolWrapper) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	val := "False"
+	val := falseStr
 
 	if b.Bool {
-		val = "True"
+		val = trueStr
 	}
 
 	e.EncodeElement(val, start)
@@ -51,10 +57,10 @@ func (b *BoolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 
 // MarshalXMLAttr returns the encoded XML attribute
 func (b *BoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
-	val := "False"
+	val := falseStr
 
 	if b.Bool {
-		val = "True"
+		val = trueStr
 	}
 
 	return xml.Attr{Name: name, Value: val}, nil
@@ -85,12 +91,12 @@ func NewNullableBoolWrapper(value bool) NullableBoolWrapper {
 
 // MarshalXML marshals the boolean into e
 func (b *NullableBoolWrapper) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	val := "null"
+	val := nullStr
 
 	if b.Valid {
-		val = "False"
+		val = falseStr
 		if b.Bool {
-			val = "True"
+			val = trueStr
 		}
 	}
 
@@ -105,7 +111,7 @@ func (b *NullableBoolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElemen
 	d.DecodeElement(&val, &start)
 
 	switch strings.ToLower(val) {
-	case "null":
+	case nullStr:
 		b.Valid = false
 		b.Bool = false
 	default:
@@ -118,12 +124,12 @@ func (b *NullableBoolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElemen
 
 // MarshalXMLAttr returns the encoded XML attribute
 func (b *NullableBoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
-	val := "null"
+	val := nullStr
 
 	if b.Valid {
-		val = "False"
+		val = falseStr
 		if b.Bool {
-			val = "True"
+			val = trueStr
 		}
 	}
 
@@ -133,7 +139,7 @@ func (b *NullableBoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 // UnmarshalXMLAttr decodes a single XML attribute
 func (b *NullableBoolWrapper) UnmarshalXMLAttr(attr xml.Attr) error {
 	switch strings.ToLower(attr.Value) {
-	case "null":
+	case nullStr:
 		b.Valid = false
 		b.Bool = false
 	default:

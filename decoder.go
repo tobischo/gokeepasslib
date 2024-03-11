@@ -36,24 +36,31 @@ func (d *Decoder) Decode(db *Database) error {
 	// Read hashes and validate them (Kdbx v4)
 	if db.Header.IsKdbx4() {
 		db.Hashes = new(DBHashes)
-		if err := db.Hashes.readFrom(d.r); err != nil {
+		err := db.Hashes.readFrom(d.r)
+		if err != nil {
 			return err
 		}
 
 		if db.Options.ValidateHashes {
-			if err := db.Header.ValidateSha256(db.Hashes.Sha256); err != nil {
+			err = db.Header.ValidateSha256(db.Hashes.Sha256)
+			if err != nil {
 				return err
 			}
 
 			hmacKey := buildHmacKey(db, transformedKey)
-			if err := db.Header.ValidateHmacSha256(hmacKey, db.Hashes.Hmac); err != nil {
+			err = db.Header.ValidateHmacSha256(hmacKey, db.Hashes.Hmac)
+			if err != nil {
 				return errors.New("Wrong password? HMAC-SHA256 of header mismatching")
 			}
 		}
 	}
 
 	// Decode raw content
-	rawContent, _ := io.ReadAll(d.r)
+	rawContent, err := io.ReadAll(d.r)
+	if err != nil {
+		return err
+	}
+
 	if err := decodeRawContent(db, rawContent, transformedKey); err != nil {
 		return err
 	}
@@ -63,7 +70,8 @@ func (d *Decoder) Decode(db *Database) error {
 	// Read InnerHeader (Kdbx v4)
 	if db.Header.IsKdbx4() {
 		db.Content.InnerHeader = new(InnerHeader)
-		if err := db.Content.InnerHeader.readFrom(contentReader); err != nil {
+		err = db.Content.InnerHeader.readFrom(contentReader)
+		if err != nil {
 			return err
 		}
 	}
@@ -131,6 +139,9 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) (err 
 		defer r.Close()
 
 		decryptedContent, err = io.ReadAll(r)
+		if err != nil {
+			return err
+		}
 	}
 
 	db.Content.RawData = decryptedContent

@@ -62,12 +62,12 @@ func decomposeContentBlocks4(r io.Reader, masterSeed []byte, transformedKey []by
 		var length uint32
 
 		copy(blockHMAC[:], content[offset:offset+32])
-		offset = offset + 32
+		offset += 32
 
 		buf := bytes.NewBuffer(content[offset : offset+4])
 		binary.Read(buf, binary.LittleEndian, &length)
 
-		offset = offset + 4
+		offset += 4
 
 		data := make([]byte, length)
 		endOfData := offset + length
