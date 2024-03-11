@@ -5,7 +5,9 @@ type RootDataOption func(*RootData)
 func WithRootDataFormattedTime(formatted bool) RootDataOption {
 	return func(rd *RootData) {
 		for _, group := range rd.Groups {
-			WithGroupFormattedTime(formatted)(&group)
+			g := group
+
+			WithGroupFormattedTime(formatted)(&g)
 		}
 	}
 }

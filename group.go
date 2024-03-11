@@ -20,11 +20,15 @@ func WithGroupFormattedTime(formatted bool) GroupOption {
 		WithTimeDataFormattedTime(formatted)(&g.Times)
 
 		for _, group := range g.Groups {
-			WithGroupFormattedTime(formatted)(&group)
+			g := group
+
+			WithGroupFormattedTime(formatted)(&g)
 		}
 
 		for _, entry := range g.Entries {
-			WithEntryFormattedTime(formatted)(&entry)
+			e := entry
+
+			WithEntryFormattedTime(formatted)(&e)
 		}
 	}
 }

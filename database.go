@@ -224,7 +224,9 @@ func addEntriesBinaries(result binariesUsages, entries []Entry) {
 func addGroupBinaries(result binariesUsages, parent *Group) {
 	addEntriesBinaries(result, parent.Entries)
 	for _, group := range parent.Groups {
-		addGroupBinaries(result, &group)
+		g := group
+
+		addGroupBinaries(result, &g)
 	}
 }
 
