@@ -5,13 +5,19 @@ import (
 	"encoding/base64"
 )
 
-var iv = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
-var sigmaWords = []uint32{
-	0x61707865,
-	0x3320646e,
-	0x79622d32,
-	0x6b206574,
-}
+var (
+	iv      = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
+	ivNonce = []uint32{
+		0x4b0930e8, // u8to32little(iv, 0)
+		0x2a5d2097, // u8to32little(iv, 4)
+	}
+	sigmaWords = []uint32{
+		0x61707865,
+		0x3320646e,
+		0x79622d32,
+		0x6b206574,
+	}
+)
 
 // SalsaStream is a Salsa20 cipher that implements CryptoStream interface
 type SalsaStream struct {
@@ -39,41 +45,40 @@ func NewSalsaStream(key []byte) (*SalsaStream, error) {
 	state[10] = sigmaWords[2]
 	state[15] = sigmaWords[3]
 
-	state[6] = u8to32little(iv, 0)
-	state[7] = u8to32little(iv, 4)
-	state[8] = uint32(0)
-	state[9] = uint32(0)
+	state[6] = ivNonce[0]
+	state[7] = ivNonce[1]
+	// state[8] = state[9] = 0
 
 	s := SalsaStream{
-		State:        state,
-		blockUsed:    64, // Ensure a fresh block is generated, the first time bytes are needed
-		currentBlock: make([]byte, 0),
+		State:     state,
+		blockUsed: 64, // Ensure a fresh block is generated, the first time bytes are needed
+		block:     make([]byte, 64),
 	}
 	return &s, nil
 }
 
 // Unpack returns the payload as unencrypted byte array
 func (s *SalsaStream) Unpack(payload string) []byte {
-	var result []byte
-
 	data, _ := base64.StdEncoding.DecodeString(payload)
 
 	salsaBytes := s.fetchBytes(len(data))
 
+	result := make([]byte, len(data))
+
 	for i := 0; i < len(data); i++ {
-		result = append(result, salsaBytes[i]^data[i])
+		result[i] = salsaBytes[i] ^ data[i]
 	}
 	return result
 }
 
 // Pack returns the payload as encrypted string
 func (s *SalsaStream) Pack(payload []byte) string {
-	var data []byte
+	data := make([]byte, len(payload))
 
 	salsaBytes := s.fetchBytes(len(payload))
 
 	for i := 0; i < len(payload); i++ {
-		data = append(data, salsaBytes[i]^payload[i])
+		data[i] = salsaBytes[i] ^ payload[i]
 	}
 
 	lockedPassword := base64.StdEncoding.EncodeToString(data)
@@ -108,7 +113,6 @@ func (s *SalsaStream) getBytes(length int) []byte {
 	for i := 0; i < length; i++ {
 		if s.blockUsed == 64 {
 			s.generateBlock()
-			s.blockUsed = 0
 		}
 		b[i] = s.block[s.blockUsed]
 		s.blockUsed++
@@ -118,8 +122,6 @@ func (s *SalsaStream) getBytes(length int) []byte {
 }
 
 func (s *SalsaStream) generateBlock() {
-	s.block = make([]byte, 64)
-
 	x := make([]uint32, 16)
 	copy(x, s.State)
 
