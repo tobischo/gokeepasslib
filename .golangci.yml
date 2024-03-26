@@ -89,7 +89,7 @@ linters:
     - gocritic
     - gocognit
     - dupl
-    - goconst
+    - golint
 
 issues:
   max-ame-issues: 50

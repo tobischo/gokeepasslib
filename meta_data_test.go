@@ -52,10 +52,7 @@ func TestNewMetaData(t *testing.T) {
 								0xed, 0x01, 0x23, 0x45,
 								0x67, 0x89, 0xab, 0xcd,
 							},
-							"iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IA" +
-								"rs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAA" +
-								"gOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZ" +
-								"QAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC",
+							encodedIcon,
 						},
 						{
 							UUID{
@@ -64,10 +61,7 @@ func TestNewMetaData(t *testing.T) {
 								0xed, 0x01, 0x23, 0x45,
 								0x67, 0x89, 0xab, 0xcd,
 							},
-							"iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IA" +
-								"rs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAA" +
-								"gOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZ" +
-								"QAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC",
+							encodedIcon,
 						},
 					}
 				},
@@ -86,10 +80,7 @@ func TestNewMetaData(t *testing.T) {
 							0xed, 0x01, 0x23, 0x45,
 							0x67, 0x89, 0xab, 0xcd,
 						},
-						"iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IA" +
-							"rs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAA" +
-							"gOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZ" +
-							"QAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC",
+						encodedIcon2,
 					},
 					{
 						UUID{
@@ -98,10 +89,7 @@ func TestNewMetaData(t *testing.T) {
 							0xed, 0x01, 0x23, 0x45,
 							0x67, 0x89, 0xab, 0xcd,
 						},
-						"iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IA" +
-							"rs4c6QAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAA" +
-							"gOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACZJREFUOE9jbGBo+M9ACQAZ" +
-							"QAlmoEQz2PWjBoyGwWg6AGdCivMCAKxN4SAQ+6S+AAAAAElFTkSuQmCC",
+						encodedIcon2,
 					},
 				},
 			},
