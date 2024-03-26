@@ -152,7 +152,7 @@ func TestDecodeFile(t *testing.T) {
 
 			// Test password matching
 			pw := db.Content.Root.Groups[0].Groups[0].Entries[0].GetPassword()
-			if pw != "Password" {
+			if pw != password {
 				t.Fatalf(
 					"Failed to decode password: should be 'Password' not '%s'",
 					pw,
@@ -161,7 +161,7 @@ func TestDecodeFile(t *testing.T) {
 
 			// Test secondary password matching
 			pw = db.Content.Root.Groups[0].Groups[0].Entries[1].GetPassword()
-			if pw != "AnotherPassword" {
+			if pw != anotherPassword {
 				t.Fatalf(
 					"Failed to decode password: should be 'AnotherPassword' not '%s'",
 					pw,
