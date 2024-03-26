@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"encoding/xml"
+	"errors"
 	"io"
 
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
@@ -70,7 +71,7 @@ func (g Group) Clone() Group {
 func (g *Group) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 	for {
 		token, err := d.Token()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		switch element := token.(type) {

@@ -83,8 +83,7 @@ linters:
     - musttag
     - nilnil
     - gomnd
-    - errorlint
-    - gocritic
+    - gocritic # suggests some changes that are not necessarily better
     - gocognit
     - dupl
     - golint
