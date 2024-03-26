@@ -84,7 +84,6 @@ linters:
     - nilnil
     - gomnd
     - errorlint
-    - revive
     - unconvert
     - gocritic
     - gocognit

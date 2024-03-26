@@ -67,7 +67,7 @@ func (g Group) Clone() Group {
 }
 
 // UnmarshalXML unmarshals the boolean from d
-func (g *Group) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (g *Group) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 	for {
 		token, err := d.Token()
 		if err == io.EOF {
