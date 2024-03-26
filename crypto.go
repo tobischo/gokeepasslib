@@ -116,7 +116,7 @@ func (cs *StreamManager) Pack(payload []byte) string {
 
 // UnlockProtectedGroups unlocks an array of protected groups
 func (cs *StreamManager) UnlockProtectedGroups(gs []Group) {
-	for i := range gs { //For each top level group
+	for i := range gs { // For each top level group
 		cs.UnlockProtectedGroup(&gs[i])
 	}
 }

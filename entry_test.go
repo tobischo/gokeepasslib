@@ -255,9 +255,7 @@ func TestHistory_Clone(t *testing.T) {
 			if !slices.EqualFunc(
 				history.Entries,
 				clone.Entries,
-				func(a, b Entry) bool {
-					return compareEntry(a, b)
-				},
+				compareEntry,
 			) {
 				t.Errorf(
 					"Did not receive expected History %+v, received %+v",

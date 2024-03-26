@@ -118,18 +118,18 @@ func decomposeContentBlocks31(r io.Reader) ([]byte, error) {
 		var data []byte
 
 		// Skipping Index, uint32
-		offset = offset + 4
+		offset += 4
 
 		copy(hash[:], content[offset:offset+32])
-		offset = offset + 32
+		offset += 32
 
 		length = binary.LittleEndian.Uint32(content[offset : offset+4])
-		offset = offset + 4
+		offset += 4
 
 		if length > 0 {
 			data = make([]byte, length)
 			copy(data, content[offset:offset+length])
-			offset = offset + length
+			offset += length
 
 			// Add to decoded blocks
 			contentData = append(contentData, data...)
@@ -208,7 +208,7 @@ func composeContentBlocks31(w io.Writer, contentData []byte) {
 		binary.Write(w, binary.LittleEndian, length)
 		binary.Write(w, binary.LittleEndian, data)
 		index++
-		offset = offset + blockSplitRate
+		offset += blockSplitRate
 	}
 	binary.Write(w, binary.LittleEndian, index)
 	binary.Write(w, binary.LittleEndian, [32]byte{})
