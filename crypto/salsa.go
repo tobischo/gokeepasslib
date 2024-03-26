@@ -5,6 +5,10 @@ import (
 	"encoding/base64"
 )
 
+const (
+	blockSize = 64
+)
+
 var iv = []byte{0xe8, 0x30, 0x09, 0x4b, 0x97, 0x20, 0x5d, 0x2a}
 var sigmaWords = []uint32{
 	0x61707865,
@@ -93,7 +97,7 @@ func rotl32(x uint32, b uint) uint32 {
 
 func (s *SalsaStream) fetchBytes(length int) []byte {
 	for length > len(s.currentBlock) {
-		s.currentBlock = append(s.currentBlock, s.getBytes(64)...)
+		s.currentBlock = append(s.currentBlock, s.getBytes(blockSize)...)
 	}
 
 	data := s.currentBlock[0:length]

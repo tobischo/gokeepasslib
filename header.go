@@ -35,6 +35,29 @@ var (
 const (
 	NoCompressionFlag   uint32 = 0 // No compression flag
 	GzipCompressionFlag uint32 = 1 // Gzip compression flag
+
+	headerIDHeaderEnd          = 0
+	headerIDComment            = 1
+	headerIDCipherID           = 2
+	headerIDCompressionsFlags  = 3
+	headerIDMasterSeed         = 4
+	headerIDTransformSeed      = 5
+	headerIDTransformRounds    = 6
+	headerIDEncryptionIV       = 7
+	headerIDProtectedStreamKey = 8
+	headerIDStreamStartBytes   = 9
+	headerIDInnerRandomStream  = 10
+	headerIDKdfParameters      = 11
+	headerIDPublicCustomData   = 12
+
+	memorySize = 1024 * 1024
+
+	defaultTransformRounds = 6000
+	defaultParallelism     = 2
+	defaultIterations      = 2
+	defaultVersion         = 19
+
+	kdbxV4Version = 4
 )
 
 // CipherAES is the AES cipher ID
@@ -196,7 +219,7 @@ func NewKDBX3FileHeaders() *FileHeaders {
 		CompressionFlags:    GzipCompressionFlag,
 		MasterSeed:          masterSeed,
 		TransformSeed:       transformSeed,
-		TransformRounds:     6000,
+		TransformRounds:     defaultTransformRounds,
 		EncryptionIV:        encryptionIV,
 		ProtectedStreamKey:  protectedStreamKey,
 		StreamStartBytes:    streamStartBytes,
@@ -224,10 +247,10 @@ func NewKDBX4FileHeaders() *FileHeaders {
 			UUID:        KdfArgon2,
 			Rounds:      0,
 			Salt:        salt,
-			Parallelism: 2,
-			Memory:      1048576,
-			Iterations:  2,
-			Version:     19,
+			Parallelism: defaultParallelism,
+			Memory:      memorySize,
+			Iterations:  defaultIterations,
+			Version:     defaultVersion,
 		},
 	}
 }
@@ -310,32 +333,32 @@ func (fh *FileHeaders) readHeader31(r io.Reader) error {
 // readFileHeader reads a header value and puts it into the right variable
 func (fh *FileHeaders) readFileHeader(id uint8, data []byte) error {
 	switch id {
-	case 0:
+	case headerIDHeaderEnd:
 		return ErrEndOfHeaders
-	case 1:
+	case headerIDComment:
 		fh.Comment = data
-	case 2:
+	case headerIDCipherID:
 		fh.CipherID = data
-	case 3:
+	case headerIDCompressionsFlags:
 		fh.CompressionFlags = binary.LittleEndian.Uint32(data)
-	case 4:
+	case headerIDMasterSeed:
 		fh.MasterSeed = data
-	case 5:
+	case headerIDTransformSeed:
 		fh.TransformSeed = data
-	case 6:
+	case headerIDTransformRounds:
 		fh.TransformRounds = binary.LittleEndian.Uint64(data)
-	case 7:
+	case headerIDEncryptionIV:
 		fh.EncryptionIV = data
-	case 8:
+	case headerIDProtectedStreamKey:
 		fh.ProtectedStreamKey = data
-	case 9:
+	case headerIDStreamStartBytes:
 		fh.StreamStartBytes = data
-	case 10:
+	case headerIDInnerRandomStream:
 		fh.InnerRandomStreamID = binary.LittleEndian.Uint32(data)
-	case 11:
+	case headerIDKdfParameters:
 		fh.KdfParameters = new(KdfParameters)
 		return fh.KdfParameters.readKdfParameters(data)
-	case 12:
+	case headerIDPublicCustomData:
 		fh.PublicCustomData = new(VariantDictionary)
 		return fh.PublicCustomData.readVariantDictionary(data)
 	default:
@@ -559,30 +582,38 @@ func (fh FileHeaders) writeTo4(w io.Writer) error {
 	compressionFlags := make([]byte, 4)
 	binary.LittleEndian.PutUint32(compressionFlags, fh.CompressionFlags)
 
-	if err := writeTo4Header(w, 1, fh.Comment); err != nil {
+	if err := writeTo4Header(w, headerIDComment, fh.Comment); err != nil {
 		return err
 	}
-	if err := writeTo4Header(w, 2, fh.CipherID); err != nil {
+	if err := writeTo4Header(w, headerIDCipherID, fh.CipherID); err != nil {
 		return err
 	}
-	if err := writeTo4Header(w, 3, compressionFlags); err != nil {
+	if err := writeTo4Header(w, headerIDCompressionsFlags, compressionFlags); err != nil {
 		return err
 	}
-	if err := writeTo4Header(w, 4, fh.MasterSeed); err != nil {
+	if err := writeTo4Header(w, headerIDMasterSeed, fh.MasterSeed); err != nil {
 		return err
 	}
-	if err := writeTo4Header(w, 7, fh.EncryptionIV); err != nil {
+	if err := writeTo4Header(w, headerIDEncryptionIV, fh.EncryptionIV); err != nil {
 		return err
 	}
 	fh.KdfParameters.updateRawData()
-	if err := writeTo4VariantDictionary(w, 11, fh.KdfParameters.RawData); err != nil {
+	if err := writeTo4VariantDictionary(
+		w,
+		headerIDKdfParameters,
+		fh.KdfParameters.RawData,
+	); err != nil {
 		return err
 	}
-	if err := writeTo4VariantDictionary(w, 12, fh.PublicCustomData); err != nil {
+	if err := writeTo4VariantDictionary(
+		w,
+		headerIDPublicCustomData,
+		fh.PublicCustomData,
+	); err != nil {
 		return err
 	}
 	// End of header
-	return writeTo4Header(w, 0, []byte{0x0D, 0x0A, 0x0D, 0x0A})
+	return writeTo4Header(w, headerIDHeaderEnd, []byte{0x0D, 0x0A, 0x0D, 0x0A})
 }
 
 // writeTo4Header is an helper to write a file header
@@ -656,38 +687,38 @@ func (fh FileHeaders) writeTo31(w io.Writer) error {
 	innerRandomStreamID := make([]byte, 4)
 	binary.LittleEndian.PutUint32(innerRandomStreamID, fh.InnerRandomStreamID)
 
-	if err := writeTo31Header(w, 1, fh.Comment); err != nil {
+	if err := writeTo31Header(w, headerIDComment, fh.Comment); err != nil {
 		return err
 	}
-	if err := writeTo31Header(w, 2, fh.CipherID); err != nil {
+	if err := writeTo31Header(w, headerIDCipherID, fh.CipherID); err != nil {
 		return err
 	}
-	if err := writeTo31Header(w, 3, compressionFlags); err != nil {
+	if err := writeTo31Header(w, headerIDCompressionsFlags, compressionFlags); err != nil {
 		return err
 	}
-	if err := writeTo31Header(w, 4, fh.MasterSeed); err != nil {
+	if err := writeTo31Header(w, headerIDMasterSeed, fh.MasterSeed); err != nil {
 		return err
 	}
-	if err := writeTo31Header(w, 5, fh.TransformSeed); err != nil {
+	if err := writeTo31Header(w, headerIDTransformSeed, fh.TransformSeed); err != nil {
 		return err
 	}
-	if err := writeTo31Header(w, 6, transformRounds); err != nil {
+	if err := writeTo31Header(w, headerIDTransformRounds, transformRounds); err != nil {
 		return err
 	}
-	if err := writeTo31Header(w, 7, fh.EncryptionIV); err != nil {
+	if err := writeTo31Header(w, headerIDEncryptionIV, fh.EncryptionIV); err != nil {
 		return err
 	}
-	if err := writeTo31Header(w, 8, fh.ProtectedStreamKey); err != nil {
+	if err := writeTo31Header(w, headerIDProtectedStreamKey, fh.ProtectedStreamKey); err != nil {
 		return err
 	}
-	if err := writeTo31Header(w, 9, fh.StreamStartBytes); err != nil {
+	if err := writeTo31Header(w, headerIDStreamStartBytes, fh.StreamStartBytes); err != nil {
 		return err
 	}
-	if err := writeTo31Header(w, 10, innerRandomStreamID); err != nil {
+	if err := writeTo31Header(w, headerIDInnerRandomStream, innerRandomStreamID); err != nil {
 		return err
 	}
 	// End of header
-	return writeTo31Header(w, 0, []byte{0x0D, 0x0A, 0x0D, 0x0A})
+	return writeTo31Header(w, headerIDHeaderEnd, []byte{0x0D, 0x0A, 0x0D, 0x0A})
 }
 
 // writeTo31Header is an helper to write a file header
@@ -720,7 +751,7 @@ func (vd *VariantDictionary) Get(key string) *VariantDictionaryItem {
 type formatVersion int
 
 func isKdbx4(v formatVersion) bool {
-	return v == 4
+	return v == kdbxV4Version
 }
 
 // IsKdbx4 returns true if the header version equals to 4
