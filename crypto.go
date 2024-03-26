@@ -151,7 +151,7 @@ func (cs *StreamManager) UnlockProtectedEntries(e []Entry) {
 // UnlockProtectedEntry unlocks a protected entry
 func (cs *StreamManager) UnlockProtectedEntry(e *Entry) {
 	for i := range e.Values {
-		if bool(e.Values[i].Value.Protected.Bool) {
+		if e.Values[i].Value.Protected.Bool {
 			e.Values[i].Value.Content = string(cs.Unpack(e.Values[i].Value.Content))
 		}
 	}
@@ -183,7 +183,7 @@ func (cs *StreamManager) LockProtectedEntries(es []Entry) {
 // LockProtectedEntry locks an unprotected entry
 func (cs *StreamManager) LockProtectedEntry(e *Entry) {
 	for i := range e.Values {
-		if bool(e.Values[i].Value.Protected.Bool) {
+		if e.Values[i].Value.Protected.Bool {
 			e.Values[i].Value.Content = cs.Pack([]byte(e.Values[i].Value.Content))
 		}
 	}
