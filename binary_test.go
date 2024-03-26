@@ -106,11 +106,11 @@ func TestBinaryKDBXv31CleanBinaries(t *testing.T) {
 	binaries := db.Content.Root.Groups[0].Entries[0].Binaries
 	for i := 0; i < count; i++ {
 		found := db.FindBinary(binaries[i].Value.ID)
-		if data, _ := found.GetContentString(); string(data) != expectedContent[i] {
+		if data, _ := found.GetContentString(); data != expectedContent[i] {
 			t.Fatalf(
 				"Binary content from FindBinary is incorrect. Should be `%s`, was '%s'",
 				expectedContent[i],
-				string(data),
+				data,
 			)
 		}
 	}

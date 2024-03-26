@@ -59,7 +59,7 @@ func Now(options ...TimeOption) TimeWrapper {
 // On Kdbx v4 it calculates the timestamp subtracting seconds
 // from the time date and encode it with base64
 func (tw TimeWrapper) MarshalText() ([]byte, error) {
-	t := time.Time(tw.Time).In(time.UTC)
+	t := tw.Time.In(time.UTC)
 	if y := t.Year(); y < 0 || y >= 10000 {
 		return nil, ErrYearOutsideOfRange
 	}
