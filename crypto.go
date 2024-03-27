@@ -37,14 +37,14 @@ type Stream interface {
 }
 
 const (
-	encrypterManagerChaCha20 = 12
-	encrypterManagerAES      = 16
+	ivLengthChaCha20 = 12
+	ivLengthAES      = 16
 )
 
 // NewEncrypterManager initialize a new EncrypterManager
 func NewEncrypterManager(key []byte, iv []byte) (*EncrypterManager, error) {
 	switch len(iv) {
-	case encrypterManagerChaCha20:
+	case ivLengthChaCha20:
 		// ChaCha20
 		encrypter, err := crypto.NewChaChaEncrypter(key, iv)
 		if err != nil {
@@ -54,7 +54,7 @@ func NewEncrypterManager(key []byte, iv []byte) (*EncrypterManager, error) {
 		return &EncrypterManager{
 			Encrypter: encrypter,
 		}, nil
-	case encrypterManagerAES:
+	case ivLengthAES:
 		// AES
 		encrypter, err := crypto.NewAESEncrypter(key, iv)
 		if err != nil {
