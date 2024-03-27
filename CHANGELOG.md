@@ -1,3 +1,7 @@
+### TO BE RELEASED
+
+* Add golangci-lint to ci steps and correct some of the findings
+
 ### v3.5.1
 
 * Update `golang.org/x/crypto` to `v0.8.0`

@@ -81,4 +81,4 @@ See [examples/deleting/example-deleting.go](examples/deleting/example-deleting.g
 [LICENSE](LICENSE.md)
 
 ### Copyright
-Copyright &copy; 2023 Tobias Schoknecht. All rights reserved.
+Copyright &copy; 2024 Tobias Schoknecht. All rights reserved.

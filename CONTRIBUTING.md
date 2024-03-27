@@ -14,6 +14,7 @@ Additionally KeePass is regularly updated and new features that are available th
 When requesting a feature, please try to write in an as detailed as possible fashion the desired behaviour as well as your usecase.
 
 ## Contributing Code
-In order to contribute code, please fork this repository, make the changes you want to make, and create a pull request.
+In order to contribute code, please raise an issue to have a discussion about the desired changes.
+Once wwe have come to a rough alignment, please fork this repository, make the changes you want to make, and create a pull request.
 If there is an open issue for the code, please reference the issue in the commit messages or at least in the merge request text.
 Otherwise please refer to [Reporting Bugs](#reporting-bugs) or [Requesting Features](#requesting-features) when writing an explanation for the pull request.
