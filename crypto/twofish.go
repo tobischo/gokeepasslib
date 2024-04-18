@@ -3,7 +3,7 @@ package crypto
 import (
 	"crypto/cipher"
 
-	"golang.org/x/crypto/twofish"
+	"golang.org/x/crypto/twofish" //nolint:staticcheck
 )
 
 // TwoFishEncrypter is a TwoFish cipher that implements Encrypter interface
