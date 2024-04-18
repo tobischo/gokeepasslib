@@ -1,6 +1,7 @@
 package gokeepasslib
 
 import (
+	"bytes"
 	"errors"
 
 	"github.com/tobischo/gokeepasslib/v3/crypto"
@@ -36,15 +37,14 @@ type Stream interface {
 	Pack(payload []byte) string
 }
 
-const (
-	ivLengthChaCha20 = 12
-	ivLengthAES      = 16
-)
-
 // NewEncrypterManager initialize a new EncrypterManager
-func NewEncrypterManager(key []byte, iv []byte) (*EncrypterManager, error) {
-	switch len(iv) {
-	case ivLengthChaCha20:
+func NewEncrypterManager(
+	cipherID []byte,
+	key []byte,
+	iv []byte,
+) (*EncrypterManager, error) {
+	switch {
+	case bytes.Equal(cipherID, CipherChaCha20):
 		// ChaCha20
 		encrypter, err := crypto.NewChaChaEncrypter(key, iv)
 		if err != nil {
@@ -54,7 +54,17 @@ func NewEncrypterManager(key []byte, iv []byte) (*EncrypterManager, error) {
 		return &EncrypterManager{
 			Encrypter: encrypter,
 		}, nil
-	case ivLengthAES:
+	case bytes.Equal(cipherID, CipherTwoFish):
+		// TwoFish
+		encrypter, err := crypto.NewTwoFishEncrypter(key, iv)
+		if err != nil {
+			return nil, err
+		}
+
+		return &EncrypterManager{
+			Encrypter: encrypter,
+		}, nil
+	case bytes.Equal(cipherID, CipherAES):
 		// AES
 		encrypter, err := crypto.NewAESEncrypter(key, iv)
 		if err != nil {

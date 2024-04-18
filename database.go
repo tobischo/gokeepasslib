@@ -93,6 +93,7 @@ func (db *Database) getTransformedKey() ([]byte, error) {
 // or nil if the type is unsupported
 func (db *Database) GetEncrypterManager(transformedKey []byte) (*EncrypterManager, error) {
 	return NewEncrypterManager(
+		db.Header.FileHeaders.CipherID,
 		buildMasterKey(db, transformedKey),
 		db.Header.FileHeaders.EncryptionIV,
 	)
