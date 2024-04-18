@@ -9,10 +9,10 @@ import (
 )
 
 func main() {
-	file, _ := os.Open("./kpxc_twofish_example.kdbx")
+	file, _ := os.Open("./example.kdbx")
 
 	db := gokeepasslib.NewDatabase()
-	db.Credentials = gokeepasslib.NewPasswordCredentials("test")
+	db.Credentials = gokeepasslib.NewPasswordCredentials("test1234test")
 	err := gokeepasslib.NewDecoder(file).Decode(db)
 	if err != nil {
 		log.Fatal(err)
