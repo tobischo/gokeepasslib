@@ -1,6 +1,7 @@
 ### TO BE RELEASED
 
 * Add golangci-lint to ci steps and correct some of the findings
+* Add twofish support
 
 ### v3.5.1
 
