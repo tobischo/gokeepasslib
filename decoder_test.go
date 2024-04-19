@@ -11,6 +11,7 @@ func TestDecodeFile(t *testing.T) {
 		title          string
 		dbFilePath     string
 		newCredentials func() (*DBCredentials, error)
+		testContent    bool
 	}{
 		{
 			title:      "Database Format v3.1, password credentials",
@@ -18,6 +19,7 @@ func TestDecodeFile(t *testing.T) {
 			newCredentials: func() (*DBCredentials, error) {
 				return NewPasswordCredentials("abcdefg12345678"), nil
 			},
+			testContent: true,
 		},
 		{
 			title:      "Database Format v3.1, password+key credentials",
@@ -28,6 +30,7 @@ func TestDecodeFile(t *testing.T) {
 					"tests/kdbx3/example-key.key",
 				)
 			},
+			testContent: true,
 		},
 		{
 			title:      "Database Format v3.1, password+keydata credentials",
@@ -48,6 +51,7 @@ func TestDecodeFile(t *testing.T) {
 					keyData,
 				)
 			},
+			testContent: true,
 		},
 		{
 			title:      "Database Format v4, password credentials",
@@ -55,6 +59,7 @@ func TestDecodeFile(t *testing.T) {
 			newCredentials: func() (*DBCredentials, error) {
 				return NewPasswordCredentials("abcdefg12345678"), nil
 			},
+			testContent: true,
 		},
 		{
 			title:      "Database Format v4, password+key credentials",
@@ -65,6 +70,7 @@ func TestDecodeFile(t *testing.T) {
 					"tests/kdbx4/example-key.key",
 				)
 			},
+			testContent: true,
 		},
 		{
 			title:      "Database Format v4, password+keydata credentials",
@@ -85,6 +91,7 @@ func TestDecodeFile(t *testing.T) {
 					keyData,
 				)
 			},
+			testContent: true,
 		},
 		{
 			title:      "Database Format v4, without compression, password credentials",
@@ -92,6 +99,7 @@ func TestDecodeFile(t *testing.T) {
 			newCredentials: func() (*DBCredentials, error) {
 				return NewPasswordCredentials("abcdefg12345678"), nil
 			},
+			testContent: true,
 		},
 		{
 			title:      "Database Format v4, chacha encryption, password credentials",
@@ -99,6 +107,7 @@ func TestDecodeFile(t *testing.T) {
 			newCredentials: func() (*DBCredentials, error) {
 				return NewPasswordCredentials("abcdefg12345678"), nil
 			},
+			testContent: true,
 		},
 		{
 			title: "Database Format v4, chacha encryption, " +
@@ -107,6 +116,15 @@ func TestDecodeFile(t *testing.T) {
 			newCredentials: func() (*DBCredentials, error) {
 				return NewPasswordCredentials("abcdefg12345678"), nil
 			},
+			testContent: true,
+		},
+		{
+			title:      "Database Format v4, twofish encryption, password credentials",
+			dbFilePath: "tests/kdbx4/example-twofish.kdbx",
+			newCredentials: func() (*DBCredentials, error) {
+				return NewPasswordCredentials("test1234test"), nil
+			},
+			testContent: false,
 		},
 	}
 
@@ -129,6 +147,10 @@ func TestDecodeFile(t *testing.T) {
 			err = NewDecoder(file).Decode(db)
 			if err != nil {
 				t.Fatalf("Failed to decode file: %s", err)
+			}
+
+			if !c.testContent {
+				return
 			}
 
 			// Test binary file matching
