@@ -1,7 +1,19 @@
 ### TO BE RELEASED
 
+### v3.6.0
+
 * Add golangci-lint to ci steps and correct some of the findings
 * Add twofish support
+
+### v3.5.3
+
+* Use chacha20 from official implementation
+* Replace argon2 fork
+
+### v3.5.2
+
+* Setup dependabot
+* Bump dependencies
 
 ### v3.5.1
 
