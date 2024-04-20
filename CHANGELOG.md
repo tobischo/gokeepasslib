@@ -8,7 +8,8 @@
 ### v3.5.3
 
 * Use chacha20 from official implementation
-* Replace argon2 fork
+* Updated `golang.org/x/crypto`
+* Replaced `github.com/aead/argon2` with `github.com/tobischo/argon2`
 
 ### v3.5.2
 
