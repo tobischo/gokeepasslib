@@ -12,19 +12,13 @@ Basically: this lib can probably read most Keepass2 files, but only Keepass v2.3
 Use `go get` to retrieve the latest version:
 
 ```
-go get -u github.com/tobischo/gokeepasslib
+go get -u github.com/tobischo/gokeepasslib/v3@latest
 ```
 
-Include it in an application (modulized):
+For including it in your code:
 ```
 import "github.com/tobischo/gokeepasslib/v3"
 ```
-
-For non-modulized applications use:
-```
-import "github.com/tobischo/gokeepasslib"
-```
-Note that this may cause breaking changes when updating from a previous version.
 
 ### Example: reading a file
 
