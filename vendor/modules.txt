@@ -18,7 +18,7 @@ github.com/stretchr/testify/assert
 # github.com/tobischo/argon2 v0.1.0
 ## explicit; go 1.21.6
 github.com/tobischo/argon2
-# golang.org/x/crypto v0.25.0
+# golang.org/x/crypto v0.26.0
 ## explicit; go 1.20
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/chacha20
@@ -28,7 +28,7 @@ golang.org/x/crypto/twofish
 ## explicit; go 1.18
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
-# golang.org/x/sys v0.22.0
+# golang.org/x/sys v0.23.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 # gopkg.in/yaml.v3 v3.0.1
