@@ -37,6 +37,10 @@ linters-settings:
         strict: true
     enable-all: true
 
+  gosec:
+    excludes:
+      - G115
+
   nakedret:
     max-func-lines: 0 # Do not use naked returns
 
@@ -65,28 +69,22 @@ linters:
     - funlen
     - cyclop
     - gofumpt
-    - deadcode
-    - interfacer
-    - maligned
-    - nosnakecase
-    - scopelint
-    - structcheck
-    - varcheck
+    - intrange
     - wrapcheck
     - stylecheck
     - testableexamples
-    - ifshort
     - errcheck
     - nestif
-    - exhaustivestruct
     - govet
     - musttag
     - nilnil
     - gomnd
+    - mnd
     - gocritic # suggests some changes that are not necessarily better
     - gocognit
     - dupl
-    - golint
+    - exportloopref
+    - execinquery
 
 issues:
   max-ame-issues: 50
