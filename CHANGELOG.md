@@ -1,5 +1,10 @@
 ### TO BE RELEASED
 
+### v3.6.1
+
+* Updated `golang.org/x/crypto`
+* Bump CI go versions to 1.22 and 1.23 instead of 1.21 and 1.22
+
 ### v3.6.0
 
 * Add golangci-lint to ci steps and correct some of the findings
