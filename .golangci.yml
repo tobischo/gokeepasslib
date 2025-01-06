@@ -11,9 +11,9 @@ linters-settings:
 
   gci:
     sections:
-      - standard                       # Standard section: captures all standard packages.
+      - standard # Standard section: captures all standard packages.
       - prefix(github.com/tobischo/gokeepasslib) # Custom section: groups all imports with the specified Prefix.
-      - default                        # Default section: contains all imports that could not be matched to another section type.
+      - default # Default section: contains all imports that could not be matched to another section type.
 
     skip-generated: false
     custom-order: true
@@ -89,5 +89,4 @@ linters:
     - golint
 
 issues:
-  max-ame-issues: 50
-
+  max-same-issues: 50
