@@ -6,7 +6,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tobischo/argon2 v0.1.0
-	golang.org/x/crypto v0.34.0
+	golang.org/x/crypto v0.35.0
 	golang.org/x/exp v0.0.0-20230105202349-8879d0199aa3
 )
 
