@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
+	"slices"
 	"testing"
 	"time"
-
-	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 func TestNewGroup(t *testing.T) {

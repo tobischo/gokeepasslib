@@ -30,5 +30,4 @@ func main() {
 		fmt.Println(entry.GetTitle())
 		fmt.Println(entry.GetPassword())
 	}
-
 }

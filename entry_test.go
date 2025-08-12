@@ -2,11 +2,11 @@ package gokeepasslib
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"golang.org/x/exp/slices"
 )
 
 func TestNewEntry(t *testing.T) {

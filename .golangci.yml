@@ -1,90 +1,90 @@
-run:
-  timeout: 5m
-
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-
-  funlen:
-    lines: 100
-    statements: 50
-
-  gci:
-    sections:
-      - standard # Standard section: captures all standard packages.
-      - prefix(github.com/tobischo/gokeepasslib) # Custom section: groups all imports with the specified Prefix.
-      - default # Default section: contains all imports that could not be matched to another section type.
-
-    skip-generated: false
-    custom-order: true
-
-  gocognit:
-    # Minimal code complexity to report.
-    # Default: 30 (but we recommend 10-20)
-    min-complexity: 10
-
-  gomnd:
-    ignored-functions:
-      - os.Chmod
-      - os.Mkdir
-      - os.MkdirAll
-      - os.OpenFile
-      - os.WriteFile
-
-  govet:
-    settings:
-      shadow:
-        strict: true
-    enable-all: true
-
-  gosec:
-    excludes:
-      - G115
-
-  nakedret:
-    max-func-lines: 0 # Do not use naked returns
-
-  lll:
-    line-length: 100
-    tab-width: 2
-
-  godot:
-    period: false
-
+version: "2"
 linters:
-  enable-all: true
+  default: all
   disable:
+    - cyclop
     - depguard
+    - dupl
+    - errcheck
+    - errname
+    - exhaustruct
+    - forbidigo
+    - funlen
+    - gochecknoglobals
+    - gocognit
+    - gocritic
+    - govet
+    - intrange
+    - ireturn
+    - mnd
+    - musttag
+    - nestif
+    - nilnil
     - nlreturn
     - paralleltest
     - tagliatelle
-    - thelper
-    - wsl
-    - forbidigo
-    - varnamelen
-    - exhaustruct
-    - errname
-    - gochecknoglobals
-    - testpackage
-    - funlen
-    - cyclop
-    - gofumpt
-    - intrange
-    - wrapcheck
-    - stylecheck
     - testableexamples
-    - errcheck
-    - nestif
-    - govet
-    - musttag
-    - nilnil
-    - gomnd
-    - mnd
-    - gocritic # suggests some changes that are not necessarily better
-    - gocognit
-    - dupl
-    - exportloopref
-    - execinquery
-
+    - testpackage
+    - thelper
+    - varnamelen
+    - wrapcheck
+    - wsl
+    - wsl_v5
+    - staticcheck
+    - recvcheck
+    - noinlineerr
+    - funcorder
+  settings:
+    errcheck:
+      check-type-assertions: true
+    funlen:
+      lines: 100
+      statements: 50
+    gocognit:
+      min-complexity: 10
+    godot:
+      period: false
+    gosec:
+      excludes:
+        - G115
+    govet:
+      enable-all: true
+      settings:
+        shadow:
+          strict: true
+    lll:
+      line-length: 100
+      tab-width: 2
+    nakedret:
+      max-func-lines: 0
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
   max-same-issues: 50
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - prefix(github.com/leafzone)
+        - default
+      custom-order: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
