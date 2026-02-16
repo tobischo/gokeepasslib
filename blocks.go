@@ -191,16 +191,16 @@ func composeContentBlocks31(w io.Writer, contentData []byte) {
 	offset := 0
 	for offset < len(contentData) {
 		var hash [32]byte
-		var length uint32
-		var data []byte
+		var endOffset int
 
 		if len(contentData[offset:]) >= blockSplitRate {
-			data = append(data, contentData[offset:]...)
+			endOffset = offset + blockSplitRate
 		} else {
-			data = append(data, contentData...)
+			endOffset = len(contentData)
 		}
 
-		length = uint32(len(data))
+		data := contentData[offset:endOffset]
+		length := uint32(len(data))
 		hash = sha256.Sum256(data)
 
 		binary.Write(w, binary.LittleEndian, index)
@@ -208,7 +208,7 @@ func composeContentBlocks31(w io.Writer, contentData []byte) {
 		binary.Write(w, binary.LittleEndian, length)
 		binary.Write(w, binary.LittleEndian, data)
 		index++
-		offset += blockSplitRate
+		offset = endOffset
 	}
 	binary.Write(w, binary.LittleEndian, index)
 	binary.Write(w, binary.LittleEndian, [32]byte{})
