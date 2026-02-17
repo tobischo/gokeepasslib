@@ -1,5 +1,9 @@
 ### TO BE RELEASED
 
+### v3.6.2
+
+* Adapt `composeContentBlocks31` method to fix file size inflation on encoding for KDBX v3.1 files
+
 ### v3.6.1
 
 * Updated `golang.org/x/crypto`
