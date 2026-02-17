@@ -58,13 +58,12 @@ func NewSalsaStream(key []byte) (*SalsaStream, error) {
 
 // Unpack returns the payload as unencrypted byte array
 func (s *SalsaStream) Unpack(payload string) []byte {
-	var result []byte
-
 	data, _ := base64.StdEncoding.DecodeString(payload)
 
 	salsaBytes := s.fetchBytes(len(data))
 
-	for i := 0; i < len(data); i++ {
+	result := make([]byte, 0, len(data))
+	for i := range len(data) {
 		result = append(result, salsaBytes[i]^data[i])
 	}
 	return result
@@ -72,11 +71,10 @@ func (s *SalsaStream) Unpack(payload string) []byte {
 
 // Pack returns the payload as encrypted string
 func (s *SalsaStream) Pack(payload []byte) string {
-	var data []byte
-
 	salsaBytes := s.fetchBytes(len(payload))
 
-	for i := 0; i < len(payload); i++ {
+	data := make([]byte, 0, len(payload))
+	for i := range len(payload) {
 		data = append(data, salsaBytes[i]^payload[i])
 	}
 
@@ -109,7 +107,7 @@ func (s *SalsaStream) fetchBytes(length int) []byte {
 func (s *SalsaStream) getBytes(length int) []byte {
 	b := make([]byte, length)
 
-	for i := 0; i < length; i++ {
+	for i := range length {
 		if s.blockUsed == 64 {
 			s.generateBlock()
 			s.blockUsed = 0
@@ -127,7 +125,7 @@ func (s *SalsaStream) generateBlock() {
 	x := make([]uint32, 16)
 	copy(x, s.State)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		x[4] ^= rotl32(x[0]+x[12], 7)
 		x[8] ^= rotl32(x[4]+x[0], 9)
 		x[12] ^= rotl32(x[8]+x[4], 13)
@@ -169,11 +167,11 @@ func (s *SalsaStream) generateBlock() {
 		x[15] ^= rotl32(x[14]+x[13], 18)
 	}
 
-	for i := 0; i < 16; i++ {
+	for i := range 16 {
 		x[i] += s.State[i]
 	}
 
-	for i := 0; i < 16; i++ {
+	for i := range 16 {
 		s.block[i<<2] = byte(x[i])
 		s.block[(i<<2)+1] = byte(x[i] >> 8)
 		s.block[(i<<2)+2] = byte(x[i] >> 16)

@@ -146,7 +146,8 @@ func (ih *InnerHeader) writeTo(w io.Writer) error {
 	}
 
 	for _, item := range ih.Binaries {
-		buf := []byte{item.MemoryProtection}
+		buf := make([]byte, 0, 1+len(item.Content))
+		buf = append(buf, item.MemoryProtection)
 		buf = append(buf, item.Content...)
 		if err := writeToInnerHeader(w, InnerHeaderBinary, buf); err != nil {
 			return err

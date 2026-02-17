@@ -22,13 +22,10 @@ func NewUUID() UUID {
 
 // Compare allowes to check whether two instance of UUID are equal in value.
 // This is used for searching a uuid
+// UUID is a fixed-size [16]byte array, so direct comparison with == is safe
+// and compares all elements.
 func (u UUID) Compare(c UUID) bool {
-	for i, v := range c {
-		if u[i] != v {
-			return false
-		}
-	}
-	return true
+	return u == c
 }
 
 // MarshalText is a marshaler method to encode uuid content as base 64 and return it

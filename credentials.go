@@ -122,7 +122,7 @@ func cryptAESKey(masterKey []byte, seed []byte, rounds uint64) ([]byte, error) {
 	newKey := make([]byte, len(masterKey))
 	copy(newKey, masterKey)
 
-	for i := uint64(0); i < rounds; i++ {
+	for range rounds {
 		block.Encrypt(newKey, newKey)
 		block.Encrypt(newKey[16:], newKey[16:])
 	}

@@ -886,8 +886,8 @@ func (vdi VariantDictionaryItem) String() string {
 // ErrInvalidSignature is the error returned if the file signature is invalid
 type ErrInvalidSignature struct {
 	Name     string
-	Is       interface{}
-	Shouldbe interface{}
+	Is       any
+	Shouldbe any
 }
 
 func (e ErrInvalidSignature) Error() string {

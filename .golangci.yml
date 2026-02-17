@@ -34,6 +34,7 @@ linters:
     - recvcheck
     - noinlineerr
     - funcorder
+    - revive
   settings:
     errcheck:
       check-type-assertions: true

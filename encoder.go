@@ -143,7 +143,7 @@ func encodeRawContent(
 
 	// Always add padding, so that decoders that check for the last bytes can work correctly
 	padding := make([]byte, 16-(len(content)%16))
-	for i := 0; i < len(padding); i++ {
+	for i := range len(padding) {
 		padding[i] = byte(len(padding))
 	}
 	content = append(content, padding...)

@@ -24,7 +24,7 @@ func TestBinaryKDBXv31(t *testing.T) {
 		t.Fatalf("Binaries.find for id 2 should be nil, wasn't")
 	}
 
-	references := []BinaryReference{}
+	references := make([]BinaryReference, 0, 1)
 	references = append(references, binary.CreateReference("example.txt"))
 	if references[0].Value.ID != 4 {
 		t.Fatalf("Binary Reference ID is incorrect. Should be 4, was %d", references[0].Value.ID)
@@ -86,7 +86,7 @@ func TestBinaryKDBXv31CleanBinaries(t *testing.T) {
 	expectedContent := []string{}
 	count := 5
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		str := "test " + strconv.Itoa(i)
 		expectedContent = append(expectedContent, str)
 		expected = append(expected, db.AddBinary([]byte(str)))
@@ -97,14 +97,14 @@ func TestBinaryKDBXv31CleanBinaries(t *testing.T) {
 	}
 
 	entry := NewEntry(WithEntryFormattedTime(!db.Header.IsKdbx4()))
-	for i := 0; i < count; i++ {
+	for i := range count {
 		entry.Binaries = append(entry.Binaries, expected[i].CreateReference("test"))
 	}
 	db.Content.Root.Groups[0].Entries = []Entry{}
 	db.Content.Root.Groups[0].Entries = append(db.Content.Root.Groups[0].Entries, entry)
 
 	binaries := db.Content.Root.Groups[0].Entries[0].Binaries
-	for i := 0; i < count; i++ {
+	for i := range count {
 		found := db.FindBinary(binaries[i].Value.ID)
 		if data, _ := found.GetContentString(); data != expectedContent[i] {
 			t.Fatalf(
@@ -169,7 +169,7 @@ func TestBinaryKDBXv4CleanBinaries(t *testing.T) {
 	expected := []*Binary{}
 	count := 5
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		expected = append(expected, db.AddBinary([]byte("test "+strconv.Itoa(i))))
 	}
 
@@ -178,14 +178,14 @@ func TestBinaryKDBXv4CleanBinaries(t *testing.T) {
 	}
 
 	entry := NewEntry(WithEntryFormattedTime(!db.Header.IsKdbx4()))
-	for i := 0; i < count; i++ {
+	for i := range count {
 		entry.Binaries = append(entry.Binaries, expected[i].CreateReference("test"))
 	}
 	db.Content.Root.Groups[0].Entries = []Entry{}
 	db.Content.Root.Groups[0].Entries = append(db.Content.Root.Groups[0].Entries, entry)
 
 	binaries := db.Content.Root.Groups[0].Entries[0].Binaries
-	for i := 0; i < count; i++ {
+	for i := range count {
 		found := db.FindBinary(binaries[i].Value.ID)
 		if data, _ := found.GetContentBytes(); string(data) != string(expected[i].Content) {
 			t.Fatalf(
