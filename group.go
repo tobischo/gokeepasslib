@@ -3,6 +3,7 @@ package gokeepasslib
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
@@ -116,12 +117,20 @@ func (g Group) Clone() Group {
 func (g *Group) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 	for {
 		token, err := d.Token()
-		if errors.Is(err, io.EOF) {
-			break
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return err
 		}
 		switch element := token.(type) {
 		case xml.StartElement:
-			unmarshalGroupToken(g, d, element)
+			// Propagating child errors is essential: silently dropping an
+			// unparseable child desyncs the protection stream cipher and
+			// corrupts every protected value that follows it.
+			if err := unmarshalGroupToken(g, d, element); err != nil {
+				return fmt.Errorf("failed to unmarshal group child %q: %w", element.Name.Local, err)
+			}
 		}
 	}
 

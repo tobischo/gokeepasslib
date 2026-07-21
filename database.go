@@ -223,6 +223,7 @@ func (db *Database) GetStreamManager() (*StreamManager, error) {
 
 // UnlockProtectedEntries goes through the entire database and encrypts
 // any Values in entries with protected=true set.
+// It also unlocks protected binaries in the KDBX v3.1 metadata section.
 // This should be called after decoding if you want to view plaintext password in an entry
 // Warning: If you call this when entry values are already unlocked,
 // it will cause them to be unreadable
@@ -234,18 +235,25 @@ func (db *Database) UnlockProtectedEntries() error {
 	if manager == nil {
 		return ErrUnsupportedStreamType
 	}
+	if db.Content.Meta != nil {
+		manager.UnlockProtectedBinaries(db.Content.Meta.Binaries)
+	}
 	manager.UnlockProtectedGroups(db.Content.Root.Groups)
 	return nil
 }
 
 // LockProtectedEntries goes through the entire database and decrypts
 // any Values in entries with protected=true set.
+// It also locks protected binaries in the KDBX v3.1 metadata section.
 // Warning: Do not call this if entries are already locked
 // Warning: Encoding a database calls LockProtectedEntries automatically
 func (db *Database) LockProtectedEntries() error {
 	manager, err := db.GetStreamManager()
 	if err != nil {
 		return err
+	}
+	if db.Content.Meta != nil {
+		manager.LockProtectedBinaries(db.Content.Meta.Binaries)
 	}
 	manager.LockProtectedGroups(db.Content.Root.Groups)
 	return nil

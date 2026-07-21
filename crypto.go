@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 
 	"github.com/tobischo/gokeepasslib/v3/crypto"
@@ -204,6 +205,41 @@ func (cs *StreamManager) LockProtectedEntry(e *Entry) {
 	}
 	for i := range e.Histories {
 		cs.LockProtectedEntries(e.Histories[i].Entries)
+	}
+}
+
+// UnlockProtectedBinaries unlocks the stream-protected binaries of a KDBX v3.1
+// metadata section, replacing the stream-encrypted content with plain base64
+// encoded content (same representation as unprotected binaries), so that
+// GetContentBytes works transparently.
+// Protected meta binaries consume the inner stream cipher in XML document
+// order before any entry value does (Meta precedes Root), therefore this must
+// be called before UnlockProtectedGroups to keep the cipher stream aligned.
+func (cs *StreamManager) UnlockProtectedBinaries(bs Binaries) {
+	for i := range bs {
+		if bs[i].isStreamProtected() {
+			data := cs.Unpack(string(bs[i].Content))
+			bs[i].Content = []byte(base64.StdEncoding.EncodeToString(data))
+		}
+	}
+}
+
+// LockProtectedBinaries locks the unlocked stream-protected binaries of a
+// KDBX v3.1 metadata section, replacing the plain base64 encoded content with
+// stream-encrypted content.
+// Must be called before LockProtectedGroups to keep the cipher stream aligned
+// with the XML document order (Meta precedes Root).
+func (cs *StreamManager) LockProtectedBinaries(bs Binaries) {
+	for i := range bs {
+		if bs[i].isStreamProtected() {
+			data, err := base64.StdEncoding.DecodeString(string(bs[i].Content))
+			if err != nil {
+				// Content of an unlocked binary is always valid base64;
+				// leave unknown content untouched rather than corrupting it
+				continue
+			}
+			bs[i].Content = []byte(cs.Pack(data))
+		}
 	}
 }
 

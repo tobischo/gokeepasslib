@@ -18,11 +18,24 @@ type Binaries []Binary
 
 // Binary stores a binary found in the metadata header of a database
 type Binary struct {
-	ID               int           `xml:"ID,attr"`         // Index (Manually counted on KDBX v4)
-	MemoryProtection byte          `xml:"-"`               // Memory protection flag (Only KDBX v4)
-	Content          []byte        `xml:",innerxml"`       // Binary content
-	Compressed       w.BoolWrapper `xml:"Compressed,attr"` // Compressed flag (Only KDBX v3.1)
-	isKDBX4          bool          `xml:"-"`
+	// ID is the index (manually counted on KDBX v4)
+	ID int `xml:"ID,attr"`
+	// MemoryProtection is the memory protection flag (Only KDBX v4)
+	MemoryProtection byte `xml:"-"`
+	// Content is the binary content
+	Content []byte `xml:",innerxml"`
+	// Compressed is the compressed flag (Only KDBX v3.1)
+	Compressed w.BoolWrapper `xml:"Compressed,attr"`
+	// Protected is the protected flag (Only KDBX v3.1):
+	// content is encrypted with the inner stream cipher
+	Protected *w.BoolWrapper `xml:"Protected,attr,omitempty"`
+	isKDBX4   bool           `xml:"-"`
+}
+
+// isStreamProtected reports whether the binary content is encrypted with the
+// inner stream cipher (KDBX v3.1 meta binaries with `Protected="True"`).
+func (b *Binary) isStreamProtected() bool {
+	return b.Protected != nil && b.Protected.Bool
 }
 
 // BinaryReference stores a reference to a binary which appears in the xml of an entry
@@ -100,10 +113,12 @@ func (bs *Binaries) Add(c []byte, options ...BinaryOption) *Binary {
 func (b Binary) GetContentBytes() ([]byte, error) {
 	// Check for base64 content (KDBX 3.1), if it fail try with KDBX 4
 	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(b.Content)))
-	_, err := base64.StdEncoding.Decode(decoded, b.Content)
+	n, err := base64.StdEncoding.Decode(decoded, b.Content)
 	if err != nil {
 		// KDBX 4 doesn't encode it
 		decoded = b.Content[:]
+	} else {
+		decoded = decoded[:n]
 	}
 
 	if b.Compressed.Bool {
