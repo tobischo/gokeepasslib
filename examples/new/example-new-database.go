@@ -19,7 +19,7 @@ func main() {
 
 	// create the new database
 	db := gokeepasslib.NewDatabase(
-		gokeepasslib.WithDatabaseKDBXVersion4(),
+		gokeepasslib.WithDatabaseKDBXVersion41(),
 	)
 	db.Content.Meta.DatabaseName = "KDBX4"
 	db.Credentials = gokeepasslib.NewPasswordCredentials(masterPassword)

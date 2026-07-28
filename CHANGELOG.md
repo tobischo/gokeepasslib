@@ -1,6 +1,23 @@
 ### TO BE RELEASED
 
 * Add support for the KDBX 4.1 file format
+    - Adds `WithDatabaseKDBXVersion41()`, `NewKDBX41Header()`, `DefaultKDBX41Sig`
+      and `(*DBHeader).IsKdbx41()`
+    - Adds `Tags`, `PreviousParentGroup` and `CustomData` to `Group`
+    - Adds `QualityCheck` and `PreviousParentGroup` to `Entry`
+    - Adds `Name` and `LastModificationTime` to `CustomIcon`
+    - Adds `LastModificationTime` to `CustomData`
+    - A KDBX 4.0 database is upgraded to KDBX 4.1 while encoding if it contains
+      elements which require it, following KeePass, which writes a database with
+      the lowest file format version that is able to hold its content.
+      Encoding a KDBX 3.1 database containing such elements returns an
+      `ErrKdbxVersionUpgradeRequired` instead of dropping them silently, since
+      upgrading it would change the structure of the file itself
+* Deprecate `DefaultKDBX4Sig`, `NewKDBX4Header()` and `WithDatabaseKDBXVersion4()` in
+  favour of the same names with a `40` version suffix, which distinguishes them from
+  their KDBX 4.1 counterparts.
+  `NewKDBX4FileHeaders()` keeps its name, as the file headers depend on the major
+  version only
 * Add `(UUID).IsZero()` and the `ZeroUUIDText` constant
 
 ### v3.6.2

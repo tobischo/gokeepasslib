@@ -52,6 +52,28 @@ Note the `db.UnlockProtectedEntries()` call: you have to unlock protected entrie
 and call `db.LockProtectedEntries()` before saving it to ensure that the passwords are not stored in plaintext in the xml.
 In kdbx files, which are encrypted using the file credentials, fields are protected with another stream cipher.
 
+### File format versions
+
+New databases are created as KDBX 3.1 unless a different version is requested:
+
+```go
+db := gokeepasslib.NewDatabase(
+    gokeepasslib.WithDatabaseKDBXVersion41(),
+)
+```
+
+Available options are `WithDatabaseKDBXVersion3()` (KDBX 3.1),
+`WithDatabaseKDBXVersion40()` (KDBX 4.0) and `WithDatabaseKDBXVersion41()` (KDBX 4.1).
+
+Reading works for all of them without passing an option, since the version is
+taken from the file itself.
+
+Some elements, e.g. `Group.Tags` or `Entry.PreviousParentGroup`, only exist in
+KDBX 4.1. Setting one of them on a KDBX 4.0 database upgrades it to KDBX 4.1 while
+encoding. Setting one of them on a KDBX 3.1 database makes encoding return an
+`ErrKdbxVersionUpgradeRequired`, because the upgrade would change the structure of
+the file itself, e.g. the key derivation function and the way binaries are stored.
+
 ### Example: writing a file
 
 See [examples/writing/example-writing.go](examples/writing/example-writing.go)

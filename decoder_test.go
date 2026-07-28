@@ -119,6 +119,14 @@ func TestDecodeFile(t *testing.T) {
 			testContent: true,
 		},
 		{
+			title:      "Database Format v4.1, password credentials",
+			dbFilePath: "tests/kdbx41/example.kdbx",
+			newCredentials: func() (*DBCredentials, error) {
+				return NewPasswordCredentials("abcdefg12345678"), nil
+			},
+			testContent: true,
+		},
+		{
 			title:      "Database Format v4, twofish encryption, password credentials",
 			dbFilePath: "tests/kdbx4/example-twofish.kdbx",
 			newCredentials: func() (*DBCredentials, error) {

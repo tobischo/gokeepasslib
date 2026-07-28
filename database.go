@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"errors"
+	"fmt"
 )
 
 // ErrInvalidDatabaseOrCredentials is returned when the file cannot be read properly.
@@ -31,17 +32,34 @@ func WithDatabaseFormattedTime(formatted bool) DatabaseOption {
 	}
 }
 
+// WithDatabaseKDBXVersion3 initializes the database as a KDBX 3.1 file
 func WithDatabaseKDBXVersion3() DatabaseOption {
 	return func(db *Database) {
 		db.Header = NewKDBX3Header()
 	}
 }
 
-func WithDatabaseKDBXVersion4() DatabaseOption {
+// WithDatabaseKDBXVersion40 initializes the database as a KDBX 4.0 file
+func WithDatabaseKDBXVersion40() DatabaseOption {
 	return func(db *Database) {
-		db.Header = NewKDBX4Header()
+		db.Header = NewKDBX40Header()
 		withDBContentKDBX4InnerHeader(db.Content)
 	}
+}
+
+// WithDatabaseKDBXVersion41 initializes the database as a KDBX 4.1 file
+func WithDatabaseKDBXVersion41() DatabaseOption {
+	return func(db *Database) {
+		db.Header = NewKDBX41Header()
+		withDBContentKDBX4InnerHeader(db.Content)
+	}
+}
+
+// WithDatabaseKDBXVersion4 initializes the database as a KDBX 4.0 file
+//
+// Deprecated: use WithDatabaseKDBXVersion40 instead
+func WithDatabaseKDBXVersion4() DatabaseOption {
+	return WithDatabaseKDBXVersion40()
 }
 
 // NewDatabase creates a new database with some sensable default settings in KDBX version 3.1.
