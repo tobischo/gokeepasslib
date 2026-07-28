@@ -40,6 +40,12 @@ func NewMetaData(options ...MetaDataOption) *MetaData {
 		HistoryMaxItems:        10,
 		HistoryMaxSize:         6291456, // 6 MB
 		MaintenanceHistoryDays: 365,
+
+		// These elements have to contain a UUID,
+		// so they are initialized as a zero UUID instead of an empty value
+		EntryTemplatesGroup: ZeroUUIDText,
+		LastSelectedGroup:   ZeroUUIDText,
+		LastTopVisibleGroup: ZeroUUIDText,
 	}
 
 	for _, option := range options {

@@ -1,6 +1,7 @@
 ### TO BE RELEASED
 
 * Add support for the KDBX 4.1 file format
+* Add `(UUID).IsZero()` and the `ZeroUUIDText` constant
 
 ### v3.6.2
 

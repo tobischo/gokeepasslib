@@ -3,8 +3,23 @@ package gokeepasslib
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/xml"
 	"errors"
 )
+
+const (
+	// uuidElement is the name of the element holding the UUID of an object
+	uuidElement = "UUID"
+
+	// customIconUUIDElement is the name of the element referencing a custom icon
+	// in the CustomIcons of the MetaData
+	customIconUUIDElement = "CustomIconUUID"
+)
+
+// ZeroUUIDText is the base64 representation of a zero UUID.
+// KeePass writes it for elements which have to contain a UUID but which do not
+// reference anything, e.g. the LastSelectedGroup of a new database.
+const ZeroUUIDText = "AAAAAAAAAAAAAAAAAAAAAA=="
 
 // ErrInvalidUUIDLength is an error which is returned during unmarshaling
 // if the UUID does not have 16 bytes length
@@ -26,6 +41,30 @@ func NewUUID() UUID {
 // and compares all elements.
 func (u UUID) Compare(c UUID) bool {
 	return u == c
+}
+
+// IsZero returns true if the UUID only consists of zero bytes,
+// which is how KeePass expresses the absence of a UUID value
+func (u UUID) IsZero() bool {
+	return u == UUID{}
+}
+
+// MarshalXML marshals the UUID as the base64 encoded content of the given element.
+//
+// A zero valued CustomIconUUID is not written at all: KeePass only writes the
+// element if a custom icon is actually set and the KDBX XML schema expects every
+// CustomIconUUID to reference an icon in the CustomIcons of the MetaData.
+func (u UUID) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if start.Name.Local == customIconUUIDElement && u.IsZero() {
+		return nil
+	}
+
+	text, err := u.MarshalText()
+	if err != nil {
+		return err
+	}
+
+	return e.EncodeElement(string(text), start)
 }
 
 // MarshalText is a marshaler method to encode uuid content as base 64 and return it

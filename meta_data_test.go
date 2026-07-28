@@ -19,6 +19,9 @@ func TestNewMetaData(t *testing.T) {
 			expectedMetaData: &MetaData{
 				MasterKeyChangeRec:     -1,
 				MasterKeyChangeForce:   -1,
+				EntryTemplatesGroup:    ZeroUUIDText,
+				LastSelectedGroup:      ZeroUUIDText,
+				LastTopVisibleGroup:    ZeroUUIDText,
 				HistoryMaxItems:        10,
 				HistoryMaxSize:         6291456, // 6 MB
 				MaintenanceHistoryDays: 365,
@@ -35,6 +38,9 @@ func TestNewMetaData(t *testing.T) {
 			expectedMetaData: &MetaData{
 				MasterKeyChangeRec:     -1,
 				MasterKeyChangeForce:   -1,
+				EntryTemplatesGroup:    ZeroUUIDText,
+				LastSelectedGroup:      ZeroUUIDText,
+				LastTopVisibleGroup:    ZeroUUIDText,
 				HistoryMaxItems:        10,
 				HistoryMaxSize:         6291456, // 6 MB
 				MaintenanceHistoryDays: 123,
@@ -69,6 +75,9 @@ func TestNewMetaData(t *testing.T) {
 			expectedMetaData: &MetaData{
 				MasterKeyChangeRec:     -1,
 				MasterKeyChangeForce:   -1,
+				EntryTemplatesGroup:    ZeroUUIDText,
+				LastSelectedGroup:      ZeroUUIDText,
+				LastTopVisibleGroup:    ZeroUUIDText,
 				HistoryMaxItems:        10,
 				HistoryMaxSize:         6291456, // 6 MB
 				MaintenanceHistoryDays: 365,
