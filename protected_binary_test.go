@@ -152,11 +152,166 @@ func TestDecodeFileProtectedBinary4(t *testing.T) {
 }
 
 func TestGroupUnmarshalPropagatesChildErrors(t *testing.T) {
-	// A child that genuinely cannot be parsed must surface an error instead of
-	// being silently dropped (which would corrupt all later protected values).
+	cases := []struct {
+		title   string
+		xmlData string
+	}{
+		{
+			// A child that genuinely cannot be parsed must surface an error
+			// instead of being silently dropped, which would corrupt all
+			// later protected values
+			title:   "unparseable child",
+			xmlData: "<Group><Entry><IconID>x</IconID></Entry></Group>",
+		},
+		{
+			// Reading a token used to only stop at io.EOF, while the xml
+			// decoder keeps returning a syntax error once it hit one,
+			// which turned malformed input into an endless loop
+			title:   "malformed xml",
+			xmlData: "<Group><Entry></Group>",
+		},
+		{
+			title:   "unparseable element of a child group",
+			xmlData: "<Group><Group><IconID>x</IconID></Group></Group>",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			var g Group
+
+			if err := xml.Unmarshal([]byte(c.xmlData), &g); err == nil {
+				t.Errorf("Expected an error, received nil")
+			}
+		})
+	}
+
+	// Unknown elements have to stay ignored, so that files written by a newer
+	// version of KeePass can still be read
 	var g Group
-	err := xml.Unmarshal([]byte("<Group><Entry><IconID>x</IconID></Entry></Group>"), &g)
-	if err == nil {
-		t.Fatalf("Expected an error for unparseable entry, received nil (silent drop)")
+	if err := xml.Unmarshal(
+		[]byte("<Group><Name>a</Name><SomethingNew>x</SomethingNew></Group>"),
+		&g,
+	); err != nil {
+		t.Errorf("Expected unknown elements to be ignored, received: %s", err)
+	}
+}
+
+func TestBinaryGetContentBytes(t *testing.T) {
+	protected := w.NewBoolWrapper(true)
+
+	cases := []struct {
+		title    string
+		binary   Binary
+		expected []byte
+	}{
+		{
+			// The decoded length has to be used, a padded base64 value would
+			// otherwise return trailing zero bytes
+			title:    "uncompressed base64 content with padding",
+			binary:   Binary{Content: []byte("SGVsbG8=")},
+			expected: []byte("Hello"),
+		},
+		{
+			title:    "uncompressed base64 content without padding",
+			binary:   Binary{Content: []byte("SGVsbG8xMg==")},
+			expected: []byte("Hello12"),
+		},
+		{
+			// KeePass ignores the Compressed flag of a protected binary
+			title: "protected content is never compressed",
+			binary: Binary{
+				Content:    []byte("SGVsbG8="),
+				Compressed: w.NewBoolWrapper(true),
+				Protected:  &protected,
+			},
+			expected: []byte("Hello"),
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			data, err := c.binary.GetContentBytes()
+			if err != nil {
+				t.Fatalf("Failed to get content bytes: %s", err)
+			}
+
+			if !bytes.Equal(data, c.expected) {
+				t.Errorf("Expected % x, received % x", c.expected, data)
+			}
+		})
+	}
+}
+
+func TestProtectedBinaryInvalidContent(t *testing.T) {
+	protected := w.NewBoolWrapper(true)
+
+	newDatabase := func() *Database {
+		db := NewDatabase()
+		db.Credentials = NewPasswordCredentials(password)
+		db.Content.Meta.Binaries = Binaries{
+			{
+				ID:        0,
+				Content:   []byte("this is not base64!"),
+				Protected: &protected,
+			},
+		}
+
+		return db
+	}
+
+	// Locking or unlocking content which is not valid base64 has to fail
+	// instead of skipping the binary, which would take the wrong amount of
+	// bytes from the inner stream cipher and corrupt every protected value
+	// that follows it
+	if err := newDatabase().UnlockProtectedEntries(); !errors.Is(err, ErrInvalidProtectedBinary) {
+		t.Errorf("Expected an ErrInvalidProtectedBinary while unlocking, received %v", err)
+	}
+
+	if err := newDatabase().LockProtectedEntries(); !errors.Is(err, ErrInvalidProtectedBinary) {
+		t.Errorf("Expected an ErrInvalidProtectedBinary while locking, received %v", err)
+	}
+}
+
+// TestUnprotectedBinariesKeepNoProtectedAttribute ensures that binaries which
+// are not stream protected are written without a Protected attribute
+func TestUnprotectedBinariesKeepNoProtectedAttribute(t *testing.T) {
+	db := decodeDatabase(t, "tests/kdbx3/example.kdbx", examplePassword)
+
+	if err := db.LockProtectedEntries(); err != nil {
+		t.Fatalf("Problem locking entries. %s", err)
+	}
+
+	if len(db.Content.Meta.Binaries) == 0 {
+		t.Fatalf("Expected the example file to contain a meta binary")
+	}
+
+	content, err := db.marshalXMLContent()
+	if err != nil {
+		t.Fatalf("Failed to marshal the database content: %s", err)
+	}
+
+	// Reading the written XML again shows whether the attribute was written:
+	// it is only set if the element carries it
+	var written DBContent
+	if err := xml.Unmarshal(content, &written); err != nil {
+		t.Fatalf("Failed to unmarshal the written content: %s", err)
+	}
+
+	if len(written.Meta.Binaries) != len(db.Content.Meta.Binaries) {
+		t.Fatalf(
+			"Expected %d meta binaries, received %d",
+			len(db.Content.Meta.Binaries),
+			len(written.Meta.Binaries),
+		)
+	}
+
+	for _, binary := range written.Meta.Binaries {
+		if binary.Protected != nil {
+			t.Errorf(
+				"Expected binary %d to be written without a Protected attribute",
+				binary.ID,
+			)
+		}
 	}
 }
