@@ -38,6 +38,11 @@ func (e *Encoder) Encode(db *Database) error {
 		return err
 	}
 
+	// ensure the file format version is able to hold the content of the database
+	if err = db.ensureRequiredKdbxFormatVersion(); err != nil {
+		return err
+	}
+
 	// ensure timestamps will be formatted correctly
 	db.ensureKdbxFormatVersion()
 

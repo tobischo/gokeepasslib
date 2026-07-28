@@ -75,9 +75,70 @@ func NewOptions() *DBOptions {
 	}
 }
 
+// ensureRequiredKdbxFormatVersion raises the file format version of the header
+// if the content of the database can not be represented in the current one.
+//
+// This follows KeePass, which writes a database with the lowest file format
+// version that is able to hold its content, and which never lowers the version
+// of an existing file.
+//
+// Upgrading from KDBX 4.0 to KDBX 4.1 only requires a different version in the
+// signature, since both share the same binary file format.
+// Upgrading a KDBX 3.1 file on the other hand would mean changing the structure
+// of the file itself, e.g. the key derivation function, the inner header and the
+// place where binaries are stored, which has to be requested explicitly instead
+// of happening as a side effect of encoding.
+func (db *Database) ensureRequiredKdbxFormatVersion() error {
+	field := db.Content.kdbx41Field()
+	if field == "" || db.Header.IsKdbx41() {
+		return nil
+	}
+
+	if !db.Header.IsKdbx4() {
+		return ErrKdbxVersionUpgradeRequired{
+			Field:           field,
+			CurrentVersion:  db.Header.formatVersion().String(),
+			RequiredVersion: formatVersion41.String(),
+		}
+	}
+
+	// Copy the signature before changing it, since it may be pointing at one of
+	// the package level default signatures
+	signature := *db.Header.Signature
+	signature.MinorVersion = 1
+	db.Header.Signature = &signature
+
+	return nil
+}
+
 func (db *Database) ensureKdbxFormatVersion() {
 	db.Content.setKdbxFormatVersion(
 		db.Header.formatVersion(),
+	)
+}
+
+// ErrKdbxVersionUpgradeRequired is returned when encoding a database whose
+// content can not be represented in the file format version of its header,
+// and where upgrading it automatically would require changing the structure
+// of the file itself.
+type ErrKdbxVersionUpgradeRequired struct {
+	// Field is the name of a field which requires the higher version
+	Field string
+
+	// CurrentVersion is the file format version of the database header
+	CurrentVersion string
+
+	// RequiredVersion is the file format version required by the content
+	RequiredVersion string
+}
+
+func (e ErrKdbxVersionUpgradeRequired) Error() string {
+	return fmt.Sprintf(
+		"gokeepasslib: %s requires a KDBX %s file, but the database is a KDBX %s file. "+
+			"Create the database with WithDatabaseKDBXVersion41() to write it",
+		e.Field,
+		e.RequiredVersion,
+		e.CurrentVersion,
 	)
 }
 
