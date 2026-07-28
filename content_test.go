@@ -61,25 +61,25 @@ func TestDBContentSetKdbxFormatVersion(t *testing.T) {
 		{
 			title:                  "initialized as v3, changed to v4",
 			formattedInitValue:     true,
-			version:                4,
+			version:                formatVersion40,
 			expectedFormattedValue: false,
 		},
 		{
 			title:                  "initialized as v4, changed to v3",
 			formattedInitValue:     false,
-			version:                3,
+			version:                formatVersion31,
 			expectedFormattedValue: true,
 		},
 		{
 			title:                  "initialized as v3, not changed",
 			formattedInitValue:     true,
-			version:                3,
+			version:                formatVersion31,
 			expectedFormattedValue: true,
 		},
 		{
 			title:                  "initialized as v4, not changed",
 			formattedInitValue:     false,
-			version:                4,
+			version:                formatVersion40,
 			expectedFormattedValue: false,
 		},
 	}

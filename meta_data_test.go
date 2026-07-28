@@ -46,22 +46,22 @@ func TestNewMetaData(t *testing.T) {
 				func(md *MetaData) {
 					md.CustomIcons = []CustomIcon{
 						{
-							UUID{
+							UUID: UUID{
 								0xde, 0xad, 0xbe, 0xef,
 								0xc0, 0xff, 0xee, 0xde,
 								0xed, 0x01, 0x23, 0x45,
 								0x67, 0x89, 0xab, 0xcd,
 							},
-							encodedIcon,
+							Data: encodedIcon,
 						},
 						{
-							UUID{
+							UUID: UUID{
 								0xdd, 0xad, 0xbe, 0xef,
 								0xc0, 0xff, 0xee, 0xde,
 								0xed, 0x01, 0x23, 0x45,
 								0x67, 0x89, 0xab, 0xcd,
 							},
-							encodedIcon,
+							Data: encodedIcon,
 						},
 					}
 				},
@@ -74,22 +74,22 @@ func TestNewMetaData(t *testing.T) {
 				MaintenanceHistoryDays: 365,
 				CustomIcons: []CustomIcon{
 					{
-						UUID{
+						UUID: UUID{
 							0xde, 0xad, 0xbe, 0xef,
 							0xc0, 0xff, 0xee, 0xde,
 							0xed, 0x01, 0x23, 0x45,
 							0x67, 0x89, 0xab, 0xcd,
 						},
-						encodedIcon2,
+						Data: encodedIcon2,
 					},
 					{
-						UUID{
+						UUID: UUID{
 							0xdd, 0xad, 0xbe, 0xef,
 							0xc0, 0xff, 0xee, 0xde,
 							0xed, 0x01, 0x23, 0x45,
 							0x67, 0x89, 0xab, 0xcd,
 						},
-						encodedIcon2,
+						Data: encodedIcon2,
 					},
 				},
 			},
@@ -124,25 +124,25 @@ func TestMetaDataSetKdbxFormatVersion(t *testing.T) {
 		{
 			title:                  "initialized as v3, changed to v4",
 			formattedInitValue:     true,
-			version:                4,
+			version:                formatVersion40,
 			expectedFormattedValue: false,
 		},
 		{
 			title:                  "initialized as v4, changed to v3",
 			formattedInitValue:     false,
-			version:                3,
+			version:                formatVersion31,
 			expectedFormattedValue: true,
 		},
 		{
 			title:                  "initialized as v3, not changed",
 			formattedInitValue:     true,
-			version:                3,
+			version:                formatVersion31,
 			expectedFormattedValue: true,
 		},
 		{
 			title:                  "initialized as v4, not changed",
 			formattedInitValue:     false,
-			version:                4,
+			version:                formatVersion40,
 			expectedFormattedValue: false,
 		},
 	}

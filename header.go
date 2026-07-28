@@ -64,8 +64,6 @@ const (
 	defaultParallelism     = 2
 	defaultIterations      = 2
 	defaultVersion         = 19
-
-	kdbxV4Version = 4
 )
 
 // CipherAES is the AES cipher ID
@@ -780,19 +778,56 @@ func (vd *VariantDictionary) Get(key string) *VariantDictionaryItem {
 	return nil
 }
 
-type formatVersion int
+// formatVersion encodes the KDBX file format version as the major version
+// in the upper 16 bits and the minor version in the lower 16 bits.
+// That keeps the values ordered, and therefore comparable, without making
+// assumptions about the highest possible minor version.
+// It matches the encoding used by KeePass itself.
+type formatVersion uint32
 
-func isKdbx4(v formatVersion) bool {
-	return v == kdbxV4Version
+const (
+	// formatVersion31 is the KDBX 3.1 file format
+	formatVersion31 formatVersion = 3<<16 | 1
+
+	// formatVersion40 is the KDBX 4.0 file format
+	formatVersion40 formatVersion = 4 << 16
+
+	// formatVersion41 is the KDBX 4.1 file format
+	formatVersion41 formatVersion = 4<<16 | 1
+)
+
+func newFormatVersion(majorVersion, minorVersion uint16) formatVersion {
+	return formatVersion(majorVersion)<<16 | formatVersion(minorVersion)
 }
 
-// IsKdbx4 returns true if the header version equals to 4
+func (v formatVersion) String() string {
+	return fmt.Sprintf("%d.%d", v>>16, v&0xFFFF)
+}
+
+// isKdbx4 returns true for any KDBX 4 minor version,
+// since those share the same binary file format
+func isKdbx4(v formatVersion) bool {
+	return v >= formatVersion40
+}
+
+// isKdbx41 returns true for KDBX 4.1 and above,
+// which is where the KDBX 4.1 specific XML elements are supported
+func isKdbx41(v formatVersion) bool {
+	return v >= formatVersion41
+}
+
+// IsKdbx4 returns true if the header major version equals to 4
 func (h *DBHeader) IsKdbx4() bool {
-	return isKdbx4(formatVersion(h.Signature.MajorVersion))
+	return isKdbx4(h.formatVersion())
+}
+
+// IsKdbx41 returns true if the header version is at least 4.1
+func (h *DBHeader) IsKdbx41() bool {
+	return isKdbx41(h.formatVersion())
 }
 
 func (h *DBHeader) formatVersion() formatVersion {
-	return formatVersion(h.Signature.MajorVersion)
+	return newFormatVersion(h.Signature.MajorVersion, h.Signature.MinorVersion)
 }
 
 // GetSha256 returns the Sha256 hash of the header
