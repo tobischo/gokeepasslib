@@ -8,6 +8,13 @@ import (
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
+const (
+	testTag                  = "tag"
+	testSubGroupTags         = "subgrouptag"
+	testCustomDataKey        = "gokeepasslib_test"
+	testGroupCustomDataValue = "group custom data"
+)
+
 var (
 	testCustomIconUUID = UUID{
 		0xde, 0xad, 0xbe, 0xef,
@@ -137,7 +144,7 @@ func databaseWithAllElements(t *testing.T, options ...DatabaseOption) *Database 
 	}
 	db.Content.Meta.CustomData = []CustomData{
 		{
-			Key:   "gokeepasslib_test",
+			Key:   testCustomDataKey,
 			Value: "meta custom data",
 		},
 	}
@@ -177,7 +184,7 @@ func databaseWithAllElements(t *testing.T, options ...DatabaseOption) *Database 
 	}
 	entry.CustomData = []CustomData{
 		{
-			Key:   "gokeepasslib_test",
+			Key:   testCustomDataKey,
 			Value: "entry custom data",
 		},
 	}
@@ -217,12 +224,12 @@ func addKdbx41Elements(db *Database, now w.TimeWrapper) {
 	group.PreviousParentGroup = &testPreviousParentGroupUUID
 	group.CustomData = []CustomData{
 		{
-			Key:   "gokeepasslib_test",
-			Value: "group custom data",
+			Key:   testCustomDataKey,
+			Value: testGroupCustomDataValue,
 		},
 	}
 
-	group.Groups[0].Tags = "subgrouptag"
+	group.Groups[0].Tags = testSubGroupTags
 	group.Groups[0].PreviousParentGroup = &testPreviousParentGroupUUID
 
 	qualityCheck := w.NewBoolWrapper(false)
@@ -312,7 +319,7 @@ func TestKDBX41RoundTrip(t *testing.T) {
 		)
 	}
 
-	if len(group.CustomData) != 1 || group.CustomData[0].Value != "group custom data" {
+	if len(group.CustomData) != 1 || group.CustomData[0].Value != testGroupCustomDataValue {
 		t.Errorf("Failed to decode Group.CustomData, received %+v", group.CustomData)
 	}
 
@@ -320,7 +327,7 @@ func TestKDBX41RoundTrip(t *testing.T) {
 		t.Fatalf("Expected 1 subgroup, received %d", len(group.Groups))
 	}
 
-	if group.Groups[0].Tags != "subgrouptag" {
+	if group.Groups[0].Tags != testSubGroupTags {
 		t.Errorf(
 			"Failed to decode Tags of the subgroup, received '%s'",
 			group.Groups[0].Tags,
@@ -399,12 +406,12 @@ func TestDecodeKDBX41File(t *testing.T) {
 		t.Errorf("Failed to decode Group.Tags, received '%s'", group.Tags)
 	}
 
-	if len(group.CustomData) != 1 || group.CustomData[0].Value != "group custom data" {
+	if len(group.CustomData) != 1 || group.CustomData[0].Value != testGroupCustomDataValue {
 		t.Errorf("Failed to decode Group.CustomData, received %+v", group.CustomData)
 	}
 
 	subGroup := group.Groups[1]
-	if subGroup.Tags != "subgrouptag" {
+	if subGroup.Tags != testSubGroupTags {
 		t.Errorf("Failed to decode Tags of the subgroup, received '%s'", subGroup.Tags)
 	}
 
@@ -469,7 +476,7 @@ func TestEnsureRequiredKdbxFormatVersion(t *testing.T) {
 			title:   "KDBX 4.0 with group tags is upgraded",
 			options: []DatabaseOption{WithDatabaseKDBXVersion40()},
 			modify: func(db *Database) {
-				db.Content.Root.Groups[0].Tags = "tag"
+				db.Content.Root.Groups[0].Tags = testTag
 			},
 			expectedVersion: formatVersion41,
 		},
@@ -515,7 +522,7 @@ func TestEnsureRequiredKdbxFormatVersion(t *testing.T) {
 			title:   "KDBX 3.1 with group tags can not be upgraded",
 			options: []DatabaseOption{WithDatabaseKDBXVersion3()},
 			modify: func(db *Database) {
-				db.Content.Root.Groups[0].Tags = "tag"
+				db.Content.Root.Groups[0].Tags = testTag
 			},
 			expectedVersion: formatVersion31,
 			expectedField:   "Group.Tags",
@@ -573,7 +580,7 @@ func TestEnsureRequiredKdbxFormatVersion(t *testing.T) {
 // level default signatures
 func TestEnsureRequiredKdbxFormatVersionKeepsDefaultSignatures(t *testing.T) {
 	db := NewDatabase(WithDatabaseKDBXVersion40())
-	db.Content.Root.Groups[0].Tags = "tag"
+	db.Content.Root.Groups[0].Tags = testTag
 
 	if err := db.ensureRequiredKdbxFormatVersion(); err != nil {
 		t.Fatalf("Received unexpected error: %s", err)
