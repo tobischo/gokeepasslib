@@ -1,5 +1,12 @@
 # How to contribute
 
+## Issue and Pull Request Descriptions
+Please keep descriptions concise and specific to the problem or change at hand.
+A few sentences stating what broke and how to reproduce it, or what changed and why, are more helpful than a complete summary of everything that was looked at.
+
+Using an AI assistant while writing is fine, but please edit the result down before submitting it.
+Generated descriptions tend to end up as walls of text which repeat themselves and mix the relevant details in with things that do not matter for the review, which makes them harder to read and to review than a short description written by hand.
+
 ## Reporting Bugs
 If you notice a bug, please open an issue.
 
