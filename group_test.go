@@ -282,6 +282,14 @@ func TestGroupUnmarshalXML(t *testing.T) {
         <EnableAutoType>True</EnableAutoType>
         <EnableSearching>False</EnableSearching>
         <LastTopVisibleEntry>SnB29sd3a06jo6GR1BkGBQ==</LastTopVisibleEntry>
+        <PreviousParentGroup>SnB29sd3a06jo6GR1BkGBQ==</PreviousParentGroup>
+        <Tags>tag1;tag2</Tags>
+        <CustomData>
+          <Item>
+            <Key>key</Key>
+            <Value>value</Value>
+          </Item>
+        </CustomData>
        </Group>`,
 			expectedGroup: Group{
 				UUID: UUID{
@@ -307,6 +315,20 @@ func TestGroupUnmarshalXML(t *testing.T) {
 				EnableAutoType:          w.NewNullableBoolWrapper(true),
 				EnableSearching:         w.NewNullableBoolWrapper(false),
 				LastTopVisibleEntry:     "SnB29sd3a06jo6GR1BkGBQ==",
+				PreviousParentGroup: &UUID{
+					0x4a, 0x70, 0x76, 0xf6,
+					0xc7, 0x77, 0x6b, 0x4e,
+					0xa3, 0xa3, 0xa1, 0x91,
+					0xd4, 0x19, 0x06, 0x05,
+				},
+				Tags: "tag1;tag2",
+				CustomData: []CustomData{
+					{
+						XMLName: xml.Name{Local: "Item"},
+						Key:     "key",
+						Value:   "value",
+					},
+				},
 			},
 		},
 	}

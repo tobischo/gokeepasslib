@@ -47,6 +47,9 @@ type Group struct {
 	EnableAutoType          w.NullableBoolWrapper `xml:"EnableAutoType"`
 	EnableSearching         w.NullableBoolWrapper `xml:"EnableSearching"`
 	LastTopVisibleEntry     string                `xml:"LastTopVisibleEntry"`
+	PreviousParentGroup     *UUID                 `xml:"PreviousParentGroup,omitempty"` // KDBX 4.1
+	Tags                    string                `xml:"Tags,omitempty"`                // KDBX 4.1
+	CustomData              []CustomData          `xml:"CustomData>Item"`               // KDBX 4
 	Entries                 []Entry               `xml:"Entry,omitempty"`
 	Groups                  []Group               `xml:"Group,omitempty"`
 	groupChildOrder         int                   `xml:"-"`
@@ -56,6 +59,14 @@ type Group struct {
 func (g Group) Clone() Group {
 	clone := g
 	clone.UUID = NewUUID()
+	if g.PreviousParentGroup != nil {
+		previousParentGroup := *g.PreviousParentGroup
+		clone.PreviousParentGroup = &previousParentGroup
+	}
+	if g.CustomData != nil {
+		clone.CustomData = make([]CustomData, len(g.CustomData))
+		copy(clone.CustomData, g.CustomData)
+	}
 	clone.Entries = make([]Entry, len(clone.Entries))
 	for i, entry := range g.Entries {
 		clone.Entries[i] = entry.Clone()
@@ -109,7 +120,7 @@ func unmarshalGroupToken(g *Group, d *xml.Decoder, element xml.StartElement) err
 		}
 
 		g.Groups = append(g.Groups, group)
-	case "UUID":
+	case uuidElement:
 		return d.DecodeElement(&g.UUID, &element)
 	case "Name":
 		return d.DecodeElement(&g.Name, &element)
@@ -117,7 +128,7 @@ func unmarshalGroupToken(g *Group, d *xml.Decoder, element xml.StartElement) err
 		return d.DecodeElement(&g.Notes, &element)
 	case "IconID":
 		return d.DecodeElement(&g.IconID, &element)
-	case "CustomIconUUID":
+	case customIconUUIDElement:
 		return d.DecodeElement(&g.CustomIconUUID, &element)
 	case "Times":
 		return d.DecodeElement(&g.Times, &element)
@@ -131,6 +142,20 @@ func unmarshalGroupToken(g *Group, d *xml.Decoder, element xml.StartElement) err
 		return d.DecodeElement(&g.EnableSearching, &element)
 	case "LastTopVisibleEntry":
 		return d.DecodeElement(&g.LastTopVisibleEntry, &element)
+	case "PreviousParentGroup":
+		g.PreviousParentGroup = new(UUID)
+		return d.DecodeElement(g.PreviousParentGroup, &element)
+	case "Tags":
+		return d.DecodeElement(&g.Tags, &element)
+	case "CustomData":
+		var customData struct {
+			Items []CustomData `xml:"Item"`
+		}
+		if err := d.DecodeElement(&customData, &element); err != nil {
+			return err
+		}
+
+		g.CustomData = customData.Items
 	}
 
 	return nil
@@ -139,10 +164,11 @@ func unmarshalGroupToken(g *Group, d *xml.Decoder, element xml.StartElement) err
 // NewGroup returns a new group with time data and uuid set
 func NewGroup(options ...GroupOption) Group {
 	group := Group{
-		EnableAutoType:  w.NewNullableBoolWrapper(true),
-		EnableSearching: w.NewNullableBoolWrapper(true),
-		Times:           NewTimeData(),
-		UUID:            NewUUID(),
+		EnableAutoType:      w.NewNullableBoolWrapper(true),
+		EnableSearching:     w.NewNullableBoolWrapper(true),
+		Times:               NewTimeData(),
+		UUID:                NewUUID(),
+		LastTopVisibleEntry: ZeroUUIDText, // value required by KDBX XML schema. Init as zero UUID.
 	}
 
 	for _, option := range options {

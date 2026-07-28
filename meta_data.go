@@ -20,6 +20,10 @@ type MetaDataOption func(*MetaData)
 type CustomIcon struct {
 	UUID UUID   `xml:"UUID"` // Entry's CustomIcon UUID should match this
 	Data string `xml:"Data"` // base64 encoded PNG icon.  Unknown size constraints
+
+	Name                 string         `xml:"Name,omitempty"`                 // KDBX 4.1
+	LastModificationTime *w.TimeWrapper `xml:"LastModificationTime,omitempty"` // KDBX 4.1
+}
 }
 
 func WithMetaDataFormattedTime(formatted bool) MetaDataOption {

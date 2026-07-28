@@ -15,20 +15,25 @@ func WithEntryFormattedTime(formatted bool) EntryOption {
 }
 
 // Entry is the structure which holds information about a parsed entry in a keepass database
+//
+// The order of the fields matches the order in which KeePass writes the
+// elements, as defined by the KDBX XML schema.
 type Entry struct {
-	UUID            UUID              `xml:"UUID"`
-	IconID          int64             `xml:"IconID"`
-	CustomIconUUID  UUID              `xml:"CustomIconUUID"`
-	ForegroundColor string            `xml:"ForegroundColor"`
-	BackgroundColor string            `xml:"BackgroundColor"`
-	OverrideURL     string            `xml:"OverrideURL"`
-	Tags            string            `xml:"Tags"`
-	Times           TimeData          `xml:"Times"`
-	Values          []ValueData       `xml:"String,omitempty"`
-	AutoType        AutoTypeData      `xml:"AutoType"`
-	Histories       []History         `xml:"History"`
-	Binaries        []BinaryReference `xml:"Binary,omitempty"`
-	CustomData      []CustomData      `xml:"CustomData>Item"`
+	UUID                UUID              `xml:"UUID"`
+	IconID              int64             `xml:"IconID"`
+	CustomIconUUID      UUID              `xml:"CustomIconUUID"`
+	ForegroundColor     string            `xml:"ForegroundColor"`
+	BackgroundColor     string            `xml:"BackgroundColor"`
+	OverrideURL         string            `xml:"OverrideURL"`
+	QualityCheck        *w.BoolWrapper    `xml:"QualityCheck,omitempty"` // KDBX 4.1
+	Tags                string            `xml:"Tags"`
+	PreviousParentGroup *UUID             `xml:"PreviousParentGroup,omitempty"` // KDBX 4.1
+	Times               TimeData          `xml:"Times"`
+	Values              []ValueData       `xml:"String,omitempty"`
+	Binaries            []BinaryReference `xml:"Binary,omitempty"`
+	AutoType            AutoTypeData      `xml:"AutoType"`
+	CustomData          []CustomData      `xml:"CustomData>Item"`
+	Histories           []History         `xml:"History"`
 }
 
 // NewEntry return a new entry with time data and uuid set
@@ -47,15 +52,52 @@ func NewEntry(options ...EntryOption) Entry {
 func (e *Entry) setKdbxFormatVersion(version formatVersion) {
 	(&e.Times).setKdbxFormatVersion(version)
 
+	setCustomDataKdbxFormatVersion(e.CustomData, version)
+
 	for i := range e.Histories {
 		(&e.Histories[i]).setKdbxFormatVersion(version)
 	}
+}
+
+// kdbx41Field returns the name of the first field of the entry, or of one of
+// its history entries, which can only be represented in KDBX 4.1 files.
+// It returns an empty string if there is none.
+func (e *Entry) kdbx41Field() string {
+	if e.QualityCheck != nil {
+		return "Entry.QualityCheck"
+	}
+
+	if e.PreviousParentGroup != nil {
+		return "Entry.PreviousParentGroup"
+	}
+
+	if field := customDataKdbx41Field(e.CustomData); field != "" {
+		return field
+	}
+
+	for i := range e.Histories {
+		for j := range e.Histories[i].Entries {
+			if field := (&e.Histories[i].Entries[j]).kdbx41Field(); field != "" {
+				return field
+			}
+		}
+	}
+
+	return ""
 }
 
 // Clone creates a copy of an Entry struct including its child entities
 func (e Entry) Clone() Entry {
 	clone := e
 	clone.UUID = NewUUID()
+	if e.QualityCheck != nil {
+		qualityCheck := *e.QualityCheck
+		clone.QualityCheck = &qualityCheck
+	}
+	if e.PreviousParentGroup != nil {
+		previousParentGroup := *e.PreviousParentGroup
+		clone.PreviousParentGroup = &previousParentGroup
+	}
 	clone.Values = make([]ValueData, len(clone.Values))
 	copy(clone.Values, e.Values)
 	clone.Histories = make([]History, len(clone.Histories))
@@ -168,4 +210,36 @@ type CustomData struct {
 	XMLName xml.Name `xml:"Item"`
 	Key     string   `xml:"Key"`
 	Value   string   `xml:"Value"`
+
+	// LastModificationTime was added in KDBX 4.1.
+	//
+	// Note that the KDBX XML schema only documents it for the custom data of
+	// the MetaData, while KeePass itself writes it for the custom data of
+	// groups and entries as well. It is therefore supported in all three
+	// places, matching the behaviour of KeePass.
+	LastModificationTime *w.TimeWrapper `xml:"LastModificationTime,omitempty"`
+}
+
+func (cd *CustomData) setKdbxFormatVersion(version formatVersion) {
+	if cd.LastModificationTime != nil {
+		cd.LastModificationTime.Formatted = !isKdbx4(version)
+	}
+}
+
+func setCustomDataKdbxFormatVersion(customData []CustomData, version formatVersion) {
+	for i := range customData {
+		(&customData[i]).setKdbxFormatVersion(version)
+	}
+}
+
+// kdbx41Field returns the name of the first field which can only be
+// represented in KDBX 4.1 files, or an empty string if there is none
+func customDataKdbx41Field(customData []CustomData) string {
+	for i := range customData {
+		if customData[i].LastModificationTime != nil {
+			return "CustomData.LastModificationTime"
+		}
+	}
+
+	return ""
 }
