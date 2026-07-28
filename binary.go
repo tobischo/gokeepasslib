@@ -18,22 +18,16 @@ type Binaries []Binary
 
 // Binary stores a binary found in the metadata header of a database
 type Binary struct {
-	// ID is the index (manually counted on KDBX v4)
-	ID int `xml:"ID,attr"`
-	// MemoryProtection is the memory protection flag (Only KDBX v4)
-	MemoryProtection byte `xml:"-"`
-	// Content is the binary content
-	Content []byte `xml:",innerxml"`
-	// Compressed is the compressed flag (Only KDBX v3.1)
-	Compressed w.BoolWrapper `xml:"Compressed,attr"`
-	// Protected is the protected flag (Only KDBX v3.1):
-	// content is encrypted with the inner stream cipher
-	Protected *w.BoolWrapper `xml:"Protected,attr,omitempty"`
-	isKDBX4   bool           `xml:"-"`
+	ID               int            `xml:"ID,attr"`                  // Index (Manually counted on KDBX v4)
+	MemoryProtection byte           `xml:"-"`                        // Memory protection flag (Only KDBX v4)
+	Content          []byte         `xml:",innerxml"`                // Binary content
+	Compressed       w.BoolWrapper  `xml:"Compressed,attr"`          // Compressed flag (Only KDBX v3.1)
+	Protected        *w.BoolWrapper `xml:"Protected,attr,omitempty"` // Inner stream cipher flag (Only KDBX v3.1)
+	isKDBX4          bool           `xml:"-"`
 }
 
 // isStreamProtected reports whether the binary content is encrypted with the
-// inner stream cipher (KDBX v3.1 meta binaries with `Protected="True"`).
+// inner stream cipher (KDBX v3.1 meta binaries with `Protected="True"`)
 func (b *Binary) isStreamProtected() bool {
 	return b.Protected != nil && b.Protected.Bool
 }
