@@ -1,8 +1,25 @@
 ### TO BE RELEASED
 
-* Add support for stream-protected binaries in the KDBX v3.1 metadata section (`<Binary Protected="True">`), matching the KeePass 2 reference implementation; previously the inner stream cipher was not advanced for them, corrupting every subsequent protected value on decode
-* Return the actual decoded length from `Binary.GetContentBytes` for uncompressed base64 content instead of a zero-padded buffer
-* Propagate group child unmarshalling errors instead of silently dropping the child element, which desynced the protection stream and corrupted all subsequent protected values
+* Add support for stream protected binaries in the KDBX v3.1 metadata section
+  (`<Binary Protected="True">`), as written by KeePass
+    - Adds `Protected` to `Binary`
+    - The inner stream cipher was not advanced for those binaries, which
+      corrupted every protected value that follows them in the document, i.e.
+      all passwords of such a database were read and written incorrectly
+    - The `Compressed` flag of a protected binary is ignored, matching KeePass,
+      which never compresses protected content
+    - Locking or unlocking a protected binary whose content is not valid base64
+      returns an `ErrInvalidProtectedBinary` rather than skipping it, since
+      skipping would corrupt the protected values which follow it
+* Return the actual decoded length from `Binary.GetContentBytes` for uncompressed
+  base64 content instead of a zero padded buffer
+* Propagate errors while unmarshalling the children of a group instead of dropping
+  the child element silently
+    - Malformed XML resulted in an endless loop before, since reading a token only
+      stopped at `io.EOF`, while the xml decoder keeps returning a syntax error
+    - Note that a file with an unparseable element now fails to decode instead of
+      being decoded with values which are silently wrong. Unknown elements are
+      still ignored
 * Add support for the KDBX 4.1 file format
     - Adds `WithDatabaseKDBXVersion41()`, `NewKDBX41Header()`, `DefaultKDBX41Sig`
       and `(*DBHeader).IsKdbx41()`
