@@ -22,8 +22,16 @@ var (
 	// DefaultKDBX3Sig is the full valid default signature struct for new databases (Kdbx v3.1)
 	DefaultKDBX3Sig = Signature{BaseSignature, SecondarySignature, 1, 3}
 
+	// DefaultKDBX40Sig is the full valid default signature struct for new databases (Kdbx v4.0)
+	DefaultKDBX40Sig = Signature{BaseSignature, SecondarySignature, 0, 4}
+
+	// DefaultKDBX41Sig is the full valid default signature struct for new databases (Kdbx v4.1)
+	DefaultKDBX41Sig = Signature{BaseSignature, SecondarySignature, 1, 4}
+
 	// DefaultKDBX4Sig is the full valid default signature struct for new databases (Kdbx v4.0)
-	DefaultKDBX4Sig = Signature{BaseSignature, SecondarySignature, 0, 4}
+	//
+	// Deprecated: use DefaultKDBX40Sig instead
+	DefaultKDBX4Sig = DefaultKDBX40Sig
 
 	// DefaultSig is the full valid default signature struct for new databases (Kdbx v3.1)
 	DefaultSig = DefaultKDBX3Sig
@@ -178,18 +186,39 @@ func NewHeader() *DBHeader {
 
 // NewKDBX3Header creates a new Header with good defaults for KDBX3
 func NewKDBX3Header() *DBHeader {
+	signature := DefaultKDBX3Sig
+
 	return &DBHeader{
-		Signature:   &DefaultKDBX3Sig,
+		Signature:   &signature,
 		FileHeaders: NewKDBX3FileHeaders(),
 	}
 }
 
-// NewKDBX4Header creates a new Header with good defaults for KDBX4
-func NewKDBX4Header() *DBHeader {
+// NewKDBX40Header creates a new Header with good defaults for KDBX 4.0
+func NewKDBX40Header() *DBHeader {
+	signature := DefaultKDBX40Sig
+
 	return &DBHeader{
-		Signature:   &DefaultKDBX4Sig,
+		Signature:   &signature,
 		FileHeaders: NewKDBX4FileHeaders(),
 	}
+}
+
+// NewKDBX41Header creates a new Header with good defaults for KDBX 4.1
+func NewKDBX41Header() *DBHeader {
+	signature := DefaultKDBX41Sig
+
+	return &DBHeader{
+		Signature:   &signature,
+		FileHeaders: NewKDBX4FileHeaders(),
+	}
+}
+
+// NewKDBX4Header creates a new Header with good defaults for KDBX 4.0
+//
+// Deprecated: use NewKDBX40Header instead
+func NewKDBX4Header() *DBHeader {
+	return NewKDBX40Header()
 }
 
 // NewFileHeaders creates a new FileHeaders with good defaults
@@ -227,7 +256,10 @@ func NewKDBX3FileHeaders() *FileHeaders {
 	}
 }
 
-// NewKDBX4FileHeaders creates a new FileHeaders with good defaults for KDBX4
+// NewKDBX4FileHeaders creates a new FileHeaders with good defaults for KDBX 4
+//
+// The file headers depend on the major version only, so they are the same for
+// KDBX 4.0 and KDBX 4.1, which differ in the XML content of the database
 func NewKDBX4FileHeaders() *FileHeaders {
 	masterSeed := make([]byte, 32)
 	rand.Read(masterSeed)

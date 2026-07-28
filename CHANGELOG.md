@@ -1,5 +1,7 @@
 ### TO BE RELEASED
 
+* Add support for the KDBX 4.1 file format
+
 ### v3.6.2
 
 * Adapt `composeContentBlocks31` method to fix file size inflation on encoding for KDBX v3.1 files
