@@ -3,8 +3,10 @@ package gokeepasslib
 import (
 	"bytes"
 	"encoding/xml"
-	"os"
+	"errors"
 	"testing"
+
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 // The tests/kdbx3/group-first.kdbx and tests/kdbx*/protected-binary.kdbx
@@ -20,26 +22,6 @@ import (
 // The files serialize child groups before entries and, on KDBX v3.1, store
 // the attachment as `<Binary Protected="True">` in the Meta section, where
 // it consumes the inner stream cipher before any entry value does.
-
-func decodeInteropFixture(t *testing.T, path string) *Database {
-	t.Helper()
-
-	file, err := os.Open(path)
-	if err != nil {
-		t.Fatalf("Failed to open keepass file: %s", err)
-	}
-	defer file.Close()
-
-	db := NewDatabase()
-	db.Credentials = NewPasswordCredentials("123")
-	if err := NewDecoder(file).Decode(db); err != nil {
-		t.Fatalf("Failed to decode file: %s", err)
-	}
-	if err := db.UnlockProtectedEntries(); err != nil {
-		t.Fatalf("Problem unlocking entries. %s", err)
-	}
-	return db
-}
 
 func findEntryByTitle(gs []Group, title string) *Entry {
 	for i := range gs {
@@ -89,13 +71,13 @@ func assertInteropContent(t *testing.T, db *Database) {
 	}
 }
 
-func TestDecodeFile_GroupFirst31(t *testing.T) {
-	db := decodeInteropFixture(t, "tests/kdbx3/group-first.kdbx")
+func TestDecodeFileGroupFirst31(t *testing.T) {
+	db := decodeDatabase(t, "tests/kdbx3/group-first.kdbx", interopPassword)
 	assertInteropContent(t, db)
 }
 
-func TestDecodeFile_ProtectedBinary31(t *testing.T) {
-	db := decodeInteropFixture(t, "tests/kdbx3/protected-binary.kdbx")
+func TestDecodeFileProtectedBinary31(t *testing.T) {
+	db := decodeDatabase(t, "tests/kdbx3/protected-binary.kdbx", interopPassword)
 	assertInteropContent(t, db)
 
 	wantBinary := bytes.Repeat([]byte{0x07}, 16)
@@ -126,7 +108,7 @@ func TestDecodeFile_ProtectedBinary31(t *testing.T) {
 	}
 
 	db2 := NewDatabase()
-	db2.Credentials = NewPasswordCredentials("123")
+	db2.Credentials = NewPasswordCredentials(interopPassword)
 	if err := NewDecoder(bytes.NewReader(buf.Bytes())).Decode(db2); err != nil {
 		t.Fatalf("Failed to decode re-encoded file: %s", err)
 	}
@@ -152,8 +134,8 @@ func TestDecodeFile_ProtectedBinary31(t *testing.T) {
 	}
 }
 
-func TestDecodeFile_ProtectedBinary4(t *testing.T) {
-	db := decodeInteropFixture(t, "tests/kdbx4/protected-binary.kdbx")
+func TestDecodeFileProtectedBinary4(t *testing.T) {
+	db := decodeDatabase(t, "tests/kdbx4/protected-binary.kdbx", interopPassword)
 	assertInteropContent(t, db)
 
 	binary := db.Content.InnerHeader.Binaries.Find(0)

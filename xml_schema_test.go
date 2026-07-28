@@ -115,19 +115,19 @@ func TestEncodedXMLMatchesSchema(t *testing.T) {
 		{
 			title: "KDBX 3.1 example file",
 			db: func(t *testing.T) *Database {
-				return decodeExampleDatabase(t, "tests/kdbx3/example.kdbx")
+				return decodeDatabase(t, "tests/kdbx3/example.kdbx", examplePassword)
 			},
 		},
 		{
 			title: "KDBX 4.0 example file",
 			db: func(t *testing.T) *Database {
-				return decodeExampleDatabase(t, "tests/kdbx4/example.kdbx")
+				return decodeDatabase(t, "tests/kdbx4/example.kdbx", examplePassword)
 			},
 		},
 		{
 			title: "KDBX 4.1 example file",
 			db: func(t *testing.T) *Database {
-				return decodeExampleDatabase(t, "tests/kdbx41/example.kdbx")
+				return decodeDatabase(t, "tests/kdbx41/example.kdbx", examplePassword)
 			},
 		},
 		{
@@ -255,27 +255,4 @@ func TestKDBX41ElementsAreVersionDependent(t *testing.T) {
 			}
 		})
 	}
-}
-
-func decodeExampleDatabase(t *testing.T, path string) *Database {
-	t.Helper()
-
-	file, err := os.Open(path)
-	if err != nil {
-		t.Fatalf("Failed to open keepass file: %s", err)
-	}
-	defer file.Close()
-
-	db := NewDatabase()
-	db.Credentials = NewPasswordCredentials("abcdefg12345678")
-
-	if err := NewDecoder(file).Decode(db); err != nil {
-		t.Fatalf("Failed to decode file: %s", err)
-	}
-
-	if err := db.UnlockProtectedEntries(); err != nil {
-		t.Fatalf("Failed to unlock protected entries: %s", err)
-	}
-
-	return db
 }

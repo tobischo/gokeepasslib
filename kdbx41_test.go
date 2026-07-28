@@ -365,7 +365,7 @@ func TestKDBX41RoundTrip(t *testing.T) {
 // tests/kdbx41/example.kdbx was created out of the KeePass generated
 // tests/kdbx4/example.kdbx by adding every element of KDBX 4.1 to it.
 func TestDecodeKDBX41File(t *testing.T) {
-	db := decodeExampleDatabase(t, "tests/kdbx41/example.kdbx")
+	db := decodeDatabase(t, "tests/kdbx41/example.kdbx", examplePassword)
 
 	if !db.Header.IsKdbx41() {
 		t.Fatalf(
