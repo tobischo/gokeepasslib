@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -149,6 +150,89 @@ func TestEncodedXMLMatchesSchema(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.title, func(t *testing.T) {
 			validateAgainstSchema(t, schema, encodedXMLContent(t, c.db(t)))
+		})
+	}
+}
+
+// kdbx41Elements counts the elements which were introduced in KDBX 4.1.
+//
+// The published schema only covers the newest file format version, so it accepts
+// those elements in a KDBX 3.1 or KDBX 4.0 document as well. They are therefore
+// checked separately.
+var kdbx41Elements = map[string]string{
+	fieldGroupTags:                      "count(//Group/Tags)",
+	fieldGroupPreviousParentGroup:       "count(//Group/PreviousParentGroup)",
+	fieldEntryPreviousParentGroup:       "count(//Entry/PreviousParentGroup)",
+	fieldEntryQualityCheck:              "count(//Entry/QualityCheck)",
+	fieldCustomIconName:                 "count(//Icon/Name)",
+	fieldCustomIconLastModificationTime: "count(//Icon/LastModificationTime)",
+	fieldCustomDataLastModificationTime: "count(//CustomData/Item/LastModificationTime)",
+}
+
+// countElements evaluates the given XPath count expression against the given
+// XML document
+func countElements(t *testing.T, document []byte, xpath string) int {
+	t.Helper()
+
+	path := writeTempFile(t, "*.xml", document)
+
+	cmd := exec.CommandContext(t.Context(), "xmllint", "--xpath", xpath, path)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("Failed to evaluate '%s': %s", xpath, strings.TrimSpace(string(output)))
+	}
+
+	count, err := strconv.Atoi(strings.TrimSpace(string(output)))
+	if err != nil {
+		t.Fatalf("Failed to parse the result of '%s': %s", xpath, err)
+	}
+
+	return count
+}
+
+// TestKDBX41ElementsAreVersionDependent ensures that the elements which were
+// introduced in KDBX 4.1 are only written into KDBX 4.1 files
+func TestKDBX41ElementsAreVersionDependent(t *testing.T) {
+	if _, err := exec.LookPath("xmllint"); err != nil {
+		t.Skip("xmllint is not available")
+	}
+
+	cases := []struct {
+		title    string
+		option   DatabaseOption
+		expected bool
+	}{
+		{
+			title:  "KDBX 3.1",
+			option: WithDatabaseKDBXVersion3(),
+		},
+		{
+			title:  "KDBX 4.0",
+			option: WithDatabaseKDBXVersion40(),
+		},
+		{
+			title:    "KDBX 4.1",
+			option:   WithDatabaseKDBXVersion41(),
+			expected: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			document := encodedXMLContent(t, databaseWithAllElements(t, c.option))
+
+			for name, xpath := range kdbx41Elements {
+				count := countElements(t, document, xpath)
+
+				if c.expected && count == 0 {
+					t.Errorf("Expected %s to be written, received no element", name)
+				}
+
+				if !c.expected && count != 0 {
+					t.Errorf("Expected %s not to be written, received %d", name, count)
+				}
+			}
 		})
 	}
 }

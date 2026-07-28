@@ -64,11 +64,11 @@ func (e *Entry) setKdbxFormatVersion(version formatVersion) {
 // It returns an empty string if there is none.
 func (e *Entry) kdbx41Field() string {
 	if e.QualityCheck != nil {
-		return "Entry.QualityCheck"
+		return fieldEntryQualityCheck
 	}
 
 	if e.PreviousParentGroup != nil {
-		return "Entry.PreviousParentGroup"
+		return fieldEntryPreviousParentGroup
 	}
 
 	if field := customDataKdbx41Field(e.CustomData); field != "" {
@@ -237,7 +237,7 @@ func setCustomDataKdbxFormatVersion(customData []CustomData, version formatVersi
 func customDataKdbx41Field(customData []CustomData) string {
 	for i := range customData {
 		if customData[i].LastModificationTime != nil {
-			return "CustomData.LastModificationTime"
+			return fieldCustomDataLastModificationTime
 		}
 	}
 

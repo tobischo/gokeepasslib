@@ -135,6 +135,18 @@ func (db *Database) ensureKdbxFormatVersion() {
 	)
 }
 
+// Names of the fields which can only be represented in KDBX 4.1 files.
+// They are reported by ErrKdbxVersionUpgradeRequired.
+const (
+	fieldGroupPreviousParentGroup       = "Group.PreviousParentGroup"
+	fieldGroupTags                      = "Group.Tags"
+	fieldEntryQualityCheck              = "Entry.QualityCheck"
+	fieldEntryPreviousParentGroup       = "Entry.PreviousParentGroup"
+	fieldCustomIconName                 = "CustomIcon.Name"
+	fieldCustomIconLastModificationTime = "CustomIcon.LastModificationTime"
+	fieldCustomDataLastModificationTime = "CustomData.LastModificationTime"
+)
+
 // ErrKdbxVersionUpgradeRequired is returned when encoding a database whose
 // content can not be represented in the file format version of its header,
 // and where upgrading it automatically would require changing the structure

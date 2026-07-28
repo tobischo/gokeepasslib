@@ -131,11 +131,11 @@ func (md *MetaData) setKdbxFormatVersion(version formatVersion) {
 func (md *MetaData) kdbx41Field() string {
 	for i := range md.CustomIcons {
 		if md.CustomIcons[i].Name != "" {
-			return "CustomIcon.Name"
+			return fieldCustomIconName
 		}
 
 		if md.CustomIcons[i].LastModificationTime != nil {
-			return "CustomIcon.LastModificationTime"
+			return fieldCustomIconLastModificationTime
 		}
 	}
 

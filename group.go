@@ -63,11 +63,11 @@ type Group struct {
 // It returns an empty string if there is none.
 func (g *Group) kdbx41Field() string {
 	if g.PreviousParentGroup != nil {
-		return "Group.PreviousParentGroup"
+		return fieldGroupPreviousParentGroup
 	}
 
 	if g.Tags != "" {
-		return "Group.Tags"
+		return fieldGroupTags
 	}
 
 	if field := customDataKdbx41Field(g.CustomData); field != "" {
