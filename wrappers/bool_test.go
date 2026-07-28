@@ -6,6 +6,25 @@ import (
 	"testing"
 )
 
+// The marshalling methods use value receivers, so that they are also used when
+// a struct containing a wrapper is marshalled by value. The method set of the
+// pointer type includes them as well, so both keep satisfying the interfaces.
+var (
+	_ xml.Marshaler       = BoolWrapper{}
+	_ xml.Marshaler       = &BoolWrapper{}
+	_ xml.MarshalerAttr   = BoolWrapper{}
+	_ xml.MarshalerAttr   = &BoolWrapper{}
+	_ xml.Unmarshaler     = &BoolWrapper{}
+	_ xml.UnmarshalerAttr = &BoolWrapper{}
+
+	_ xml.Marshaler       = NullableBoolWrapper{}
+	_ xml.Marshaler       = &NullableBoolWrapper{}
+	_ xml.MarshalerAttr   = NullableBoolWrapper{}
+	_ xml.MarshalerAttr   = &NullableBoolWrapper{}
+	_ xml.Unmarshaler     = &NullableBoolWrapper{}
+	_ xml.UnmarshalerAttr = &NullableBoolWrapper{}
+)
+
 func TestBoolWrapperUnmarshalXML(t *testing.T) {
 	cases := []struct {
 		title    string

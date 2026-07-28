@@ -28,6 +28,9 @@
     - Groups now contain an empty `CustomData` element if they have no custom
       data, matching the existing behaviour for entries
 * Add `(UUID).IsZero()` and the `ZeroUUIDText` constant
+* Marshal `BoolWrapper` and `NullableBoolWrapper` through value receivers, so that
+  they are also written as `True`/`False`/`null` when a struct containing them is
+  marshalled by value instead of through a pointer
 
 ### v3.6.2
 
