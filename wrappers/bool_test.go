@@ -384,3 +384,59 @@ func TestNullableBoolWrapperUnmarshalXMLAttr(t *testing.T) {
 		})
 	}
 }
+
+// TestBoolWrapperMarshalXML ensures that the wrappers marshal into the values
+// expected by KDBX files, no matter whether they are reached through a pointer.
+//
+// encoding/xml only uses a Marshaler with a pointer receiver if the value it
+// marshals is addressable, so marshalling a struct which contains a wrapper by
+// value would fall back to the default marshalling of the struct fields.
+func TestBoolWrapperMarshalXML(t *testing.T) {
+	type wrap struct {
+		XMLName  xml.Name            `xml:"Wrap"`
+		Bool     BoolWrapper         `xml:"Bool"`
+		Nullable NullableBoolWrapper `xml:"Nullable"`
+		Attr     BoolWrapper         `xml:"Attr,attr"`
+	}
+
+	cases := []struct {
+		title    string
+		value    any
+		expected string
+	}{
+		{
+			title: "by value",
+			value: wrap{
+				Bool:     NewBoolWrapper(true),
+				Nullable: NewNullableBoolWrapper(false),
+			},
+			expected: `<Wrap Attr="False"><Bool>True</Bool><Nullable>False</Nullable></Wrap>`,
+		},
+		{
+			title: "by pointer",
+			value: &wrap{
+				Bool:     NewBoolWrapper(true),
+				Nullable: NewNullableBoolWrapper(false),
+			},
+			expected: `<Wrap Attr="False"><Bool>True</Bool><Nullable>False</Nullable></Wrap>`,
+		},
+		{
+			title:    "zero values",
+			value:    wrap{},
+			expected: `<Wrap Attr="False"><Bool>False</Bool><Nullable>null</Nullable></Wrap>`,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			data, err := xml.Marshal(c.value)
+			if err != nil {
+				t.Fatalf("Failed to marshal: %s", err)
+			}
+
+			if string(data) != c.expected {
+				t.Errorf("Expected '%s', received '%s'", c.expected, data)
+			}
+		})
+	}
+}

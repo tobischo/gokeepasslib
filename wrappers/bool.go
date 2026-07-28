@@ -33,7 +33,7 @@ func NewBoolWrapper(value bool) BoolWrapper {
 }
 
 // MarshalXML marshals the boolean into e
-func (b *BoolWrapper) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (b BoolWrapper) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	val := falseStr
 
 	if b.Bool {
@@ -56,7 +56,7 @@ func (b *BoolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 }
 
 // MarshalXMLAttr returns the encoded XML attribute
-func (b *BoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+func (b BoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	val := falseStr
 
 	if b.Bool {
@@ -90,7 +90,7 @@ func NewNullableBoolWrapper(value bool) NullableBoolWrapper {
 }
 
 // MarshalXML marshals the boolean into e
-func (b *NullableBoolWrapper) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (b NullableBoolWrapper) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	val := nullStr
 
 	if b.Valid {
@@ -123,7 +123,7 @@ func (b *NullableBoolWrapper) UnmarshalXML(d *xml.Decoder, start xml.StartElemen
 }
 
 // MarshalXMLAttr returns the encoded XML attribute
-func (b *NullableBoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+func (b NullableBoolWrapper) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	val := nullStr
 
 	if b.Valid {

@@ -203,27 +203,44 @@ func TestKDBX41ElementsAreVersionDependent(t *testing.T) {
 
 	cases := []struct {
 		title    string
-		option   DatabaseOption
+		db       func(t *testing.T) *Database
 		expected bool
 	}{
 		{
-			title:  "KDBX 3.1",
-			option: WithDatabaseKDBXVersion3(),
+			title: "KDBX 3.1",
+			db: func(t *testing.T) *Database {
+				return databaseWithAllElements(t, WithDatabaseKDBXVersion3())
+			},
 		},
 		{
-			title:  "KDBX 4.0",
-			option: WithDatabaseKDBXVersion40(),
+			title: "KDBX 4.0",
+			db: func(t *testing.T) *Database {
+				return databaseWithAllElements(t, WithDatabaseKDBXVersion40())
+			},
 		},
 		{
-			title:    "KDBX 4.1",
-			option:   WithDatabaseKDBXVersion41(),
+			// A database which does not use the elements must not gain them
+			// just because it is a KDBX 4.1 file
+			title: "KDBX 4.1 without those elements",
+			db: func(t *testing.T) *Database {
+				db := NewDatabase(WithDatabaseKDBXVersion41())
+				db.Credentials = NewPasswordCredentials(password)
+
+				return db
+			},
+		},
+		{
+			title: "KDBX 4.1",
+			db: func(t *testing.T) *Database {
+				return databaseWithAllElements(t, WithDatabaseKDBXVersion41())
+			},
 			expected: true,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.title, func(t *testing.T) {
-			document := encodedXMLContent(t, databaseWithAllElements(t, c.option))
+			document := encodedXMLContent(t, c.db(t))
 
 			for name, xpath := range kdbx41Elements {
 				count := countElements(t, document, xpath)
