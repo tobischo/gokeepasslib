@@ -115,7 +115,10 @@ func (b Binary) GetContentBytes() ([]byte, error) {
 		decoded = decoded[:n]
 	}
 
-	if b.Compressed.Bool {
+	// KeePass never compresses the content of a stream protected binary and
+	// ignores the Compressed flag while reading one, so it is ignored here too.
+	// See SubWriteValue and ReadProtectedBinary in the KeePass sources.
+	if b.Compressed.Bool && !b.isStreamProtected() {
 		reader, err := gzip.NewReader(bytes.NewReader(decoded))
 		if err != nil {
 			return nil, err
@@ -158,6 +161,8 @@ func (wc writeCloser) Close() error {
 }
 
 // SetContent encodes and (if Compressed=true) compresses c and sets b's content
+//
+// The content of a stream protected binary is never compressed, matching KeePass
 func (b *Binary) SetContent(c []byte) error {
 	buff := &bytes.Buffer{}
 
@@ -169,7 +174,7 @@ func (b *Binary) SetContent(c []byte) error {
 		writer = base64.NewEncoder(base64.StdEncoding, buff)
 	}
 
-	if b.Compressed.Bool {
+	if b.Compressed.Bool && !b.isStreamProtected() {
 		writer = gzip.NewWriter(writer)
 	}
 	_, err := writer.Write(c)
