@@ -212,6 +212,8 @@ func NewGroup(options ...GroupOption) Group {
 func (g *Group) setKdbxFormatVersion(version formatVersion) {
 	(&g.Times).setKdbxFormatVersion(version)
 
+	setCustomDataKdbxFormatVersion(g.CustomData, version)
+
 	for i := range g.Groups {
 		(&g.Groups[i]).setKdbxFormatVersion(version)
 	}

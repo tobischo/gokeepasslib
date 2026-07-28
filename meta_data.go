@@ -118,6 +118,12 @@ func (md *MetaData) setKdbxFormatVersion(version formatVersion) {
 	if md.EntryTemplatesGroupChanged != nil {
 		md.EntryTemplatesGroupChanged.Formatted = !isKdbx4(version)
 	}
+
+	for i := range md.CustomIcons {
+		(&md.CustomIcons[i]).setKdbxFormatVersion(version)
+	}
+
+	setCustomDataKdbxFormatVersion(md.CustomData, version)
 }
 
 // kdbx41Field returns the name of the first field of the meta data which can
