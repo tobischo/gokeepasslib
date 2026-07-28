@@ -35,6 +35,9 @@ func WithGroupFormattedTime(formatted bool) GroupOption {
 }
 
 // Group is a structure to store entries in their named groups for organization
+//
+// The order of the fields matches the order in which KeePass writes the
+// elements, as defined by the KDBX XML schema.
 type Group struct {
 	UUID                    UUID                  `xml:"UUID"`
 	Name                    string                `xml:"Name"`

@@ -18,6 +18,15 @@
   their KDBX 4.1 counterparts.
   `NewKDBX4FileHeaders()` keeps its name, as the file headers depend on the major
   version only
+* Correct the XML written by the encoder to match the KDBX XML schema
+    - The `Binary` and `CustomData` elements of an entry are written in the
+      documented order
+    - `CustomIconUUID` is not written anymore if no custom icon is set
+    - `EntryTemplatesGroup`, `LastSelectedGroup`, `LastTopVisibleGroup` and
+      `LastTopVisibleEntry` are initialized with a zero UUID instead of an empty
+      value, as those elements have to contain a UUID
+    - Groups now contain an empty `CustomData` element if they have no custom
+      data, matching the existing behaviour for entries
 * Add `(UUID).IsZero()` and the `ZeroUUIDText` constant
 
 ### v3.6.2

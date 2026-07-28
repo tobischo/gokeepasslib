@@ -86,11 +86,10 @@ func (e *Encoder) Encode(db *Database) error {
 	}
 
 	// Encode xml and append header to the top
-	rawContent, err := xml.MarshalIndent(db.Content, "", "\t")
+	rawContent, err := db.marshalXMLContent()
 	if err != nil {
 		return err
 	}
-	rawContent = append(xmlHeader, rawContent...)
 
 	// Write InnerHeader (Kdbx v4)
 	if db.Header.IsKdbx4() {
@@ -111,6 +110,21 @@ func (e *Encoder) Encode(db *Database) error {
 	// Writes the encrypted database content
 	_, err = e.w.Write(encodedContent)
 	return err
+}
+
+// marshalXMLContent marshals the content of the database into the XML document
+// which is stored in a KDBX file
+func (db *Database) marshalXMLContent() ([]byte, error) {
+	rawContent, err := xml.MarshalIndent(db.Content, "", "\t")
+	if err != nil {
+		return nil, err
+	}
+
+	content := make([]byte, 0, len(xmlHeader)+len(rawContent))
+	content = append(content, xmlHeader...)
+	content = append(content, rawContent...)
+
+	return content, nil
 }
 
 func encodeRawContent(
