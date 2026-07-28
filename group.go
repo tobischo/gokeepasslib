@@ -55,6 +55,37 @@ type Group struct {
 	groupChildOrder         int                   `xml:"-"`
 }
 
+// kdbx41Field returns the name of the first field of the group, or of one of its
+// child groups and entries, which can only be represented in KDBX 4.1 files.
+// It returns an empty string if there is none.
+func (g *Group) kdbx41Field() string {
+	if g.PreviousParentGroup != nil {
+		return "Group.PreviousParentGroup"
+	}
+
+	if g.Tags != "" {
+		return "Group.Tags"
+	}
+
+	if field := customDataKdbx41Field(g.CustomData); field != "" {
+		return field
+	}
+
+	for i := range g.Entries {
+		if field := (&g.Entries[i]).kdbx41Field(); field != "" {
+			return field
+		}
+	}
+
+	for i := range g.Groups {
+		if field := (&g.Groups[i]).kdbx41Field(); field != "" {
+			return field
+		}
+	}
+
+	return ""
+}
+
 // Clone creates a copy of a Group struct including its child entities
 func (g Group) Clone() Group {
 	clone := g

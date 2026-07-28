@@ -41,6 +41,22 @@ func (c *DBContent) setKdbxFormatVersion(version formatVersion) {
 	c.Root.setKdbxFormatVersion(version)
 }
 
+// kdbx41Field returns the name of the first field of the content which can only
+// be represented in KDBX 4.1 files, or an empty string if there is none
+func (c *DBContent) kdbx41Field() string {
+	if c.Meta != nil {
+		if field := c.Meta.kdbx41Field(); field != "" {
+			return field
+		}
+	}
+
+	if c.Root != nil {
+		return c.Root.kdbx41Field()
+	}
+
+	return ""
+}
+
 type DBContentOption func(*DBContent)
 
 func WithDBContentFormattedTime(formatted bool) DBContentOption {

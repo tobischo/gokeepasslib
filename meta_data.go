@@ -24,6 +24,11 @@ type CustomIcon struct {
 	Name                 string         `xml:"Name,omitempty"`                 // KDBX 4.1
 	LastModificationTime *w.TimeWrapper `xml:"LastModificationTime,omitempty"` // KDBX 4.1
 }
+
+func (ci *CustomIcon) setKdbxFormatVersion(version formatVersion) {
+	if ci.LastModificationTime != nil {
+		ci.LastModificationTime.Formatted = !isKdbx4(version)
+	}
 }
 
 func WithMetaDataFormattedTime(formatted bool) MetaDataOption {
@@ -113,4 +118,20 @@ func (md *MetaData) setKdbxFormatVersion(version formatVersion) {
 	if md.EntryTemplatesGroupChanged != nil {
 		md.EntryTemplatesGroupChanged.Formatted = !isKdbx4(version)
 	}
+}
+
+// kdbx41Field returns the name of the first field of the meta data which can
+// only be represented in KDBX 4.1 files, or an empty string if there is none
+func (md *MetaData) kdbx41Field() string {
+	for i := range md.CustomIcons {
+		if md.CustomIcons[i].Name != "" {
+			return "CustomIcon.Name"
+		}
+
+		if md.CustomIcons[i].LastModificationTime != nil {
+			return "CustomIcon.LastModificationTime"
+		}
+	}
+
+	return customDataKdbx41Field(md.CustomData)
 }

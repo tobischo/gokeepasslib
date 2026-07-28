@@ -36,6 +36,18 @@ func NewRootData(options ...RootDataOption) *RootData {
 	return root
 }
 
+// kdbx41Field returns the name of the first field within the group tree which
+// can only be represented in KDBX 4.1 files, or an empty string if there is none
+func (rd *RootData) kdbx41Field() string {
+	for i := range rd.Groups {
+		if field := (&rd.Groups[i]).kdbx41Field(); field != "" {
+			return field
+		}
+	}
+
+	return ""
+}
+
 func (rd *RootData) setKdbxFormatVersion(version formatVersion) {
 	for i := range rd.Groups {
 		(&rd.Groups[i]).setKdbxFormatVersion(version)
