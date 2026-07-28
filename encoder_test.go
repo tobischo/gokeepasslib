@@ -50,13 +50,13 @@ func TestEncodeFile31(t *testing.T) {
 	}
 	db.Content.Meta.CustomIcons = []CustomIcon{
 		{
-			UUID{
+			UUID: UUID{
 				0xde, 0xad, 0xbe, 0xef,
 				0xc0, 0xff, 0xee, 0xde,
 				0xed, 0x01, 0x23, 0x45,
 				0x67, 0x89, 0xab, 0xcd,
 			},
-			encodedIcon,
+			Data: encodedIcon,
 		},
 	}
 
@@ -126,13 +126,13 @@ func TestEncodeFile31(t *testing.T) {
 	if !reflect.DeepEqual(
 		db.Content.Meta.CustomIcons[0],
 		CustomIcon{
-			UUID{
+			UUID: UUID{
 				0xde, 0xad, 0xbe, 0xef,
 				0xc0, 0xff, 0xee, 0xde,
 				0xed, 0x01, 0x23, 0x45,
 				0x67, 0x89, 0xab, 0xcd,
 			},
-			encodedIcon,
+			Data: encodedIcon,
 		},
 	) {
 		t.Fatal("Failed to properly store a custom icon in the Meta block")
@@ -180,13 +180,13 @@ func TestEncodeFile4(t *testing.T) {
 	}
 	db.Content.Meta.CustomIcons = []CustomIcon{
 		{
-			UUID{
+			UUID: UUID{
 				0xde, 0xad, 0xbe, 0xef,
 				0xc0, 0xff, 0xee, 0xde,
 				0xed, 0x01, 0x23, 0x45,
 				0x67, 0x89, 0xab, 0xcd,
 			},
-			encodedIcon,
+			Data: encodedIcon,
 		},
 	}
 
@@ -255,13 +255,13 @@ func TestEncodeFile4(t *testing.T) {
 	if !reflect.DeepEqual(
 		db.Content.Meta.CustomIcons[0],
 		CustomIcon{
-			UUID{
+			UUID: UUID{
 				0xde, 0xad, 0xbe, 0xef,
 				0xc0, 0xff, 0xee, 0xde,
 				0xed, 0x01, 0x23, 0x45,
 				0x67, 0x89, 0xab, 0xcd,
 			},
-			encodedIcon,
+			Data: encodedIcon,
 		},
 	) {
 		t.Fatal("Failed to properly store a custom icon in the Meta block")
