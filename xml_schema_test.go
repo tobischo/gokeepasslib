@@ -12,7 +12,7 @@ import (
 
 // schemaPath is the KDBX 4.1 XML schema as published on
 // https://keepass.info/help/download/KDBX_XML.xsd
-const schemaPath = "tests/KDBX_XML.xsd"
+const schemaPath = "tests/schema/KDBX_XML.xsd"
 
 // prepareSchema returns the path to a copy of the KDBX XML schema which libxml2
 // is able to compile.
