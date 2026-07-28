@@ -236,7 +236,9 @@ func (db *Database) UnlockProtectedEntries() error {
 		return ErrUnsupportedStreamType
 	}
 	if db.Content.Meta != nil {
-		manager.UnlockProtectedBinaries(db.Content.Meta.Binaries)
+		if err := manager.unlockProtectedBinaries(db.Content.Meta.Binaries); err != nil {
+			return err
+		}
 	}
 	manager.UnlockProtectedGroups(db.Content.Root.Groups)
 	return nil
@@ -253,7 +255,9 @@ func (db *Database) LockProtectedEntries() error {
 		return err
 	}
 	if db.Content.Meta != nil {
-		manager.LockProtectedBinaries(db.Content.Meta.Binaries)
+		if err := manager.lockProtectedBinaries(db.Content.Meta.Binaries); err != nil {
+			return err
+		}
 	}
 	manager.LockProtectedGroups(db.Content.Root.Groups)
 	return nil

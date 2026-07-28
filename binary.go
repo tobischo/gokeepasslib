@@ -18,11 +18,11 @@ type Binaries []Binary
 
 // Binary stores a binary found in the metadata header of a database
 type Binary struct {
-	ID               int            `xml:"ID,attr"`                  // Index (Manually counted on KDBX v4)
-	MemoryProtection byte           `xml:"-"`                        // Memory protection flag (Only KDBX v4)
+	ID               int            `xml:"ID,attr"`                  // Index (manual on KDBX v4)
+	MemoryProtection byte           `xml:"-"`                        // Memory protection (KDBX v4)
 	Content          []byte         `xml:",innerxml"`                // Binary content
-	Compressed       w.BoolWrapper  `xml:"Compressed,attr"`          // Compressed flag (Only KDBX v3.1)
-	Protected        *w.BoolWrapper `xml:"Protected,attr,omitempty"` // Inner stream cipher flag (Only KDBX v3.1)
+	Compressed       w.BoolWrapper  `xml:"Compressed,attr"`          // Compressed flag (KDBX v3.1)
+	Protected        *w.BoolWrapper `xml:"Protected,attr,omitempty"` // Stream cipher flag (KDBX v3.1)
 	isKDBX4          bool           `xml:"-"`
 }
 
