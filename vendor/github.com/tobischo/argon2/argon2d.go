@@ -30,7 +30,7 @@ package argon2
 // For example, you can get a derived key for e.g. AES-256 (which needs a
 // 32-byte key) by doing:
 //
-//  key := argon2.DKey([]byte("some password"), salt, 1, 64*1024, 4, 32)
+//	key := argon2.DKey([]byte("some password"), salt, 1, 64*1024, 4, 32)
 //
 // The draft RFC recommends[2] time=3, and memory=32*1024 is a sensible number.
 // If using that amount of memory (32 MB) is not possible in some contexts then
@@ -43,5 +43,5 @@ package argon2
 // increased as memory latency and CPU parallelism increases. Remember to get a
 // good random salt.
 func DKey(password, salt []byte, time, memory uint32, threads uint8, keyLen uint32) []byte {
-  return deriveKey(argon2d, password, salt, nil, nil, time, memory, threads, keyLen)
+	return deriveKey(argon2d, password, salt, nil, nil, time, memory, threads, keyLen)
 }
