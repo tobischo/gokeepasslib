@@ -19,6 +19,17 @@
   ignored before
     - The gzip stream is read as a single stream, so the padding of the block
       cipher which follows it is no longer read as another stream
+* Unlock protected values in the order in which they appear in the XML document
+    - Entries and groups which alternate within a group (e.g. Entry, Group,
+      Entry), as written by some KeePass clients, were unlocked as two blocks before,
+      which corrupted the protected values after the first subgroup. Only
+      whether the first child was an entry or a group was taken into account
+    - The same applies to a `<String>` which follows a `<History>` within an
+      entry, as written by some KeePass libraries
+    - Entries and groups added after decoding are unlocked after the decoded
+      ones, in the order of the struct
+    - Note that `Entry` now has an unexported field like `Group`, so comparing
+      entries with go-cmp requires `cmp.AllowUnexported(Entry{})`
 
 ### v3.7.0
 
