@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"reflect"
 )
 
 var (
@@ -147,7 +146,7 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) error
 	// Check for StreamStartBytes (Kdbx v3.1)
 	if !db.Header.IsKdbx4() {
 		startBytes := db.Header.FileHeaders.StreamStartBytes
-		if !reflect.DeepEqual(decryptedContent[0:len(startBytes)], startBytes) {
+		if !bytes.HasPrefix(decryptedContent, startBytes) {
 			return errDatabaseIntegrityFailed
 		}
 
