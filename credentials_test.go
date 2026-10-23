@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -196,6 +197,46 @@ func BenchmarkCryptAESKey(b *testing.B) {
 				if err != nil {
 					fmt.Printf("error: %v", err)
 				}
+			}
+		})
+	}
+}
+
+func TestBuildTransformedKeyCorrupted(t *testing.T) {
+	cases := []struct {
+		title         string
+		kdfParameters *KdfParameters
+	}{
+		{
+			title: "missing kdf parameters",
+		},
+		{
+			title: "argon2 without iterations",
+			kdfParameters: &KdfParameters{
+				UUID:        KdfArgon2,
+				Memory:      1024 * 1024,
+				Parallelism: 2,
+			},
+		},
+		{
+			title: "argon2 without parallelism",
+			kdfParameters: &KdfParameters{
+				UUID:       KdfArgon2,
+				Memory:     1024 * 1024,
+				Iterations: 2,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			db := NewDatabase(WithDatabaseKDBXVersion4())
+			db.Credentials = NewPasswordCredentials(examplePassword)
+			db.Header.FileHeaders.KdfParameters = c.kdfParameters
+
+			_, err := db.getTransformedKey()
+			if !errors.Is(err, ErrCorruptedDatabase) {
+				t.Fatalf("Received error '%v', expected '%v'", err, ErrCorruptedDatabase)
 			}
 		})
 	}

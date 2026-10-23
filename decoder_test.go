@@ -242,9 +242,10 @@ func TestDecodeTruncatedFile(t *testing.T) {
 				t.Fatalf("Failed to read file: %s", err)
 			}
 
-			sizes := []int{0, 1, 12, len(data) / 2}
-			for _, removed := range []int{1, 4, 15, 16, 17, 40, 100} {
-				sizes = append(sizes, len(data)-c.unreadBytes-removed)
+			end := len(data) - c.unreadBytes
+			sizes := []int{
+				0, 1, 12, len(data) / 2,
+				end - 1, end - 4, end - 15, end - 16, end - 17, end - 40, end - 100,
 			}
 
 			for _, size := range sizes {
@@ -338,5 +339,26 @@ func TestReadBytes(t *testing.T) {
 				t.Fatalf("Received data '% x', expected '% x'", data, c.expectedData)
 			}
 		})
+	}
+}
+
+func TestDecodeRawContentInvalidEncryptionIV(t *testing.T) {
+	db := NewDatabase(WithDatabaseKDBXVersion3())
+	db.Credentials = NewPasswordCredentials(examplePassword)
+
+	transformedKey, err := db.getTransformedKey()
+	if err != nil {
+		t.Fatalf("Failed to transform key: %s", err)
+	}
+
+	encoded, err := encodeRawContent(db, xmlHeader, transformedKey)
+	if err != nil {
+		t.Fatalf("Failed to encode content: %s", err)
+	}
+	db.Header.FileHeaders.EncryptionIV = db.Header.FileHeaders.EncryptionIV[:8]
+
+	err = decodeRawContent(db, encoded, transformedKey)
+	if !errors.Is(err, ErrCorruptedDatabase) {
+		t.Fatalf("Received error '%v', expected '%v'", err, ErrCorruptedDatabase)
 	}
 }
