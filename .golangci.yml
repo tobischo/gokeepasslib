@@ -8,12 +8,14 @@ linters:
     - errcheck
     - errname
     - exhaustruct
+    - exhaustruct_v5
     - forbidigo
     - funlen
     - gochecknoglobals
     - gocognit
     - gocritic
     - govet
+    - goconst
     - intrange
     - ireturn
     - mnd
