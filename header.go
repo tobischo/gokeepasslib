@@ -324,7 +324,6 @@ func (h *DBHeader) readFrom(r io.Reader) error {
 func (fh *FileHeaders) readHeader4(r io.Reader) error {
 	var id uint8
 	var length uint32
-	var data []byte
 
 	if err := binary.Read(r, binary.LittleEndian, &id); err != nil {
 		return err
@@ -332,8 +331,8 @@ func (fh *FileHeaders) readHeader4(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
 		return err
 	}
-	data = make([]byte, length)
-	if err := binary.Read(r, binary.LittleEndian, &data); err != nil {
+	data, err := readBytes(r, int64(length))
+	if err != nil {
 		return err
 	}
 
@@ -344,7 +343,6 @@ func (fh *FileHeaders) readHeader4(r io.Reader) error {
 func (fh *FileHeaders) readHeader31(r io.Reader) error {
 	var id uint8
 	var length uint16
-	var data []byte
 
 	if err := binary.Read(r, binary.LittleEndian, &id); err != nil {
 		return err
@@ -352,8 +350,8 @@ func (fh *FileHeaders) readHeader31(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
 		return err
 	}
-	data = make([]byte, length)
-	if err := binary.Read(r, binary.LittleEndian, &data); err != nil {
+	data, err := readBytes(r, int64(length))
+	if err != nil {
 		return err
 	}
 
@@ -565,19 +563,18 @@ func (vd *VariantDictionary) readVariantDictionary(data []byte) error {
 		}
 
 		if vdi.Type != 0x00 {
-			if err := binary.Read(r, binary.LittleEndian, &vdi.NameLength); err != nil {
+			var err error
+			if err = binary.Read(r, binary.LittleEndian, &vdi.NameLength); err != nil {
 				return err
 			}
-			vdi.Name = make([]byte, vdi.NameLength)
-			if err := binary.Read(r, binary.LittleEndian, &vdi.Name); err != nil {
+			if vdi.Name, err = readBytes(r, int64(vdi.NameLength)); err != nil {
 				return err
 			}
 
-			if err := binary.Read(r, binary.LittleEndian, &vdi.ValueLength); err != nil {
+			if err = binary.Read(r, binary.LittleEndian, &vdi.ValueLength); err != nil {
 				return err
 			}
-			vdi.Value = make([]byte, vdi.ValueLength)
-			if err := binary.Read(r, binary.LittleEndian, &vdi.Value); err != nil {
+			if vdi.Value, err = readBytes(r, int64(vdi.ValueLength)); err != nil {
 				return err
 			}
 
