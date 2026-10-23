@@ -58,15 +58,32 @@ func (c *DBCredentials) buildTransformedKey(db *Database) ([]byte, error) {
 	}
 
 	if db.Header.IsKdbx4() {
+		if db.Header.FileHeaders.KdfParameters == nil {
+			return nil, fmt.Errorf("%w: kdf parameters are missing", ErrCorruptedDatabase)
+		}
+
 		if reflect.DeepEqual(db.Header.FileHeaders.KdfParameters.UUID, KdfArgon2) {
+			iterations := uint32(db.Header.FileHeaders.KdfParameters.Iterations)
+			parallelism := uint8(db.Header.FileHeaders.KdfParameters.Parallelism)
+
+			// Argon 2 panics on these values instead of returning an error
+			if iterations < 1 || parallelism < 1 {
+				return nil, fmt.Errorf(
+					"%w: invalid argon2 iterations %d or parallelism %d",
+					ErrCorruptedDatabase,
+					db.Header.FileHeaders.KdfParameters.Iterations,
+					db.Header.FileHeaders.KdfParameters.Parallelism,
+				)
+			}
+
 			// Argon 2
 			transformedKey = argon2.DKey(
 				transformedKey, // Master key
-				db.Header.FileHeaders.KdfParameters.Salt[:],             // Salt
-				uint32(db.Header.FileHeaders.KdfParameters.Iterations),  // Time cost
+				db.Header.FileHeaders.KdfParameters.Salt[:], // Salt
+				iterations, // Time cost
 				uint32(db.Header.FileHeaders.KdfParameters.Memory)/1024, // Memory cost
-				uint8(db.Header.FileHeaders.KdfParameters.Parallelism),  // Parallelism
-				32, // Hash length
+				parallelism, // Parallelism
+				32,          // Hash length
 			)
 		} else {
 			// AES
