@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"reflect"
 )
@@ -130,6 +131,16 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) error
 	encrypter, err := db.GetEncrypterManager(transformedKey)
 	if err != nil {
 		return err
+	}
+
+	// Block ciphers can only decrypt whole blocks, which a truncated file lacks
+	blockSize := cipherBlockSize(db.Header.FileHeaders.CipherID)
+	if blockSize > 0 && len(content)%blockSize != 0 {
+		return fmt.Errorf(
+			"%w: encrypted content of %d bytes is no multiple of the cipher block size",
+			ErrCorruptedDatabase,
+			len(content),
+		)
 	}
 	decryptedContent := encrypter.Decrypt(content)
 

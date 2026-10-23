@@ -10,6 +10,12 @@ var ErrInvalidDatabaseOrCredentials = errors.New(
 	"Cannot read database: Either credentials are invalid or the database file is corrupted",
 )
 
+// ErrCorruptedDatabase is returned when the database file is truncated or
+// corrupted, e.g. a content block is incomplete or its hash is mismatching.
+var ErrCorruptedDatabase = errors.New(
+	"gokeepasslib: database file is truncated or corrupted",
+)
+
 // Database stores all contents necessary for a keepass database file
 type Database struct {
 	Options     *DBOptions
