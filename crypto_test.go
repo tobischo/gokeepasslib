@@ -95,7 +95,9 @@ func TestUnlockProtectedGroupDocumentOrder(t *testing.T) {
 		passwords []string
 		xmlData   func(p []string) string
 		modify    func(g *Group, p []string)
-		expected  map[string]string
+		// relock unmarshals plain values and locks them before unlocking
+		relock   bool
+		expected map[string]string
 	}{
 		{
 			title:     "entries before groups",
@@ -165,6 +167,28 @@ func TestUnlockProtectedGroupDocumentOrder(t *testing.T) {
 				"H/D": "password-d",
 			},
 		},
+		{
+			title:     "entries and groups interleaved, locked after unmarshalling",
+			passwords: []string{"password-a", "password-b", "password-c"},
+			xmlData: func(p []string) string {
+				return "<Group>" + protectedEntryXML("A", p[0]) +
+					"<Group><Name>G</Name>" + protectedEntryXML("B", p[1]) + "</Group>" +
+					protectedEntryXML("C", p[2]) + "</Group>"
+			},
+			relock:   true,
+			expected: map[string]string{"A": "password-a", "C": "password-c", "G/B": "password-b"},
+		},
+		{
+			title:     "value after the history, locked after unmarshalling",
+			passwords: []string{"password-old", "password-new"},
+			xmlData: func(p []string) string {
+				return "<Group>" +
+					protectedEntryXML("E", p[1], "<History>"+protectedEntryXML("E", p[0])+"</History>") +
+					"</Group>"
+			},
+			relock:   true,
+			expected: map[string]string{"E": "password-new", "E/History/E": "password-old"},
+		},
 	}
 
 	for _, c := range cases {
@@ -175,17 +199,25 @@ func TestUnlockProtectedGroupDocumentOrder(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to create stream manager: %v", err)
 			}
-			packed := make([]string, len(c.passwords))
-			for i, password := range c.passwords {
-				packed[i] = lockManager.Pack([]byte(password))
+
+			// Without relocking, the values are locked in document order
+			values := c.passwords
+			if !c.relock {
+				values = make([]string, len(c.passwords))
+				for i, password := range c.passwords {
+					values[i] = lockManager.Pack([]byte(password))
+				}
 			}
 
 			var group Group
-			if err := xml.Unmarshal([]byte(c.xmlData(packed)), &group); err != nil {
+			if err := xml.Unmarshal([]byte(c.xmlData(values)), &group); err != nil {
 				t.Fatalf("Failed to unmarshal group: %v", err)
 			}
 			if c.modify != nil {
-				c.modify(&group, packed)
+				c.modify(&group, values)
+			}
+			if c.relock {
+				lockManager.LockProtectedGroup(&group)
 			}
 
 			unlockManager, err := NewStreamManager(ChaChaStreamID, key)
