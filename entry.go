@@ -34,6 +34,10 @@ type Entry struct {
 	AutoType            AutoTypeData      `xml:"AutoType"`
 	CustomData          []CustomData      `xml:"CustomData>Item"`
 	Histories           []History         `xml:"History"`
+
+	// childOrder is the order of the values and histories in the XML document.
+	// The inner random stream has to be consumed in this order when unlocking
+	childOrder []xmlChild `xml:"-"`
 }
 
 // NewEntry return a new entry with time data and uuid set

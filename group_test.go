@@ -246,18 +246,27 @@ func TestGroupUnmarshalXML(t *testing.T) {
 			title:   "child group first",
 			xmlData: "<Group><Group></Group><Entry></Entry></Group>",
 			expectedGroup: Group{
-				Entries:         []Entry{{}},
-				Groups:          []Group{{}},
-				groupChildOrder: groupChildOrderGroupFirst,
+				Entries:    []Entry{{}},
+				Groups:     []Group{{}},
+				childOrder: []xmlChild{xmlChildGroup, xmlChildEntry},
 			},
 		},
 		{
 			title:   "child entry first",
 			xmlData: "<Group><Entry></Entry><Group></Group></Group>",
 			expectedGroup: Group{
-				Entries:         []Entry{{}},
-				Groups:          []Group{{}},
-				groupChildOrder: groupChildOrderEntryFirst,
+				Entries:    []Entry{{}},
+				Groups:     []Group{{}},
+				childOrder: []xmlChild{xmlChildEntry, xmlChildGroup},
+			},
+		},
+		{
+			title:   "child entries and groups interleaved",
+			xmlData: "<Group><Entry></Entry><Group></Group><Entry></Entry></Group>",
+			expectedGroup: Group{
+				Entries:    []Entry{{}, {}},
+				Groups:     []Group{{}},
+				childOrder: []xmlChild{xmlChildEntry, xmlChildGroup, xmlChildEntry},
 			},
 		},
 		{
