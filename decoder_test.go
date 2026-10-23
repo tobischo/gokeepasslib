@@ -200,3 +200,56 @@ func TestDecodeFile(t *testing.T) {
 		})
 	}
 }
+
+func TestReadBytes(t *testing.T) {
+	cases := []struct {
+		title        string
+		data         []byte
+		length       int64
+		expectedData []byte
+		expectedErr  error
+	}{
+		{
+			title:        "exact length",
+			data:         []byte{0x01, 0x02, 0x03},
+			length:       3,
+			expectedData: []byte{0x01, 0x02, 0x03},
+		},
+		{
+			title:        "shorter length",
+			data:         []byte{0x01, 0x02, 0x03},
+			length:       2,
+			expectedData: []byte{0x01, 0x02},
+		},
+		{
+			title:        "zero length",
+			data:         []byte{0x01},
+			length:       0,
+			expectedData: []byte{},
+		},
+		{
+			title:       "length beyond the data",
+			data:        []byte{0x01, 0x02, 0x03},
+			length:      0xffffffff,
+			expectedErr: io.ErrUnexpectedEOF,
+		},
+		{
+			title:       "negative length",
+			data:        []byte{0x01, 0x02, 0x03},
+			length:      -1,
+			expectedErr: ErrCorruptedDatabase,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			data, err := readBytes(bytes.NewReader(c.data), c.length)
+			if !errors.Is(err, c.expectedErr) {
+				t.Fatalf("Received error '%v', expected '%v'", err, c.expectedErr)
+			}
+			if !bytes.Equal(data, c.expectedData) {
+				t.Fatalf("Received data '% x', expected '% x'", data, c.expectedData)
+			}
+		})
+	}
+}
