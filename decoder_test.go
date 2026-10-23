@@ -1,6 +1,9 @@
 package gokeepasslib
 
 import (
+	"bytes"
+	"compress/gzip"
+	"errors"
 	"io"
 	"os"
 	"testing"
@@ -198,6 +201,90 @@ func TestDecodeFile(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestDecodeTruncatedFile(t *testing.T) {
+	cases := []struct {
+		title      string
+		dbFilePath string
+		// Bytes at the end which are never read, e.g. the additional empty
+		// KDBX v4 block which is written by this library
+		unreadBytes int
+	}{
+		{
+			title:      "Database Format v3.1",
+			dbFilePath: "tests/kdbx3/example.kdbx",
+		},
+		{
+			title:      "Database Format v4",
+			dbFilePath: "tests/kdbx4/example.kdbx",
+		},
+		{
+			title:      "Database Format v4, chacha encryption",
+			dbFilePath: "tests/kdbx4/example-chacha.kdbx",
+		},
+		{
+			title:      "Database Format v4, twofish encryption",
+			dbFilePath: "tests/kdbx4/example-twofish.kdbx",
+		},
+		{
+			title:       "Database Format v4.1",
+			dbFilePath:  "tests/kdbx41/example.kdbx",
+			unreadBytes: 36,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			data, err := os.ReadFile(c.dbFilePath)
+			if err != nil {
+				t.Fatalf("Failed to read file: %s", err)
+			}
+
+			sizes := []int{0, 1, 12, len(data) / 2}
+			for _, removed := range []int{1, 4, 15, 16, 17, 40, 100} {
+				sizes = append(sizes, len(data)-c.unreadBytes-removed)
+			}
+
+			for _, size := range sizes {
+				db := NewDatabase()
+				db.Credentials = NewPasswordCredentials(examplePassword)
+
+				err := NewDecoder(bytes.NewReader(data[:size])).Decode(db)
+				if err == nil {
+					t.Fatalf("Expected an error for a file truncated to %d of %d bytes", size, len(data))
+				}
+			}
+		})
+	}
+}
+
+func TestDecodeRawContentTruncatedGzip(t *testing.T) {
+	db := NewDatabase(WithDatabaseKDBXVersion3())
+	db.Credentials = NewPasswordCredentials(examplePassword)
+
+	transformedKey, err := db.getTransformedKey()
+	if err != nil {
+		t.Fatalf("Failed to transform key: %s", err)
+	}
+
+	var compressed bytes.Buffer
+	w := gzip.NewWriter(&compressed)
+	w.Write(xmlHeader)
+	w.Close()
+
+	// Encode the truncated gzip stream as is and decode it as compressed content
+	db.Header.FileHeaders.CompressionFlags = NoCompressionFlag
+	encoded, err := encodeRawContent(db, compressed.Bytes()[:compressed.Len()-4], transformedKey)
+	if err != nil {
+		t.Fatalf("Failed to encode content: %s", err)
+	}
+	db.Header.FileHeaders.CompressionFlags = GzipCompressionFlag
+
+	err = decodeRawContent(db, encoded, transformedKey)
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
+		t.Fatalf("Received error '%v', expected '%v'", err, io.ErrUnexpectedEOF)
 	}
 }
 
