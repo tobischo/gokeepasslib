@@ -232,6 +232,10 @@ func (cs *StreamManager) LockProtectedGroups(gs []Group) {
 func (cs *StreamManager) LockProtectedGroup(g *Group) {
 	cs.LockProtectedEntries(g.Entries)
 	cs.LockProtectedGroups(g.Groups)
+
+	// unset childOrder as the values are locked in the order of the struct,
+	// which is also the order in which they are marshalled
+	g.childOrder = nil
 }
 
 // LockProtectedEntries locks an array of unprotected entries
@@ -251,6 +255,10 @@ func (cs *StreamManager) LockProtectedEntry(e *Entry) {
 	for i := range e.Histories {
 		cs.LockProtectedEntries(e.Histories[i].Entries)
 	}
+
+	// unset childOrder as the values are locked in the order of the struct,
+	// which is also the order in which they are marshalled
+	e.childOrder = nil
 }
 
 // unlockProtectedBinaries unlocks the stream-protected binaries of a KDBX v3.1
