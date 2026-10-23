@@ -1,12 +1,14 @@
 package gokeepasslib
 
 import (
+	"encoding/xml"
 	"reflect"
 	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 func TestNewEntry(t *testing.T) {
@@ -263,6 +265,98 @@ func TestHistory_Clone(t *testing.T) {
 					clone,
 					history,
 				)
+			}
+		})
+	}
+}
+
+func TestEntryUnmarshalXML(t *testing.T) {
+	cases := []struct {
+		title         string
+		xmlData       string
+		expectedEntry Entry
+	}{
+		{
+			title:   "empty entry",
+			xmlData: "<Entry></Entry>",
+		},
+		{
+			title: "values and histories interleaved",
+			xmlData: "<Entry>" +
+				"<String><Key>Title</Key><Value>title</Value></String>" +
+				"<History><Entry></Entry></History>" +
+				"<String><Key>Password</Key><Value Protected=\"True\">password</Value></String>" +
+				"</Entry>",
+			expectedEntry: Entry{
+				Values: []ValueData{
+					{Key: "Title", Value: V{Content: "title"}},
+					{Key: "Password", Value: V{Content: "password", Protected: w.NewBoolWrapper(true)}},
+				},
+				Histories:  []History{{Entries: []Entry{{}}}},
+				childOrder: []xmlChild{xmlChildValue, xmlChildHistory, xmlChildValue},
+			},
+		},
+		{
+			title: "with the other fields",
+			xmlData: "<Entry>" +
+				"<UUID>uJSFMJ8KrUSO0Qiivnk2Eg==</UUID>" +
+				"<IconID>49</IconID>" +
+				"<ForegroundColor>#FF0000</ForegroundColor>" +
+				"<BackgroundColor>#00FF00</BackgroundColor>" +
+				"<OverrideURL>cmd://url</OverrideURL>" +
+				"<QualityCheck>False</QualityCheck>" +
+				"<Tags>tag1;tag2</Tags>" +
+				"<PreviousParentGroup>SnB29sd3a06jo6GR1BkGBQ==</PreviousParentGroup>" +
+				"<Binary><Key>file</Key><Value Ref=\"1\"/></Binary>" +
+				"<AutoType><Enabled>True</Enabled>" +
+				"<DefaultSequence>{PASSWORD}</DefaultSequence></AutoType>" +
+				"<CustomData><Item><Key>key</Key><Value>value</Value></Item></CustomData>" +
+				"<Unknown><String><Key>Ignored</Key></String></Unknown>" +
+				"</Entry>",
+			expectedEntry: Entry{
+				UUID: UUID{
+					0xb8, 0x94, 0x85, 0x30,
+					0x9f, 0xa, 0xad, 0x44,
+					0x8e, 0xd1, 0x8, 0xa2,
+					0xbe, 0x79, 0x36, 0x12,
+				},
+				IconID:          49,
+				ForegroundColor: "#FF0000",
+				BackgroundColor: "#00FF00",
+				OverrideURL:     "cmd://url",
+				QualityCheck:    &w.BoolWrapper{Bool: false},
+				Tags:            "tag1;tag2",
+				PreviousParentGroup: &UUID{
+					0x4a, 0x70, 0x76, 0xf6,
+					0xc7, 0x77, 0x6b, 0x4e,
+					0xa3, 0xa3, 0xa1, 0x91,
+					0xd4, 0x19, 0x06, 0x05,
+				},
+				Binaries: []BinaryReference{{Name: "file", Value: struct {
+					ID int `xml:"Ref,attr"`
+				}{ID: 1}}},
+				AutoType: AutoTypeData{
+					Enabled:         w.NewBoolWrapper(true),
+					DefaultSequence: "{PASSWORD}",
+				},
+				CustomData: []CustomData{{
+					XMLName: xml.Name{Local: "Item"},
+					Key:     "key",
+					Value:   "value",
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			var entry Entry
+			if err := xml.Unmarshal([]byte(c.xmlData), &entry); err != nil {
+				t.Fatalf("Failed to unmarshal entry: %v", err)
+			}
+
+			if !reflect.DeepEqual(entry, c.expectedEntry) {
+				t.Fatalf("Received entry %+v, expected %+v", entry, c.expectedEntry)
 			}
 		})
 	}
