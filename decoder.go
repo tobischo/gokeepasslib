@@ -172,7 +172,14 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) error
 		}
 		defer r.Close()
 
-		decryptedContent, _ = io.ReadAll(r)
+		// KeePass writes a single gzip stream. The content of a block cipher
+		// is followed by its padding, which must not be read as another stream
+		r.Multistream(false)
+
+		decryptedContent, err = io.ReadAll(r)
+		if err != nil {
+			return err
+		}
 	}
 
 	db.Content.RawData = decryptedContent
