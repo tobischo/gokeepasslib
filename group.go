@@ -9,10 +9,15 @@ import (
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
+// xmlChild is the kind of a child element of a group or an entry, which can
+// hold protected values
+type xmlChild uint8
+
 const (
-	groupChildOrderDefault = iota
-	groupChildOrderEntryFirst
-	groupChildOrderGroupFirst
+	xmlChildEntry   xmlChild = iota // <Entry> of a group
+	xmlChildGroup                   // <Group> of a group
+	xmlChildValue                   // <String> of an entry
+	xmlChildHistory                 // <History> of an entry
 )
 
 type GroupOption func(*Group)
@@ -56,7 +61,10 @@ type Group struct {
 	CustomData              []CustomData          `xml:"CustomData>Item"`               // KDBX 4
 	Entries                 []Entry               `xml:"Entry,omitempty"`
 	Groups                  []Group               `xml:"Group,omitempty"`
-	groupChildOrder         int                   `xml:"-"`
+
+	// childOrder is the order of the entries and groups in the XML document.
+	// The inner random stream has to be consumed in this order when unlocking
+	childOrder []xmlChild `xml:"-"`
 }
 
 // kdbx41Field returns the name of the first field of the group, or of one of its
@@ -140,10 +148,6 @@ func (g *Group) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 func unmarshalGroupToken(g *Group, d *xml.Decoder, element xml.StartElement) error {
 	switch element.Name.Local {
 	case "Entry":
-		if g.groupChildOrder == groupChildOrderDefault {
-			g.groupChildOrder = groupChildOrderEntryFirst
-		}
-
 		var entry Entry
 		err := d.DecodeElement(&entry, &element)
 		if err != nil {
@@ -151,11 +155,8 @@ func unmarshalGroupToken(g *Group, d *xml.Decoder, element xml.StartElement) err
 		}
 
 		g.Entries = append(g.Entries, entry)
+		g.childOrder = append(g.childOrder, xmlChildEntry)
 	case "Group":
-		if g.groupChildOrder == groupChildOrderDefault {
-			g.groupChildOrder = groupChildOrderGroupFirst
-		}
-
 		var group Group
 		err := d.DecodeElement(&group, &element)
 		if err != nil {
@@ -163,6 +164,7 @@ func unmarshalGroupToken(g *Group, d *xml.Decoder, element xml.StartElement) err
 		}
 
 		g.Groups = append(g.Groups, group)
+		g.childOrder = append(g.childOrder, xmlChildGroup)
 	case uuidElement:
 		return d.DecodeElement(&g.UUID, &element)
 	case "Name":

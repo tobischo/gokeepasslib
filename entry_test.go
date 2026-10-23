@@ -79,6 +79,7 @@ func compareEntry(a, b Entry) bool {
 	if !cmp.Equal(
 		a,
 		b,
+		cmp.AllowUnexported(Entry{}),
 		cmpopts.IgnoreFields(Entry{}, "Values", "Histories", "Binaries", "CustomData"),
 	) {
 		return false
@@ -98,7 +99,7 @@ func compareEntry(a, b Entry) bool {
 		a.Histories,
 		b.Histories,
 		func(a, b History) bool {
-			return cmp.Equal(a, b)
+			return cmp.Equal(a, b, cmp.AllowUnexported(Entry{}))
 		},
 	) {
 		return false
