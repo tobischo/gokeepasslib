@@ -1,5 +1,7 @@
 ### TO BE RELEASED
 
+### v3.7.1
+
 * Return an error instead of panicking when decoding a truncated or corrupted
   database file
     - Adds `ErrCorruptedDatabase`, which is wrapped by the returned error
