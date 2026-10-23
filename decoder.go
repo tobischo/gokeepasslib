@@ -86,6 +86,24 @@ func (d *Decoder) Decode(db *Database) error {
 	return xmlDecoder.Decode(db.Content)
 }
 
+// readBytes reads exactly length bytes from r.
+// Unlike allocating length bytes upfront, the result only grows with the data
+// actually read, so a damaged length cannot cause a huge allocation
+func readBytes(r io.Reader, length int64) ([]byte, error) {
+	if length < 0 {
+		return nil, fmt.Errorf("%w: negative length %d", ErrCorruptedDatabase, length)
+	}
+
+	data, err := io.ReadAll(io.LimitReader(r, length))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) != length {
+		return nil, io.ErrUnexpectedEOF
+	}
+	return data, nil
+}
+
 func decodeRawContent(db *Database, content []byte, transformedKey []byte) error {
 	var err error
 	// Initialize content
