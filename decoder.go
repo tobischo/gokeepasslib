@@ -32,13 +32,9 @@ func (d *Decoder) Decode(db *Database) error {
 		return err
 	}
 
-	// Calculate transformed key to decrypt and calculate HMAC
-	transformedKey, err := db.getTransformedKey()
-	if err != nil {
-		return err
-	}
-
-	// Read hashes and validate them (Kdbx v4)
+	// Read hashes and validate the header hash (Kdbx v4)
+	// The header is validated before calculating the transformed key, so the
+	// key derivation never runs on the parameters of a corrupted header
 	if db.Header.IsKdbx4() {
 		db.Hashes = new(DBHashes)
 		err := db.Hashes.readFrom(d.r)
@@ -51,7 +47,18 @@ func (d *Decoder) Decode(db *Database) error {
 			if err != nil {
 				return err
 			}
+		}
+	}
 
+	// Calculate transformed key to decrypt and calculate HMAC
+	transformedKey, err := db.getTransformedKey()
+	if err != nil {
+		return err
+	}
+
+	// Validate the header HMAC (Kdbx v4)
+	if db.Header.IsKdbx4() {
+		if db.Options.ValidateHashes {
 			hmacKey := buildHmacKey(db, transformedKey)
 			err = db.Header.ValidateHmacSha256(hmacKey, db.Hashes.Hmac)
 			if err != nil {
@@ -132,8 +139,16 @@ func decodeRawContent(db *Database, content []byte, transformedKey []byte) error
 		return err
 	}
 
-	// Block ciphers can only decrypt whole blocks, which a truncated file lacks
+	// Block ciphers in CBC mode panic on an IV which is not a single block
+	// and can only decrypt whole blocks, which a truncated file lacks
 	blockSize := cipherBlockSize(db.Header.FileHeaders.CipherID)
+	if blockSize > 0 && len(db.Header.FileHeaders.EncryptionIV) != blockSize {
+		return fmt.Errorf(
+			"%w: encryption IV of %d bytes does not match the cipher block size",
+			ErrCorruptedDatabase,
+			len(db.Header.FileHeaders.EncryptionIV),
+		)
+	}
 	if blockSize > 0 && len(content)%blockSize != 0 {
 		return fmt.Errorf(
 			"%w: encrypted content of %d bytes is no multiple of the cipher block size",

@@ -368,12 +368,18 @@ func (fh *FileHeaders) readFileHeader(id uint8, data []byte) error {
 	case headerIDCipherID:
 		fh.CipherID = data
 	case headerIDCompressionsFlags:
+		if err := checkValueLength("header", id, data, 4); err != nil {
+			return err
+		}
 		fh.CompressionFlags = binary.LittleEndian.Uint32(data)
 	case headerIDMasterSeed:
 		fh.MasterSeed = data
 	case headerIDTransformSeed:
 		fh.TransformSeed = data
 	case headerIDTransformRounds:
+		if err := checkValueLength("header", id, data, 8); err != nil {
+			return err
+		}
 		fh.TransformRounds = binary.LittleEndian.Uint64(data)
 	case headerIDEncryptionIV:
 		fh.EncryptionIV = data
@@ -382,6 +388,9 @@ func (fh *FileHeaders) readFileHeader(id uint8, data []byte) error {
 	case headerIDStreamStartBytes:
 		fh.StreamStartBytes = data
 	case headerIDInnerRandomStream:
+		if err := checkValueLength("header", id, data, 4); err != nil {
+			return err
+		}
 		fh.InnerRandomStreamID = binary.LittleEndian.Uint32(data)
 	case headerIDKdfParameters:
 		fh.KdfParameters = new(KdfParameters)
@@ -395,6 +404,32 @@ func (fh *FileHeaders) readFileHeader(id uint8, data []byte) error {
 	return nil
 }
 
+// kdfParameterSizes are the minimum sizes of the kdf parameters which are converted
+var kdfParameterSizes = map[string]int{
+	"R": 8,
+	"S": 32,
+	"P": 4,
+	"M": 8,
+	"I": 8,
+	"V": 4,
+}
+
+// checkValueLength checks that the value of a header or kdf parameter holds
+// at least the expected size before it is converted
+func checkValueLength(kind string, id any, value []byte, size int) error {
+	if len(value) < size {
+		return fmt.Errorf(
+			"%w: %s %v has %d bytes, expected %d",
+			ErrCorruptedDatabase,
+			kind,
+			id,
+			len(value),
+			size,
+		)
+	}
+	return nil
+}
+
 // readKdfParameters reads a variant dictionary and puts values into KdfParameters
 func (k *KdfParameters) readKdfParameters(data []byte) error {
 	dict := new(VariantDictionary)
@@ -404,6 +439,12 @@ func (k *KdfParameters) readKdfParameters(data []byte) error {
 
 	k.RawData = dict
 	for _, item := range dict.Items {
+		if size, ok := kdfParameterSizes[string(item.Name)]; ok {
+			if err := checkValueLength("kdf parameter", string(item.Name), item.Value, size); err != nil {
+				return err
+			}
+		}
+
 		switch string(item.Name) {
 		case "$UUID":
 			k.UUID = item.Value
