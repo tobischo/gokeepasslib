@@ -2,6 +2,7 @@ package gokeepasslib
 
 import (
 	"bytes"
+	"crypto/aes"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -78,6 +79,18 @@ func NewEncrypterManager(
 		}, nil
 	default:
 		return nil, ErrUnsupportedEncrypterType
+	}
+}
+
+// cipherBlockSize returns the block size of the block cipher with the given
+// cipher ID, or 0 for a stream cipher
+func cipherBlockSize(cipherID []byte) int {
+	switch {
+	case bytes.Equal(cipherID, CipherAES), bytes.Equal(cipherID, CipherTwoFish):
+		// AES and TwoFish both use blocks of 128 bits
+		return aes.BlockSize
+	default:
+		return 0
 	}
 }
 
