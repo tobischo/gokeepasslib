@@ -2,6 +2,9 @@ package gokeepasslib
 
 import (
 	"encoding/xml"
+	"errors"
+	"fmt"
+	"io"
 
 	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
@@ -61,6 +64,96 @@ func (e *Entry) setKdbxFormatVersion(version formatVersion) {
 	for i := range e.Histories {
 		(&e.Histories[i]).setKdbxFormatVersion(version)
 	}
+}
+
+// UnmarshalXML unmarshals the entry from d
+func (e *Entry) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
+	for {
+		token, err := d.Token()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return err
+		}
+		switch element := token.(type) {
+		case xml.StartElement:
+			// Propagating child errors is essential: silently dropping an
+			// unparseable child desyncs the protection stream cipher and
+			// corrupts every protected value that follows it.
+			if err := unmarshalEntryToken(e, d, element); err != nil {
+				return fmt.Errorf("failed to unmarshal entry child %q: %w", element.Name.Local, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func unmarshalEntryToken(e *Entry, d *xml.Decoder, element xml.StartElement) error {
+	switch element.Name.Local {
+	case "String":
+		var value ValueData
+		if err := d.DecodeElement(&value, &element); err != nil {
+			return err
+		}
+
+		e.Values = append(e.Values, value)
+		e.childOrder = append(e.childOrder, xmlChildValue)
+	case "History":
+		var history History
+		if err := d.DecodeElement(&history, &element); err != nil {
+			return err
+		}
+
+		e.Histories = append(e.Histories, history)
+		e.childOrder = append(e.childOrder, xmlChildHistory)
+	case uuidElement:
+		return d.DecodeElement(&e.UUID, &element)
+	case "IconID":
+		return d.DecodeElement(&e.IconID, &element)
+	case customIconUUIDElement:
+		return d.DecodeElement(&e.CustomIconUUID, &element)
+	case "ForegroundColor":
+		return d.DecodeElement(&e.ForegroundColor, &element)
+	case "BackgroundColor":
+		return d.DecodeElement(&e.BackgroundColor, &element)
+	case "OverrideURL":
+		return d.DecodeElement(&e.OverrideURL, &element)
+	case "QualityCheck":
+		e.QualityCheck = new(w.BoolWrapper)
+		return d.DecodeElement(e.QualityCheck, &element)
+	case "Tags":
+		return d.DecodeElement(&e.Tags, &element)
+	case "PreviousParentGroup":
+		e.PreviousParentGroup = new(UUID)
+		return d.DecodeElement(e.PreviousParentGroup, &element)
+	case "Times":
+		return d.DecodeElement(&e.Times, &element)
+	case "Binary":
+		var binary BinaryReference
+		if err := d.DecodeElement(&binary, &element); err != nil {
+			return err
+		}
+
+		e.Binaries = append(e.Binaries, binary)
+	case "AutoType":
+		return d.DecodeElement(&e.AutoType, &element)
+	case "CustomData":
+		var customData struct {
+			Items []CustomData `xml:"Item"`
+		}
+		if err := d.DecodeElement(&customData, &element); err != nil {
+			return err
+		}
+
+		e.CustomData = append(e.CustomData, customData.Items...)
+	default:
+		// Unknown elements are ignored, as they were by the default decoding
+		return d.Skip()
+	}
+
+	return nil
 }
 
 // kdbx41Field returns the name of the first field of the entry, or of one of
