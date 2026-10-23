@@ -48,6 +48,19 @@ func (b *BlockHMACBuilder) BuildHMAC(index uint64, length uint32, data []byte) [
 	return mac.Sum(nil)
 }
 
+// blockHeader4 is the header of a content block (Kdbx v4)
+type blockHeader4 struct {
+	HMAC   [32]byte
+	Length uint32
+}
+
+// blockHeader31 is the header of a content block (Kdbx v3.1)
+type blockHeader31 struct {
+	Index  uint32
+	Hash   [32]byte
+	Length uint32
+}
+
 // decomposeContentBlocks4 decodes the content data block by block (Kdbx v4)
 // Used to extract data blocks from the entire content
 func decomposeContentBlocks4(
@@ -55,89 +68,92 @@ func decomposeContentBlocks4(
 	masterSeed []byte,
 	transformedKey []byte,
 ) ([]byte, error) {
-	var contentData []byte
-	// Get all the content
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
+	var contentData bytes.Buffer
 
 	hmacBuilder := NewBlockHMACBuilder(masterSeed, transformedKey)
 
-	index := uint64(0)
-	offset := uint32(0)
-	for {
-		var blockHMAC [32]byte
-		var length uint32
+	for index := uint64(0); ; index++ {
+		var header blockHeader4
+		if err := binary.Read(r, binary.LittleEndian, &header); err != nil {
+			return nil, corruptedBlockError(index, err)
+		}
 
-		copy(blockHMAC[:], content[offset:offset+32])
-		offset += 32
+		start := contentData.Len()
+		if err := readBlockData(&contentData, r, header.Length); err != nil {
+			return nil, corruptedBlockError(index, err)
+		}
+		data := contentData.Bytes()[start:]
 
-		buf := bytes.NewBuffer(content[offset : offset+4])
-		binary.Read(buf, binary.LittleEndian, &length)
+		calculatedHMAC := hmacBuilder.BuildHMAC(index, header.Length, data)
 
-		offset += 4
-
-		data := make([]byte, length)
-		endOfData := offset + length
-		copy(data, content[offset:endOfData])
-		offset = endOfData
-
-		calculatedHMAC := hmacBuilder.BuildHMAC(index, length, data)
-
-		if subtle.ConstantTimeCompare(calculatedHMAC, blockHMAC[:]) == 0 {
+		if subtle.ConstantTimeCompare(calculatedHMAC, header.HMAC[:]) == 0 {
 			return nil, fmt.Errorf("%w for block %d", errHMACVerificationFailed, index)
 		}
 
-		// Add to blocks
-		contentData = append(contentData, data...)
-
-		if length == 0 {
+		if header.Length == 0 {
 			break
 		}
-
-		index++
 	}
-	return contentData, nil
+	return contentData.Bytes(), nil
 }
 
 // decomposeContentBlocks31 decodes the content data block by block (Kdbx v3.1)
 // Used to extract data blocks from the entire content
 func decomposeContentBlocks31(r io.Reader) ([]byte, error) {
-	var contentData []byte
-	// Get all the content
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
+	var contentData bytes.Buffer
 
-	offset := uint32(0)
-	for {
-		var hash [32]byte
-		var length uint32
-		var data []byte
+	for index := uint32(0); ; index++ {
+		var header blockHeader31
+		if err := binary.Read(r, binary.LittleEndian, &header); err != nil {
+			return nil, corruptedBlockError(uint64(index), err)
+		}
 
-		// Skipping Index, uint32
-		offset += 4
+		if header.Index != index {
+			return nil, fmt.Errorf(
+				"%w: expected block %d, found block %d",
+				ErrCorruptedDatabase,
+				index,
+				header.Index,
+			)
+		}
 
-		copy(hash[:], content[offset:offset+32])
-		offset += 32
-
-		length = binary.LittleEndian.Uint32(content[offset : offset+4])
-		offset += 4
-
-		if length > 0 {
-			data = make([]byte, length)
-			copy(data, content[offset:offset+length])
-			offset += length
-
-			// Add to decoded blocks
-			contentData = append(contentData, data...)
-		} else {
+		// The final block is empty and has an empty hash
+		if header.Length == 0 {
+			if header.Hash != [32]byte{} {
+				return nil, fmt.Errorf("%w: final block %d has a hash", ErrCorruptedDatabase, index)
+			}
 			break
 		}
+
+		start := contentData.Len()
+		if err := readBlockData(&contentData, r, header.Length); err != nil {
+			return nil, corruptedBlockError(uint64(index), err)
+		}
+
+		if sha256.Sum256(contentData.Bytes()[start:]) != header.Hash {
+			return nil, fmt.Errorf("%w: hash of block %d mismatching", ErrCorruptedDatabase, index)
+		}
 	}
-	return contentData, nil
+	return contentData.Bytes(), nil
+}
+
+// readBlockData appends the length bytes of block data from r to buf.
+// buf only grows with the data actually read, so a damaged length cannot
+// cause a huge allocation
+func readBlockData(buf *bytes.Buffer, r io.Reader, length uint32) error {
+	_, err := io.CopyN(buf, r, int64(length))
+	if errors.Is(err, io.EOF) {
+		return io.ErrUnexpectedEOF
+	}
+	return err
+}
+
+// corruptedBlockError wraps an error which occurred while reading a content block
+func corruptedBlockError(index uint64, err error) error {
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		return fmt.Errorf("%w: block %d is incomplete: %w", ErrCorruptedDatabase, index, err)
+	}
+	return err
 }
 
 // composeContentBlocks4 composes every content block into a HMAC-LENGTH-DATA block scheme (Kdbx v4)

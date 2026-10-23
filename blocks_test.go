@@ -2,6 +2,8 @@ package gokeepasslib
 
 import (
 	"bytes"
+	"encoding/binary"
+	"errors"
 	"testing"
 )
 
@@ -179,6 +181,153 @@ func TestBlockHMACBuilderBuildHMAC(t *testing.T) {
 					builtHMAC,
 					c.expectedHMAC,
 				)
+			}
+		})
+	}
+}
+
+func TestDecomposeContentBlocks31Corrupted(t *testing.T) {
+	content := bytes.Repeat([]byte{0x2a}, 100)
+
+	var blocks bytes.Buffer
+	composeContentBlocks31(&blocks, content)
+	composed := blocks.Bytes()
+
+	// Offsets within the first block, which is followed by the final block
+	const (
+		lengthOffset = 4 + 32
+		dataOffset   = lengthOffset + 4
+		finalOffset  = dataOffset + 100
+	)
+
+	cases := []struct {
+		title  string
+		modify func(data []byte) []byte
+	}{
+		{
+			title:  "empty content",
+			modify: func(data []byte) []byte { return nil },
+		},
+		{
+			title:  "truncated block header",
+			modify: func(data []byte) []byte { return data[:lengthOffset] },
+		},
+		{
+			title:  "truncated block data",
+			modify: func(data []byte) []byte { return data[:dataOffset+50] },
+		},
+		{
+			title:  "missing final block",
+			modify: func(data []byte) []byte { return data[:finalOffset] },
+		},
+		{
+			title: "length beyond the content",
+			modify: func(data []byte) []byte {
+				binary.LittleEndian.PutUint32(data[lengthOffset:], 0xffffffff)
+				return data
+			},
+		},
+		{
+			title: "unexpected block index",
+			modify: func(data []byte) []byte {
+				binary.LittleEndian.PutUint32(data, 1)
+				return data
+			},
+		},
+		{
+			title: "data mismatching the hash",
+			modify: func(data []byte) []byte {
+				data[dataOffset] ^= 0x01
+				return data
+			},
+		},
+		{
+			title: "final block with a hash",
+			modify: func(data []byte) []byte {
+				data[finalOffset+4] = 0x01
+				return data
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			data := c.modify(bytes.Clone(composed))
+
+			_, err := decomposeContentBlocks31(bytes.NewReader(data))
+			if !errors.Is(err, ErrCorruptedDatabase) {
+				t.Fatalf("Received error '%v', expected '%v'", err, ErrCorruptedDatabase)
+			}
+		})
+	}
+}
+
+func TestDecomposeContentBlocks4Corrupted(t *testing.T) {
+	content := bytes.Repeat([]byte{0x2a}, 100)
+	masterSeed := make([]byte, 32)
+	transformedKey := make([]byte, 32)
+
+	var blocks bytes.Buffer
+	composeContentBlocks4(&blocks, content, masterSeed, transformedKey)
+	composed := blocks.Bytes()
+
+	// Offsets within the first block, which is followed by the final block
+	const (
+		lengthOffset = 32
+		dataOffset   = lengthOffset + 4
+		finalOffset  = dataOffset + 100
+	)
+
+	cases := []struct {
+		title       string
+		modify      func(data []byte) []byte
+		expectedErr error
+	}{
+		{
+			title:       "empty content",
+			modify:      func(data []byte) []byte { return nil },
+			expectedErr: ErrCorruptedDatabase,
+		},
+		{
+			title:       "truncated block header",
+			modify:      func(data []byte) []byte { return data[:lengthOffset] },
+			expectedErr: ErrCorruptedDatabase,
+		},
+		{
+			title:       "truncated block data",
+			modify:      func(data []byte) []byte { return data[:dataOffset+50] },
+			expectedErr: ErrCorruptedDatabase,
+		},
+		{
+			title:       "missing final block",
+			modify:      func(data []byte) []byte { return data[:finalOffset] },
+			expectedErr: ErrCorruptedDatabase,
+		},
+		{
+			title: "length beyond the content",
+			modify: func(data []byte) []byte {
+				binary.LittleEndian.PutUint32(data[lengthOffset:], 0xffffffff)
+				return data
+			},
+			expectedErr: ErrCorruptedDatabase,
+		},
+		{
+			title: "data mismatching the HMAC",
+			modify: func(data []byte) []byte {
+				data[dataOffset] ^= 0x01
+				return data
+			},
+			expectedErr: errHMACVerificationFailed,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			data := c.modify(bytes.Clone(composed))
+
+			_, err := decomposeContentBlocks4(bytes.NewReader(data), masterSeed, transformedKey)
+			if !errors.Is(err, c.expectedErr) {
+				t.Fatalf("Received error '%v', expected '%v'", err, c.expectedErr)
 			}
 		})
 	}
