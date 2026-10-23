@@ -1,5 +1,25 @@
 ### TO BE RELEASED
 
+* Return an error instead of panicking when decoding a truncated or corrupted
+  database file
+    - Adds `ErrCorruptedDatabase`, which is wrapped by the returned error
+    - Content blocks are read without trusting their length, a damaged length
+      allocated up to 4 GiB before. The same applies to the lengths in the
+      header, the inner header and the KDF parameters
+    - The hash and index of each KDBX v3.1 content block are verified, as KeePass
+      does, so corrupted content is no longer decoded silently
+    - Encrypted content which is not a multiple of the block size of AES or
+      TwoFish, or an encryption IV of the wrong size, is rejected before
+      decrypting it
+    - Header and KDF parameter values which are too short for their type, missing
+      KDF parameters and argon2 parameters of zero are rejected
+* Validate the SHA-256 of a KDBX v4 header before deriving the key, so the key
+  derivation never runs on the parameters of a corrupted header
+* Return the errors of reading the content and of decompressing it, which were
+  ignored before
+    - The gzip stream is read as a single stream, so the padding of the block
+      cipher which follows it is no longer read as another stream
+
 ### v3.7.0
 
 * Add support for stream protected binaries in the KDBX v3.1 metadata section
