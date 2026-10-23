@@ -28,6 +28,9 @@
       entry, as written by some KeePass libraries
     - Entries and groups added after decoding are unlocked after the decoded
       ones, in the order of the struct
+    - Locking resets the recorded document order, since values are locked in
+      the order of the struct. Unmarshalled values which are locked and then
+      unlocked again were corrupted before if they were not in that order
     - Note that `Entry` now has an unexported field like `Group`, so comparing
       entries with go-cmp requires `cmp.AllowUnexported(Entry{})`
 
