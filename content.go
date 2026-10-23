@@ -98,7 +98,6 @@ ForLoop:
 	for {
 		var headerType byte
 		var length int32
-		var data []byte
 
 		if err := binary.Read(r, binary.LittleEndian, &headerType); err != nil {
 			return err
@@ -106,8 +105,8 @@ ForLoop:
 		if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
 			return err
 		}
-		data = make([]byte, length)
-		if err := binary.Read(r, binary.LittleEndian, &data); err != nil {
+		data, err := readBytes(r, int64(length))
+		if err != nil {
 			return err
 		}
 
