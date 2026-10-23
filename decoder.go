@@ -61,7 +61,7 @@ func (d *Decoder) Decode(db *Database) error {
 	}
 
 	// Decode raw content
-	rawContent, _ := io.ReadAll(d.r)
+	rawContent, err := io.ReadAll(d.r)
 	if err != nil {
 		return err
 	}
